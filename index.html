@@ -11,28 +11,29 @@
   <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
   <style>
     :root {
-      --bg: #0a0e1a; --card: #141a2b; --btn: #00e0ff; --text: #e0f7ff; --accent: #ff6b6b; --gold: #ffd700;
+      --bg: #0a0a0a; --card: #111; --btn: #ff6b00; --text: #fff; --accent: #ff8c33; --gold: #ffd700;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
     .container { padding:15px; }
-    .header { text-align:center; padding:15px; background:linear-gradient(135deg, #00e0ff, #ff6b6b); border-radius:16px; margin-bottom:15px; }
-    .airdrop { background:var(--accent); color:white; padding:10px; border-radius:12px; text-align:center; font-weight:bold; }
-    .tree { width:120px; animation: float 3s infinite; }
-    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .header { text-align:center; padding:20px; background:linear-gradient(135deg, #ff6b00, #ff8c33); border-radius:16px; margin-bottom:15px; }
+    .logo { width:80px; filter: drop-shadow(0 0 8px #ff6b00); }
+    .airdrop { background:#ff4500; color:white; padding:10px; border-radius:12px; text-align:center; font-weight:bold; margin:10px 0; }
     .stats { display:flex; justify-content:space-around; background:var(--card); padding:15px; border-radius:12px; margin:15px 0; }
     .stat { text-align:center; }
-    .stat-value { font-size:22px; font-weight:bold; color:#00e0ff; }
-    .btn { background:var(--btn); color:#000; padding:14px; border:none; border-radius:10px; width:100%; margin:10px 0; font-weight:bold; }
+    .stat-value { font-size:22px; font-weight:bold; color:#ff6b00; }
+    .btn { background:var(--btn); color:#000; padding:14px; border:none; border-radius:10px; width:100%; margin:10px 0; font-weight:bold; font-size:16px; }
     .btn:disabled { background:#444; }
     .btn-gold { background:var(--gold); color:#000; }
-    .tab { flex:1; text-align:center; padding:12px; background:#1f2a44; border-radius:10px; margin:0 3px; color:#ccc; }
+    .tab { flex:1; text-align:center; padding:12px; background:#222; border-radius:10px; margin:0 3px; color:#ccc; }
     .tab.active { background:var(--btn); color:#000; }
     .section { display:none; padding:15px; background:var(--card); border-radius:12px; margin:10px 0; }
     .section.active { display:block; }
-    .rules { font-size:13px; line-height:1.6; }
-    .daily-bonus { background:#1a2332; padding:10px; border-radius:10px; margin:10px 0; text-align:center; }
-    #chat-box { height:180px; overflow-y:auto; background:#1f2a44; padding:10px; border-radius:10px; margin:10px 0; }
+    .countdown { text-align:center; margin:15px 0; font-size:18px; color:#ff6b00; font-weight:bold; }
+    .leaderboard { max-height:300px; overflow-y:auto; }
+    .leader { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #333; }
+    .rank { color:#ff8c33; font-weight:bold; }
+    #ref-count { font-size:18px; color:#ff6b00; font-weight:bold; }
   </style>
 </head>
 <body>
@@ -40,34 +41,32 @@
 
     <!-- Header -->
     <div class="header">
+      <img src="https://i.ibb.co/5jW3vYk/aethermine-logo.png" class="logo" alt="AetherMine">
       <h1>AetherMine</h1>
       <p id="username">Loading...</p>
       <div class="airdrop">
-        <b>Monthly Airdrop</b><br>15 Nov – 15 Dec
-      </div>
-    </div>
-
-    <!-- Tree + Stats -->
-    <div style="text-align:center; margin:20px 0;">
-      <img src="https://i.ibb.co/7tZ3n0Q/aether-tree.gif" class="tree" alt="Aether Tree">
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-value" id="points">0</div>
-          <small>Points</small>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="speed">1</div>
-          <small>pts/sec</small>
-        </div>
-        <div class="stat">
-          <div class="stat-value" id="refs">0</div>
-          <small>Referrals</small>
-        </div>
+        <b>Final Airdrop</b><br>1 Jan 2026
       </div>
     </div>
 
     <!-- Countdown -->
-    <div style="text-align:center; color:#ff6b6b; font-weight:bold;" id="countdown"></div>
+    <div class="countdown" id="countdown"></div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="points">0</div>
+        <small>Points</small>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="speed">1</div>
+        <small>pts/sec</small>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="refs">0</div>
+        <small>Referrals</small>
+      </div>
+    </div>
 
     <!-- Tabs -->
     <div style="display:flex; margin:15px 0;">
@@ -75,15 +74,13 @@
       <div class="tab" onclick="openTab('tasks')">Tasks</div>
       <div class="tab" onclick="openTab('frens')">Frens</div>
       <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
-      <div class="tab" onclick="openTab('rules')">Rules</div>
     </div>
 
     <!-- Home -->
     <div id="home" class="section active">
       <button class="btn" id="start-mining">Start Mining</button>
-      <div class="daily-bonus">
-        <b>Daily Login Bonus</b><br>
-        Day <span id="day">1</span>: <span id="bonus">100</span> Points
+      <div style="text-align:center; margin:15px 0;">
+        <p>Daily Bonus: Day <span id="day">1</span> → <span id="bonus">100</span> Points</p>
       </div>
     </div>
 
@@ -91,33 +88,23 @@
     <div id="tasks" class="section">
       <button class="btn" id="watch-ad">Watch Ad (+10 Speed)</button>
       <p style="text-align:center;">Daily: <span id="ads-today">0</span> / <span id="ads-limit">100</span></p>
-      <button class="btn btn-gold" id="join-channel">Join Channel = 2000 Coins</button>
+      <button class="btn btn-gold" id="join-channel">Join Channel = 2000 Points</button>
     </div>
 
     <!-- Frens -->
     <div id="frens" class="section">
-      <button class="btn" onclick="shareRef()">Invite Friend</button>
-      <p style="font-size:12px; word-break:break-all;" id="ref-link">Loading...</p>
+      <p style="text-align:center; font-size:18px;">You have <span id="ref-count">0</span> Referrals</p>
+      <button class="btn" onclick="shareRef()">Invite Friend (+100 Points)</button>
+      <p style="font-size:12px; word-break:break-all; margin:10px 0;" id="ref-link">Loading...</p>
+      <h3 style="margin:15px 0 10px; color:#ff8c33;">Top 100 Miners</h3>
+      <div class="leaderboard" id="leaderboard">Loading...</div>
     </div>
 
     <!-- Airdrop -->
     <div id="airdrop" class="section">
-      <p><b>Final Launch:</b> 1 Jan 2026</p>
-      <button class="btn" id="connect-wallet">Connect Wallet (Polygon)</button>
+      <p><b>Eligibility:</b> 10 Referrals + 5000 Points</p>
+      <button class="btn" id="connect-wallet">Connect Wallet</button>
       <p id="wallet-status">Not Connected</p>
-    </div>
-
-    <!-- Rules -->
-    <div id="rules" class="section">
-      <div class="rules">
-        <h3>Rules</h3>
-        <p>1. Minimum <b>10 Referrals</b> + <b>5000 Points</b> = Airdrop Eligible</p>
-        <p>2. Daily Ads Limit: <b>100 + 2×Referrals</b></p>
-        <p>3. <b>Join @AetherMineX</b> = 2000 Coins</p>
-        <p>4. 7-Day Login Bonus: 100, 200, 300, 400, 500, 700, 1000</p>
-        <p>5. Auto Airdrop on <b>1 Jan 2026</b></p>
-        <p>6. Tokens in Wallet Directly</p>
-      </div>
     </div>
 
   </div>
@@ -149,20 +136,9 @@
 
       const doc = await db.collection('users').doc(userId).get();
       if (!doc.exists) {
-        const refCode = generateRefCode();
+        const refCode = 'AM' + Math.random().toString(36).substr(2, 6).toUpperCase();
         await db.collection('users').doc(userId).set({
-          telegramId: userId,
-          username: username,
-          refCode: refCode,
-          points: 0,
-          speed: 1,
-          adsToday: 0,
-          refs: [],
-          wallet: "",
-          lastLogin: null,
-          streak: 0,
-          joinedChannel: false,
-          joined: new Date()
+          telegramId: userId, username, refCode, points: 0, speed: 1, adsToday: 0, refs: [], wallet: "", lastLogin: null, streak: 0, joinedChannel: false, joined: new Date()
         });
       } else {
         current = doc.data();
@@ -171,65 +147,31 @@
       updateUI();
       startCountdown();
       handleReferral();
+      loadLeaderboard();
     }
 
-    // === UNIQUE REF CODE ===
-    function generateRefCode() {
-      return 'AM' + Math.random().toString(36).substr(2, 6).toUpperCase();
-    }
-
-    // === DAILY LOGIN BONUS (7 Days) ===
+    // === DAILY LOGIN BONUS ===
     const BONUS = [100, 200, 300, 400, 500, 700, 1000];
     async function checkDailyLogin() {
       const today = new Date().toDateString();
       if (current.lastLogin !== today) {
         const streak = (current.streak % 7) + 1;
-        const bonus = BONUS[streak - 1];
-        current.points += bonus;
+        current.points += BONUS[streak - 1];
         current.streak = streak;
         current.lastLogin = today;
-        await db.collection('users').doc(userId).update({
-          points: current.points,
-          streak: current.streak,
-          lastLogin: today
-        });
-        tg.showAlert(`Day ${streak} Bonus: +${bonus} Points!`);
+        await db.collection('users').doc(userId).update({ points: current.points, streak: current.streak, lastLogin: today });
+        tg.showAlert(`Day ${streak} Bonus: +${BONUS[streak-1]} Points!`);
       }
       document.getElementById('day').innerText = (current.streak % 7) + 1;
       document.getElementById('bonus').innerText = BONUS[(current.streak % 7)];
     }
 
-    // === JOIN CHANNEL = 2000 COINS ===
-    document.getElementById('join-channel').onclick = async () => {
-      if (current.joinedChannel) return alert("Already claimed!");
-      tg.openTelegramLink('https://t.me/AetherMineX');
-      setTimeout(async () => {
-        current.points += 2000;
-        current.joinedChannel = true;
-        await db.collection('users').doc(userId).update({ points: current.points, joinedChannel: true });
-        updateUI();
-        alert("2000 Coins Claimed!");
-      }, 3000);
-    };
-
-    // === MINING, ADS, REFERRAL, WALLET, UI, COUNTDOWN ===
-    // [Same as previous, just updated with new fields]
-
-    document.getElementById('start-mining').onclick = () => {
-      if (mining) return;
-      mining = true;
-      setInterval(async () => {
-        current.points += current.speed;
-        await db.collection('users').doc(userId).update({ points: current.points });
-        document.getElementById('points').innerText = Math.floor(current.points);
-      }, 1000);
-    };
-
+    // === ADS ===
     document.getElementById('watch-ad').onclick = () => {
       const limit = 100 + current.refs.length * 2;
-      if (current.adsToday >= limit) return alert("Limit reached!");
+      if (current.adsToday >= limit) return alert("Daily limit reached!");
       const btn = document.getElementById('watch-ad');
-      btn.disabled = true; btn.innerText = "Playing...";
+      btn.disabled = true; btn.innerText = "Ad Playing...";
       show_10192178().then(async () => {
         current.speed += 10; current.adsToday += 1;
         await db.collection('users').doc(userId).update({ speed: current.speed, adsToday: current.adsToday });
@@ -237,9 +179,9 @@
       }).catch(() => { btn.disabled = false; btn.innerText = "Watch Ad (+10 Speed)"; });
     };
 
+    // === REFERRAL + 100 POINTS + TOP 100 ===
     function shareRef() {
-      const userDoc = db.collection('users').doc(userId);
-      userDoc.get().then(doc => {
+      db.collection('users').doc(userId).get().then(doc => {
         const code = doc.data().refCode;
         const link = `https://t.me/AetherMineX?start=ref_${code}`;
         document.getElementById('ref-link').innerText = link;
@@ -255,14 +197,53 @@
         const refSnap = await db.collection('users').where('refCode', '==', refCode).get();
         if (!refSnap.empty && refSnap.docs[0].id !== userId) {
           const refId = refSnap.docs[0].id;
-          await db.collection('users').doc(userId).update({ refs: firebase.firestore.FieldValue.arrayUnion(refId) });
-          await db.collection('users').doc(refId).update({ speed: firebase.firestore.FieldValue.increment(5) });
+          const userRef = db.collection('users').doc(userId);
+          const refUser = db.collection('users').doc(refId);
+          await userRef.update({ refs: firebase.firestore.FieldValue.arrayUnion(refId) });
+          await refUser.update({ points: firebase.firestore.FieldValue.increment(100) }); // +100 Points
+          await refUser.update({ speed: firebase.firestore.FieldValue.increment(5) });
         }
       }
     }
 
+    async function loadLeaderboard() {
+      const snap = await db.collection('users').orderBy('points', 'desc').limit(100).get();
+      const list = document.getElementById('leaderboard');
+      list.innerHTML = '';
+      snap.forEach((doc, i) => {
+        const data = doc.data();
+        list.innerHTML += `<div class="leader"><span class="rank">#${i+1}</span> <span>${data.username}</span> <span>${data.points} pts</span></div>`;
+      });
+    }
+
+    // === JOIN CHANNEL ===
+    document.getElementById('join-channel').onclick = async () => {
+      if (current.joinedChannel) return alert("Already claimed!");
+      tg.openTelegramLink('https://t.me/AetherMineX');
+      setTimeout(async () => {
+        current.points += 2000; current.joinedChannel = true;
+        await db.collection('users').doc(userId).update({ points: current.points, joinedChannel: true });
+        updateUI(); alert("2000 Points Claimed!");
+      }, 3000);
+    };
+
+    // === MINING, WALLET, UI, COUNTDOWN ===
+    let mining = false;
+    document.getElementById('start-mining').onclick = () => {
+      if (mining) return;
+      mining = true;
+      setInterval(async () => {
+        current.points += current.speed;
+        await db.collection('users').doc(userId).update({ points: current.points });
+        document.getElementById('points').innerText = Math.floor(current.points);
+      }, 1000);
+    };
+
     document.getElementById('connect-wallet').onclick = async () => {
       if (!window.ethereum) return alert("Install MetaMask!");
+      try {
+        await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x13881' }] });
+      } catch { /* add chain */ }
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
       const wallet = accounts[0];
       await db.collection('users').doc(userId).update({ wallet });
@@ -273,6 +254,7 @@
       document.getElementById('points').innerText = Math.floor(current.points);
       document.getElementById('speed').innerText = current.speed;
       document.getElementById('refs').innerText = current.refs.length;
+      document.getElementById('ref-count').innerText = current.refs.length;
       document.getElementById('ads-today').innerText = current.adsToday;
       document.getElementById('ads-limit').innerText = 100 + current.refs.length * 2;
     }
@@ -284,8 +266,18 @@
         if (diff <= 0) { document.getElementById('countdown').innerHTML = "<b>AIRDROPS LIVE!</b>"; return; }
         const d = Math.floor(diff / 86400000);
         const h = Math.floor((diff % 86400000) / 3600000);
-        document.getElementById('countdown').innerHTML = `<b>Launch: ${d}d ${h}h</b>`;
+        const m = Math.floor((diff % 3600000) / 60000);
+        document.getElementById('countdown').innerHTML = `<b>⏰ ${d}d ${h}h ${m}m to Airdrop</b>`;
       }, 1000);
+    }
+
+    // Tabs
+    function openTab(tab) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      document.querySelector(`[onclick="openTab('${tab}')"]`).classList.add('active');
+      if (tab === 'frens') loadLeaderboard();
     }
 
     initUser();
