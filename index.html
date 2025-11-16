@@ -5,10 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aether</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Firebase compat (as you used) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <!-- Ads SDK -->
+
+  <!-- WalletConnect (v1 UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@1.6.6/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/qrcode-modal@1.6.0/dist/umd/index.min.js"></script>
+
+  <!-- ethers.js for on-chain reads -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+  <!-- REWARDED POPUP ADS SDK (kept as you had) -->
   <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
+
   <style>
     :root {
       --bg: #000; --card: #111; --btn: #00ff88; --text: #fff; --accent: #00cc66; --glow: 0 0 15px rgba(0, 255, 136, 0.6);
@@ -17,7 +28,6 @@
     body { font-family: 'Arial', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
     .container { padding:15px; }
 
-    /* Header - NOTCOIN STYLE */
     .header {
       text-align:center; padding:25px; background: #111; border-radius:16px; margin-bottom:15px;
       border: 1px solid #333; box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
@@ -25,7 +35,6 @@
     .logo-text { font-size:36px; font-weight:900; color:#00ff88; text-shadow: 0 0 10px #00ff88; }
     .username { font-size:16px; color:#ccc; margin:8px 0; }
 
-    /* Stats */
     .stats {
       display:flex; justify-content:space-around; background:#111; padding:18px; border-radius:12px; margin:15px 0;
       border: 1px solid #333;
@@ -34,7 +43,6 @@
     .stat-value { font-size:24px; font-weight:bold; color:#00ff88; }
     .stat-label { font-size:12px; color:#aaa; }
 
-    /* Tabs - NOTCOIN */
     .tabs {
       display:flex; background:#111; border-radius:12px; padding:5px; margin:15px 0;
       border: 1px solid #333;
@@ -44,12 +52,9 @@
       transition: all 0.3s; cursor:pointer;
     }
     .tab.active { background:#00ff88; color:#000; }
-
-    /* Sections */
-    .section { display:none; padding:15px; background:#111; border-radius:12px; margin:10px 0; border:1px solid #333; }
+       .section { display:none; padding:15px; background:#111; border-radius:12px; margin:10px 0; border:1px solid #333; }
     .section.active { display:block; }
 
-    /* Buttons */
     .btn {
       background:#00ff88; color:#000; padding:16px; border:none; border-radius:12px; width:100%; margin:10px 0;
       font-weight:bold; font-size:18px; cursor:pointer; transition: all 0.3s;
@@ -70,6 +75,7 @@
     .copy-btn { background:#00cc66; color:#000; padding:8px 12px; border-radius:8px; font-size:12px; margin-left:8px; }
 
     .claim-btn { background:#ffd700; color:#000; }
+    .small { font-size:13px; color:#aaa; margin-top:6px; }
   </style>
 </head>
 <body>
@@ -116,7 +122,9 @@
 
     <!-- Tasks -->
     <div id="tasks" class="section">
-      <button class="btn" id="watch-ad">Watch Ad (+50 Points)</button>
+      <!-- REWARDED POPUP AD -->
+      <button class="btn" id="watch-ad">Watch Rewarded Ad (+50 Points)</button>
+      <p style="text-align:center; font-size:14px; color:#aaa;">Complete full ad to earn reward!</p>
       <p style="text-align:center;">Daily: <span id="ads-today">0</span> / <span id="ads-limit">100</span></p>
       <div style="margin:10px 0; padding:10px; background:#222; border-radius:10px; color:#00ff88; font-size:14px;">
         <b>Milestones:</b> 10 Ads → +500 | 20 → +1000 | 50 → +3000
@@ -138,14 +146,42 @@
     <div id="airdrop" class="section">
       <div class="countdown" id="countdown">Loading...</div>
       <p><b>Eligibility:</b> 10 Referrals + 5000 Points</p>
+
       <button class="btn" id="connect-wallet">Connect Wallet</button>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn" id="disconnect-wallet" style="width:48%;">Disconnect</button>
+        <button class="btn" id="show-balance" style="width:48%;">Show Balance</button>
+      </div>
+
       <p id="wallet-status" style="margin-top:10px; color:#00ff88;">Not Connected</p>
+      <p class="small" id="eth-balance"></p>
+      <p class="small" id="token-balance"></p>
     </div>
 
   </div>
 
   <script>
-    // === FIREBASE ===
+    // -------------------------
+    // CONFIG - change if needed
+    // -------------------------
+    // Chain RPC for on-chain reads (default: Ethereum mainnet public RPC).
+    // If your token is on BSC/Polygon, replace RPC URL accordingly.
+    const READ_RPC = "https://rpc.ankr.com/eth";
+
+    // If you want the UI to show an ERC-20 token balance, set TOKEN_CONTRACT to token address (lowercase).
+    // Leave as empty string to skip token balance reading.
+    const TOKEN_CONTRACT = ""; // ex: "0xYourTokenAddressHere"
+
+    // Minimal ERC20 ABI for balanceOf/decimals/symbol
+    const ERC20_ABI = [
+      "function balanceOf(address) view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function symbol() view returns (string)"
+    ];
+
+    // -------------------------
+    // FIREBASE INIT (your keys kept)
+    // -------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
       authDomain: "earncryptomp.firebaseapp.com",
@@ -157,75 +193,142 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // === TELEGRAM ===
+    // -------------------------
+    // TELEGRAM WEBAPP
+    // -------------------------
     const tg = window.Telegram.WebApp;
     tg.ready();
     const user = tg.initDataUnsafe.user;
     const userId = user?.id?.toString() || 'anonymous';
     const username = user?.username ? `@${user.username}` : (user?.first_name || 'User');
+
+    // local runtime state
     let current = { points: 0, speed: 1, adsToday: 0, adsMilestones: [], refs: [], wallet: "", lastLogin: null, streak: 0, joinedChannel: false, refCode: '' };
 
-    // === INIT ===
+    // WalletConnect connector (keeps reference)
+    let wcConnector = null;
+
+    // -------------------------
+    // INIT USER
+    // -------------------------
     async function initUser() {
       document.getElementById('username').innerText = username;
+      try {
+        const docRef = db.collection('users').doc(userId);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          const refCode = 'AM' + Math.random().toString(36).substr(2, 6).toUpperCase();
+          // create user
+          await docRef.set({
+            telegramId: userId,
+            username,
+            refCode,
+            points: 0,
+            speed: 1,
+            adsToday: 0,
+            adsMilestones: [],
+            refs: [],
+            wallet: "",
+            lastLogin: null,
+            streak: 0,
+            joinedChannel: false
+          });
+          current.refCode = refCode;
+        } else {
+          const data = doc.data();
+          // prevent undefined fields
+          current = {
+            points: data.points || 0,
+            speed: data.speed || 1,
+            adsToday: data.adsToday || 0,
+            adsMilestones: data.adsMilestones || [],
+            refs: data.refs || [],
+            wallet: data.wallet || "",
+            lastLogin: data.lastLogin || null,
+            streak: data.streak || 0,
+            joinedChannel: data.joinedChannel || false,
+            refCode: data.refCode || ('AM' + Math.random().toString(36).substr(2, 6).toUpperCase())
+          };
+        }
 
-      const doc = await db.collection('users').doc(userId).get();
-      if (!doc.exists) {
-        const refCode = 'AM' + Math.random().toString(36).substr(2, 6).toUpperCase();
-        await db.collection('users').doc(userId).set({
-          telegramId: userId, username, refCode, points: 0, speed: 1, adsToday: 0, adsMilestones: [], refs: [], wallet: "", lastLogin: null, streak: 0, joinedChannel: false
-        });
-        current.refCode = refCode;
-      } else {
-        current = doc.data();
-        current.adsMilestones = current.adsMilestones || [];
+        // set ref link text
+        document.getElementById('ref-link').innerText = `https://t.me/AetherMineX?start=ref_${current.refCode}`;
+
+        checkDailyLogin();
+        updateUI();
+        startCountdown();
+        handleReferral();
+
+        // if wallet saved earlier, show it
+        if (current.wallet) {
+          document.getElementById('wallet-status').innerText = current.wallet.slice(0,6) + "..." + current.wallet.slice(-4);
+        }
+      } catch (err) {
+        console.error("initUser error:", err);
+        tg.showAlert("Error initializing user.");
       }
-
-      checkDailyLogin();
-      updateUI();
-      startCountdown();
-      handleReferral();
-      document.getElementById('ref-link').innerText = `https://t.me/AetherMineX?start=ref_${current.refCode}`;
     }
-
-    // === DAILY BONUS + RESET ADS ===
+       // -------------------------
+    // DAILY BONUS
+    // -------------------------
     const BONUS = [100, 200, 300, 400, 500, 700, 1000];
     async function checkDailyLogin() {
-      const today = new Date().toDateString();
-      if (current.lastLogin !== today) {
-        const streak = (current.streak % 7) + 1;
-        current.points += BONUS[streak - 1];
-        current.streak = streak;
-        current.lastLogin = today;
-        current.adsToday = 0;
-        current.adsMilestones = [];
-        await db.collection('users').doc(userId).update({ points: current.points, streak: current.streak, lastLogin: today, adsToday: 0, adsMilestones: [] });
-        tg.showAlert(`Day ${streak} Bonus: +${BONUS[streak-1]} Points!`);
+      try {
+        const today = new Date().toDateString();
+        if (current.lastLogin !== today) {
+          const streak = (current.streak % 7) + 1;
+          current.points += BONUS[streak - 1];
+          current.streak = streak;
+          current.lastLogin = today;
+          current.adsToday = 0;
+          current.adsMilestones = [];
+          await db.collection('users').doc(userId).update({ points: current.points, streak: current.streak, lastLogin: today, adsToday: 0, adsMilestones: [] });
+          tg.showAlert(`Day ${streak} Bonus: +${BONUS[streak-1]} Points!`);
+        }
+        document.getElementById('day').innerText = (current.streak % 7) + 1;
+        document.getElementById('bonus').innerText = BONUS[(current.streak % 7)];
+      } catch (e) {
+        console.error("daily login error", e);
       }
-      document.getElementById('day').innerText = (current.streak % 7) + 1;
-      document.getElementById('bonus').innerText = BONUS[(current.streak % 7)];
     }
 
-    // === ADS + MILESTONES ===
+    // -------------------------
+    // REWARDED ADS
+    // -------------------------
     const MILESTONES = { 10: 500, 20: 1000, 50: 3000 };
     document.getElementById('watch-ad').onclick = () => {
       const limit = 100 + current.refs.length * 2;
       if (current.adsToday >= limit) return tg.showAlert("Daily limit reached!");
+
       const btn = document.getElementById('watch-ad');
-      btn.disabled = true; btn.innerText = "Ad Playing...";
-      show_10192178().then(async () => {
-        current.points += 50; current.adsToday += 1;
+      btn.disabled = true;
+      btn.innerText = "Loading Ad...";
+
+      show_10192178('pop').then(async () => {
+        current.points += 50;
+        current.adsToday += 1;
+
         if (MILESTONES[current.adsToday] && !current.adsMilestones.includes(current.adsToday)) {
           current.points += MILESTONES[current.adsToday];
           current.adsMilestones.push(current.adsToday);
           tg.showAlert(`Milestone! +${MILESTONES[current.adsToday]} Points`);
         }
+
         await db.collection('users').doc(userId).update({ points: current.points, adsToday: current.adsToday, adsMilestones: current.adsMilestones });
-        updateUI(); btn.disabled = false; btn.innerText = "Watch Ad (+50 Points)";
-      }).catch(() => { btn.disabled = false; btn.innerText = "Watch Ad (+50 Points)"; });
+        updateUI();
+        tg.showAlert("+50 Points Rewarded!");
+        btn.disabled = false;
+        btn.innerText = "Watch Rewarded Ad (+50 Points)";
+      }).catch((e) => {
+        btn.disabled = false;
+        btn.innerText = "Watch Rewarded Ad (+50 Points)";
+        tg.showAlert("Ad not completed. No reward.");
+      });
     };
 
-    // === JOIN CHANNEL + CLAIM 500 ===
+    // -------------------------
+    // JOIN CHANNEL
+    // -------------------------
     document.getElementById('join-channel').onclick = async () => {
       if (current.joinedChannel) return tg.showAlert("Already claimed!");
       tg.openTelegramLink('https://t.me/AetherMineX');
@@ -240,19 +343,25 @@
       }, 4000);
     };
 
-    // === REFERRAL + 500 + COPY ===
+    // -------------------------
+    // REFERRAL
+    // -------------------------
     async function handleReferral() {
-      const params = new URLSearchParams(window.location.search);
-      const ref = params.get('start');
-      if (ref?.startsWith('ref_')) {
-        const refCode = ref.split('_')[1];
-        const refSnap = await db.collection('users').where('refCode', '==', refCode).get();
-        if (!refSnap.empty && refSnap.docs[0].id !== userId) {
-          const refId = refSnap.docs[0].id;
-          await db.collection('users').doc(userId).update({ refs: firebase.firestore.FieldValue.arrayUnion(refId) });
-          await db.collection('users').doc(refId).update({ points: firebase.firestore.FieldValue.increment(500) });
-          tg.showAlert("Referral Bonus: +500 Points!");
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('start');
+        if (ref?.startsWith('ref_')) {
+          const refCode = ref.split('_')[1];
+          const refSnap = await db.collection('users').where('refCode', '==', refCode).get();
+          if (!refSnap.empty && refSnap.docs[0].id !== userId) {
+            const refId = refSnap.docs[0].id;
+            await db.collection('users').doc(userId).update({ refs: firebase.firestore.FieldValue.arrayUnion(refId) });
+            await db.collection('users').doc(refId).update({ points: firebase.firestore.FieldValue.increment(500) });
+            tg.showAlert("Referral Bonus: +500 Points!");
+          }
         }
+      } catch (e) {
+        console.error("referral error", e);
       }
     }
 
@@ -266,24 +375,173 @@
       navigator.clipboard.writeText(link).then(() => tg.showAlert("Copied!"));
     }
 
-    // === WALLET CONNECT (WORKING) ===
-    document.getElementById('connect-wallet').onclick = async () => {
-      if (!window.ethereum) {
-        tg.showAlert("Install MetaMask from metamask.io");
-        return;
+    // -------------------------
+    // WALLET CONNECT (Telegram-friendly)
+    // -------------------------
+    // Uses WalletConnect v1 client. Opens universal WalletConnect deep-link page,
+    // which should redirect to the user's mobile wallet (MetaMask, Trust, Coinbase...) when opened from mobile.
+    //
+    // Flow:
+    // 1. Create connector -> connector.createSession()
+    // 2. Open https://walletconnect.com/wc?uri={uri} which will redirect to wallet apps
+    // 3. Wallet approves -> connector emits "connect"
+    // 4. Save wallet address to Firestore and UI
+    //
+
+    const WalletConnectGlobal = window.WalletConnect && (window.WalletConnect.default || window.WalletConnect);
+    const QRCodeModal = window.WalletConnectQRCodeModal && (window.WalletConnectQRCodeModal.default || window.WalletConnectQRCodeModal);
+
+    async function createOrUseConnector() {
+      if (wcConnector && wcConnector.connected) return wcConnector;
+
+      // create new connector
+      wcConnector = new WalletConnectGlobal({
+        bridge: "https://bridge.walletconnect.org"
+      });
+
+      // If already connected from previous session, restore
+      if (!wcConnector.connected) {
+        await wcConnector.createSession();
       }
+
+      return wcConnector;
+    }
+
+    document.getElementById('connect-wallet').onclick = async () => {
       try {
-        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-        const wallet = accounts[0];
-        await db.collection('users').doc(userId).update({ wallet });
-        document.getElementById('wallet-status').innerText = wallet.slice(0,6) + "..." + wallet.slice(-4);
-        tg.showAlert("Wallet Connected!");
+        const connector = await createOrUseConnector();
+
+        // If already connected, use existing account
+        if (connector.connected) {
+          const wallet = connector.accounts[0];
+          await saveWalletToFirebase(wallet);
+          showWalletInUI(wallet);
+          tg.showAlert("Wallet already connected.");
+          return;
+        }
+
+        // Build a universal walletconnect deep link page (recommended for mobile/telegram)
+        const uri = connector.uri;
+        const deep = `https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`;
+
+        // Try opening deep link (will load walletconnect redirect page which suggests wallets)
+        window.location.href = deep;
+
+        // Listen for connect event
+        connector.on("connect", async (error, payload) => {
+          if (error) {
+            console.error("WC connect error:", error);
+            return tg.showAlert("Connection Failed!");
+          }
+          try {
+            const { accounts } = payload.params[0];
+            const wallet = accounts[0];
+            await saveWalletToFirebase(wallet);
+            showWalletInUI(wallet);
+            tg.showAlert("Wallet Connected Successfully!");
+          } catch (e) {
+            console.error("on connect handling error:", e);
+            tg.showAlert("Error after connect.");
+          }
+        });
+
+        // optional: handle session_update (accounts change)
+        connector.on("session_update", (error, payload) => {
+          if (error) { console.error("session_update error", error); return; }
+          const { accounts } = payload.params[0];
+          const wallet = accounts && accounts[0];
+          if (wallet) {
+            saveWalletToFirebase(wallet);
+            showWalletInUI(wallet);
+          }
+        });
+
+        connector.on("disconnect", (error, payload) => {
+          if (error) { console.error("disconnect error", error); }
+          // clear UI + firestore wallet field
+          document.getElementById('wallet-status').innerText = "Not Connected";
+          document.getElementById('eth-balance').innerText = "";
+          document.getElementById('token-balance').innerText = "";
+          wcConnector = null;
+        });
+
       } catch (err) {
-        tg.showAlert("Connection failed. Try again.");
+        console.error("connect-wallet error:", err);
+        tg.showAlert("Wallet connection error!");
       }
     };
 
-    // === MINING ===
+    // Disconnect button
+    document.getElementById('disconnect-wallet').onclick = async () => {
+      try {
+        if (wcConnector && wcConnector.connected) {
+          await wcConnector.killSession();
+        }
+        await db.collection('users').doc(userId).update({ wallet: "" });
+        current.wallet = "";
+        document.getElementById('wallet-status').innerText = "Not Connected";
+        document.getElementById('eth-balance').innerText = "";
+        document.getElementById('token-balance').innerText = "";
+        tg.showAlert("Disconnected");
+      } catch (e) {
+        console.error("disconnect error", e);
+        tg.showAlert("Error disconnecting");
+      }
+    };
+
+    // save wallet to firebase
+    async function saveWalletToFirebase(address) {
+      try {
+        current.wallet = address;
+        await db.collection('users').doc(userId).update({ wallet: address });
+      } catch (e) {
+        console.error("save wallet error:", e);
+      }
+    }
+
+    // reflect wallet in UI
+    function showWalletInUI(address) {
+      document.getElementById('wallet-status').innerText = address.slice(0,6) + "..." + address.slice(-4);
+    }
+
+    // -------------------------
+    // BALANCE READ (native + token)
+    // -------------------------
+    document.getElementById('show-balance').onclick = async () => {
+      try {
+        const addr = current.wallet;
+        if (!addr) {
+          tg.showAlert("Connect wallet first.");
+          return;
+        }
+
+        const provider = new ethers.providers.JsonRpcProvider(READ_RPC);
+
+        // native balance
+        const bal = await provider.getBalance(addr);
+        const eth = ethers.utils.formatEther(bal);
+        document.getElementById('eth-balance').innerText = `Native balance: ${eth} ETH`;
+     // token balance (if token provided)
+        if (TOKEN_CONTRACT && TOKEN_CONTRACT.length === 42) {
+          const token = new ethers.Contract(TOKEN_CONTRACT, ERC20_ABI, provider);
+          const raw = await token.balanceOf(addr);
+          const decimals = await token.decimals().catch(() => 18);
+          const sym = await token.symbol().catch(() => "TOKEN");
+          const formatted = ethers.utils.formatUnits(raw, decimals);
+          document.getElementById('token-balance').innerText = `${sym} balance: ${formatted}`;
+        } else {
+          document.getElementById('token-balance').innerText = '';
+        }
+
+      } catch (e) {
+        console.error("balance read error:", e);
+        tg.showAlert("Error reading balance.");
+      }
+    };
+
+    // -------------------------
+    // MINING / COUNTDOWN / UI (unchanged logic)
+    // -------------------------
     let mining = false;
     document.getElementById('start-mining').onclick = () => {
       if (mining) return;
@@ -295,7 +553,6 @@
       }, 1000);
     };
 
-    // === COUNTDOWN IN AIRDROP ===
     function startCountdown() {
       const launch = new Date('2026-01-01T00:00:00+05:30');
       setInterval(() => {
@@ -311,7 +568,6 @@
       }, 1000);
     }
 
-    // === UI & TABS ===
     function updateUI() {
       document.getElementById('points').innerText = Math.floor(current.points);
       document.getElementById('speed').innerText = current.speed;
@@ -328,7 +584,9 @@
       document.querySelector(`[onclick="openTab('${tab}')"]`).classList.add('active');
     }
 
+    // Init
     initUser();
+
   </script>
 </body>
-  </html>
+</html>
