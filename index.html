@@ -4,50 +4,45 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>AetherMine — Wallet & Referral</title>
-
-  <!-- Telegram WebApp -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-
-  <!-- WalletConnect v1 UMD + QR modal -->
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@1.6.6/dist/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/qrcode-modal@1.6.0/dist/umd/index.min.js"></script>
-
-  <!-- ethers for on-chain reads -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-
-  <!-- Ad SDK (kept optional - replace your zone if needed) -->
   <script src="//libtl.com/sdk.js" data-zone="10192178" data-sdk="show_10192178"></script>
 
   <style>
-    /* Notcoin-like professional theme */
-    :root{--bg:#071018;--card:#0f1720;--muted:#9aa6b2;--accent:#1de9b6;--accent-dark:#11c7a0;--glass:rgba(255,255,255,0.03);--radius:14px}
+    /* Tomarket-inspired compact theme */
+    :root{
+      --bg:#07121a; --panel:#0e1a23; --muted:#9fb6c1; --accent:#00e199; --accent2:#ff5aa5;
+      --radius:18px;
+    }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:linear-gradient(180deg,#061017,#08121a);color:#e6f3ef;font-family:Inter,system-ui,Arial;padding:18px;min-height:100vh}
-    .wrap{max-width:600px;margin:12px auto}
-    .top{display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.02)}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;font-weight:800;color:#002}
+    body{background:linear-gradient(0deg,#041017,#071821);color:#eaf7f0;font-family:Inter,Helvetica,Arial;padding:12px;min-height:100vh}
+    .wrap{max-width:540px;margin:10px auto}
+    .top{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+    .logo{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#00c88a);display:flex;align-items:center;justify-content:center;font-weight:900;color:#012}
     .title h2{margin:0;font-size:18px}
-    .card{background:var(--card);border-radius:var(--radius);padding:14px;margin-top:14px;border:1px solid rgba(255,255,255,0.03)}
+    .panel{background:var(--panel);border-radius:16px;padding:14px;margin-top:12px;border:1px solid rgba(255,255,255,0.02)}
     .stats{display:flex;gap:10px;justify-content:space-between}
-    .stat{flex:1;padding:12px;background:var(--glass);border-radius:10px;text-align:center}
-    .stat .v{font-weight:700;color:var(--accent)}
+    .stat{flex:1;padding:12px;background:rgba(255,255,255,0.01);border-radius:12px;text-align:center}
+    .stat .v{font-weight:800;color:var(--accent)}
     .tabs{display:flex;gap:8px;margin-top:12px}
-    .tab{flex:1;padding:10px;border-radius:10px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.02);cursor:pointer;color:var(--muted)}
-    .tab.active{background:linear-gradient(90deg, rgba(29,233,182,0.12), rgba(17,199,160,0.06));color:var(--accent);border:1px solid rgba(29,233,182,0.18)}
+    .tab{flex:1;padding:10px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.01);cursor:pointer;color:var(--muted)}
+    .tab.active{background:linear-gradient(90deg, rgba(0,225,153,0.08), rgba(255,90,165,0.03));color:var(--accent)}
     .section{display:none;padding-top:12px}
     .section.active{display:block}
-    .btn{display:inline-block;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#042;padding:12px;border-radius:12px;border:none;font-weight:700;cursor:pointer;width:100%;box-shadow:0 10px 30px rgba(17,199,160,0.12)}
-    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+    .btn{display:inline-block;background:linear-gradient(90deg,var(--accent),#00c88a);color:#022;padding:12px;border-radius:12px;border:none;font-weight:800;cursor:pointer;width:100%;box-shadow:0 12px 30px rgba(0,200,150,0.08)}
+    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.02)}
     .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
-    .ref-box{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;display:flex;gap:8px;align-items:center;justify-content:space-between}
-    .ref-link{color:var(--accent);font-weight:600;word-break:break-all}
-    .copy{background:#0a1a16;color:var(--accent);border-radius:10px;padding:8px 10px;border:none;cursor:pointer}
-    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12px}
+    .ref-box{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:10px;border-radius:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.02)}
+    .ref-link{color:var(--accent);font-weight:700;word-break:break-all}
+    .copy{background:#08221a;color:var(--accent);border-radius:10px;padding:8px 10px;border:none;cursor:pointer}
+    .bottom-nav{display:flex;gap:8px;margin-top:12px;justify-content:space-between}
+    .icon-btn{flex:1;padding:10px;border-radius:12px;background:rgba(255,255,255,0.02);text-align:center;color:var(--muted);border:1px solid rgba(255,255,255,0.01)}
+    footer{margin-top:16px;text-align:center;color:var(--muted);font-size:12px}
   </style>
 </head>
 <body>
@@ -58,21 +53,20 @@
       <div style="width:44px"></div>
     </div>
 
-    <div class="card">
+    <div class="panel">
       <div class="stats">
         <div class="stat"><div class="v" id="points">0</div><div class="l">Points</div></div>
         <div class="stat"><div class="v" id="speed">1</div><div class="l">pts/sec</div></div>
         <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
       </div>
 
-      <div class="tabs" style="margin-top:12px">
+      <div class="tabs">
         <div class="tab active" onclick="openTab('home')">Home</div>
         <div class="tab" onclick="openTab('tasks')">Tasks</div>
         <div class="tab" onclick="openTab('referral')">Referral</div>
         <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
       </div>
 
-      <!-- HOME -->
       <div id="home" class="section active">
         <div style="margin-top:12px">
           <button id="start-mining" class="btn">Start Mining</button>
@@ -80,7 +74,6 @@
         </div>
       </div>
 
-      <!-- TASKS -->
       <div id="tasks" class="section">
         <div style="margin-top:8px">
           <button id="watch-ad" class="btn">Watch Rewarded Ad (+50 Points)</button>
@@ -92,21 +85,17 @@
         </div>
       </div>
 
-      <!-- REFERRAL -->
       <div id="referral" class="section">
         <div style="margin-top:12px">
           <p style="margin-bottom:8px">Invite friends — each successful referral = <strong>+500 pts</strong></p>
           <div class="ref-box">
             <div class="ref-link" id="ref-link">Generating...</div>
-            <div>
-              <button class="copy" id="copy-ref">COPY</button>
-            </div>
+            <div><button class="copy" id="copy-ref">COPY</button></div>
           </div>
           <p class="small" style="margin-top:10px">Share the link — only first-time joins via your link count.</p>
         </div>
       </div>
 
-      <!-- AIRDROP -->
       <div id="airdrop" class="section">
         <div style="margin-top:12px">
           <div style="display:flex;gap:8px">
@@ -125,25 +114,22 @@
 
     </div>
 
+    <div class="bottom-nav">
+      <div class="icon-btn">🏠 Home</div>
+      <div class="icon-btn">🎯 Tasks</div>
+      <div class="icon-btn">🪙 Farm</div>
+      <div class="icon-btn">👥 Friends</div>
+      <div class="icon-btn">💼 Wallet</div>
+    </div>
+
     <footer>© AetherMine — Bot: @AetherMineXBot</footer>
   </div>
 
   <script>
-    /**************************************************************
-     * CONFIG - CHANGE THESE VALUES AS NEEDED
-     **************************************************************/
-    // Chain RPC for reads (change if token on BSC/Polygon)
-    const READ_RPC = "https://rpc.ankr.com/eth";
-
-    // If you want to display an ERC-20 token balance set this
-    const TOKEN_CONTRACT = ""; // e.g. "0xYourTokenAddress"
-    const ERC20_ABI = [
-      "function balanceOf(address) view returns (uint256)",
-      "function decimals() view returns (uint8)",
-      "function symbol() view returns (string)"
-    ];
-
-    // Firebase config (keep your keys)
+    /**************** CONFIG ****************/
+    const READ_RPC = "https://rpc.ankr.com/polygon"; // default to Polygon as you said you'll deploy token on Polygon
+    const TOKEN_CONTRACT = ""; // set your 0x... polygon token address after deploy
+    const ERC20_ABI = ["function balanceOf(address) view returns (uint256)","function decimals() view returns (uint8)","function symbol() view returns (string)"];
     const firebaseConfig = {
       apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
       authDomain: "earncryptomp.firebaseapp.com",
@@ -152,333 +138,213 @@
       messagingSenderId: "405204250643",
       appId: "1:405204250643:web:8841299bceb46f6752cfe6"
     };
+    const BOT_USERNAME = "AetherMineXBot";
+    /*****************************************/
 
-    // Bot username for referral link
-    const BOT_USERNAME = "AetherMineXBot"; // matches what you gave
-
-    /**************************************************************
-     * END CONFIG
-     **************************************************************/
-
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Telegram
-    const tg = window.Telegram.WebApp;
-    tg.ready();
+    const tg = window.Telegram.WebApp; tg.ready();
     const tgUser = tg.initDataUnsafe.user || {};
     document.getElementById('username').innerText = tgUser.username ? "@" + tgUser.username : (tgUser.first_name || "Guest");
 
-    // runtime
+    // state
     let current = { points:0, speed:1, adsToday:0, adsMilestones:[], refs:[], wallet:"", lastLogin:null, streak:0, joinedChannel:false, refCode:'' };
     let wcConnector = null;
-    let firebaseUid = null; // this app will use Firebase anonymous uid as doc id -> matches rules `request.auth != null`
+    let firebaseUid = null;
 
-    // Start param helpers: telegram mini-app may provide start_param or window.location.search (bot links)
+    // start param detection
     const startParam = (tg.initDataUnsafe && (tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp)) || (new URLSearchParams(window.location.search).get('start') || new URLSearchParams(window.location.search).get('startapp')) || '';
 
-    // Sign in anonymously to Firebase (required because your rules require request.auth != null)
-    auth.signInAnonymously().then(() => {
-      firebaseUid = auth.currentUser.uid;
-      initApp();
-    }).catch((e) => {
-      console.error("Firebase auth failed:", e);
-      // still try to init using timestamp id (less secure)
-      firebaseUid = "anon_" + Date.now();
-      initApp();
-    });
+    // sign in anon (required if your rules need request.auth != null)
+    auth.signInAnonymously().then(()=>{ firebaseUid = auth.currentUser.uid; initApp(); }).catch((e)=>{ console.error(e); firebaseUid = "anon_"+Date.now(); initApp(); });
 
-    // SAFE helper to return user doc ref (we use firebaseUid as doc id)
-    function userDocRef() {
-      return db.collection('users').doc(firebaseUid);
-    }
+    function userDocRef(){ return db.collection('users').doc(firebaseUid); }
 
-    // Initialize app: create user doc if not exists; handle referral param
-    async function initApp() {
+    async function initApp(){
       try {
-        // ensure doc exists
         const doc = await userDocRef().get();
         if (!doc.exists) {
           const refCode = 'AM' + Math.random().toString(36).substr(2,6).toUpperCase();
           current.refCode = refCode;
-          // create doc with initial fields
           await userDocRef().set({
             firebaseUid,
             telegramId: tgUser.id || null,
             username: tgUser.username || tgUser.first_name || null,
             refCode,
-            points:0,
-            speed:1,
-            adsToday:0,
-            adsMilestones:[],
-            refs:[],
-            wallet:"",
-            lastLogin:null,
-            streak:0,
-            joinedChannel:false,
-            referredBy: null
+            points:0, speed:1, adsToday:0, adsMilestones:[], refs:[], wallet:"", lastLogin:null, streak:0, joinedChannel:false, referredBy:null
           }, { merge: true });
         } else {
           const data = doc.data();
           current = {
-            points: data.points || 0,
-            speed: data.speed || 1,
-            adsToday: data.adsToday || 0,
-            adsMilestones: data.adsMilestones || [],
-            refs: data.refs || [],
-            wallet: data.wallet || "",
-            lastLogin: data.lastLogin || null,
-            streak: data.streak || 0,
-            joinedChannel: data.joinedChannel || false,
-            refCode: data.refCode || ('AM' + Math.random().toString(36).substr(2,6).toUpperCase()),
-            referredBy: data.referredBy || null
+            points: data.points || 0, speed: data.speed || 1, adsToday: data.adsToday || 0,
+            adsMilestones: data.adsMilestones || [], refs: data.refs || [], wallet: data.wallet || "",
+            lastLogin: data.lastLogin || null, streak: data.streak || 0, joinedChannel: data.joinedChannel || false,
+            refCode: data.refCode || ('AM'+Math.random().toString(36).substr(2,6).toUpperCase()), referredBy: data.referredBy || null
           };
         }
-    // Build referral link (use bot username)
+
         const myRefLink = `https://t.me/${BOT_USERNAME}?startapp=ref_${firebaseUid}`;
         document.getElementById('ref-link').innerText = myRefLink;
-        document.getElementById('copy-ref').onclick = () => { navigator.clipboard.writeText(myRefLink); tg.showAlert("Link copied"); };
+        document.getElementById('copy-ref').onclick = ()=>{ navigator.clipboard.writeText(myRefLink); tg.showAlert("Link copied"); };
 
-        // Handle referral param (works for both start and startapp, and also for direct ?start=ref_xxx)
         await handleReferralParam();
-
-        updateUI();
-        checkDailyLogin();
-
-      } catch (e) {
-        console.error("initApp error:", e);
-        tg.showAlert("Init error");
-      }
+        updateUI(); checkDailyLogin();
+      } catch(e){ console.error("initApp",e); tg.showAlert("Init error"); }
     }
 
-    // Referral handling: credit referrer only once per new user
-    async function handleReferralParam() {
-      try {
+    async function handleReferralParam(){
+      try{
         if (!startParam || !startParam.startsWith('ref_')) return;
-        const refId = startParam.split('_')[1];
-        if (!refId) return;
-
-        // If already referred, skip
-        const meDoc = await userDocRef().get();
-        const meData = meDoc.exists ? meDoc.data() : {};
-        if (meData.referredBy) {
-          console.log("already referred by", meData.referredBy);
-          return;
-        }
-
-        // Prevent self-referral
-        if (refId === firebaseUid) {
-          console.log("self-referral blocked");
-          return;
-        }
-
-        // Find referrer doc by firebaseUid (refId)
+        const refId = startParam.split('_')[1]; if (!refId) return;
+        const meDoc = await userDocRef().get(); const meData = meDoc.exists ? meDoc.data() : {};
+        if (meData.referredBy) return;
+        if (refId === firebaseUid) return; // self-referral blocked
         const refDocSnap = await db.collection('users').doc(refId).get();
-        if (!refDocSnap.exists) {
-          console.log("referrer not found");
-          return;
-        }
-
-        // Add current to referrer's refs array and increment their points
-        await db.collection('users').doc(refId).update({
-          refs: firebase.firestore.FieldValue.arrayUnion(firebaseUid),
-          points: firebase.firestore.FieldValue.increment(500)
-        });
-
-        // Mark current user referredBy (so cannot be referred again)
+        if (!refDocSnap.exists) return;
+        await db.collection('users').doc(refId).update({ refs: firebase.firestore.FieldValue.arrayUnion(firebaseUid), points: firebase.firestore.FieldValue.increment(500) });
         await userDocRef().set({ referredBy: refId }, { merge: true });
-
         tg.showAlert("Referral applied. Referrer +500 pts");
-      } catch (e) {
-        console.error("handleReferralParam err", e);
-      }
+      } catch(e){ console.error("handleReferralParam",e); }
     }
 
-    // DAILY login
-    const BONUS = [100,200,300,400,500,700,1000];
-    async function checkDailyLogin() {
-      try {
-        const today = new Date().toDateString();
-        if (current.lastLogin !== today) {
-          const streak = (current.streak % 7) + 1;
-          const bonus = BONUS[streak-1] || 100;
-          current.points += bonus;
-          current.streak = streak;
-          current.lastLogin = today;
-          current.adsToday = 0;
-          current.adsMilestones = [];
-          await userDocRef().update({ points: current.points, streak: current.streak, lastLogin: today, adsToday:0, adsMilestones: [] });
-          tg.showAlert(`Day ${streak} Bonus: +${bonus} pts`);
-        }
-        document.getElementById('day').innerText = (current.streak % 7) + 1;
-        document.getElementById('bonus').innerText = BONUS[(current.streak % 7)] || 100;
-      } catch (e) { console.error("daily check err", e); }
-    }
-
-    // UI update
-    function updateUI() {
-      document.getElementById('points').innerText = Math.floor(current.points || 0);
-      document.getElementById('speed').innerText = current.speed || 1;
+    // UI helpers
+    function updateUI(){
+      document.getElementById('points').innerText = Math.floor(current.points||0);
+      document.getElementById('speed').innerText = current.speed||1;
       document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0;
       document.getElementById('ads-today').innerText = current.adsToday || 0;
       document.getElementById('ads-limit').innerText = 100 + ((current.refs && current.refs.length) || 0) * 2;
       if (current.wallet) document.getElementById('wallet-status').innerText = `${current.wallet.slice(0,6)}...${current.wallet.slice(-4)}`;
     }
-
-    // Tabs
-    function openTab(tab) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    function openTab(tab){
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
       document.getElementById(tab).classList.add('active');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
       document.querySelector(`[onclick="openTab('${tab}')"]`).classList.add('active');
     }
 
-    // Watch ad (same pattern as earlier)
-    document.getElementById('watch-ad').onclick = async () => {
+    // Ads / mining / join channel (same as before)
+    document.getElementById('watch-ad').onclick = async ()=>{
       const limit = 100 + ((current.refs && current.refs.length) || 0) * 2;
       if (current.adsToday >= limit) return tg.showAlert("Daily limit reached");
-      const btn = document.getElementById('watch-ad');
-      btn.disabled = true; btn.innerText = "Loading Ad...";
-      // try SDK
+      const btn = document.getElementById('watch-ad'); btn.disabled=true; btn.innerText="Loading Ad...";
       if (typeof show_10192178 === "function") {
-        try {
-          await show_10192178('pop');
-          await grantAdReward();
-        } catch { tg.showAlert("Ad not completed"); }
-      } else {
-        // fallback for testing
-        setTimeout(async ()=> { await grantAdReward(); }, 800);
-      }
-      btn.disabled = false; btn.innerText = "Watch Rewarded Ad (+50 Points)";
+        try { await show_10192178('pop'); await grantAdReward(); }
+        catch(e){ tg.showAlert("Ad not completed"); }
+      } else { setTimeout(async ()=>{ await grantAdReward(); }, 800); }
+      btn.disabled=false; btn.innerText="Watch Rewarded Ad (+50 Points)";
     };
-
-    async function grantAdReward() {
-      current.points += 50;
-      current.adsToday = (current.adsToday || 0) + 1;
+    async function grantAdReward(){
+      current.points += 50; current.adsToday = (current.adsToday||0)+1;
       const M = {10:500,20:1000,50:3000};
-      if (M[current.adsToday] && !(current.adsMilestones||[]).includes(current.adsToday)) {
-        current.points += M[current.adsToday];
-        current.adsMilestones = current.adsMilestones || [];
-        current.adsMilestones.push(current.adsToday);
-      }
+      if (M[current.adsToday] && !(current.adsMilestones||[]).includes(current.adsToday)){ current.points += M[current.adsToday]; current.adsMilestones = current.adsMilestones||[]; current.adsMilestones.push(current.adsToday); }
       await userDocRef().update({ points: current.points, adsToday: current.adsToday, adsMilestones: current.adsMilestones });
-      updateUI();
-      tg.showAlert("+50 pts awarded");
+      updateUI(); tg.showAlert("+50 pts awarded");
     }
-
-    // Join channel
-    document.getElementById('join-channel').onclick = async () => {
+    document.getElementById('join-channel').onclick = async ()=>{
       if (current.joinedChannel) return tg.showAlert("Already claimed");
       tg.openTelegramLink('https://t.me/AetherMineX');
-      setTimeout(async ()=> {
-        current.points += 500; current.joinedChannel = true;
-        await userDocRef().update({ points: current.points, joinedChannel: true });
-        updateUI();
-        tg.showAlert("500 pts claimed");
-      }, 4000);
-    };
-
-    /**************************************************************
-     * WALLETCONNECT (mobile friendly with QR fallback)
-     **************************************************************/
-    const WalletConnectGlobal = window.WalletConnect && (window.WalletConnect.default || window.WalletConnect);
-    const QRCodeModal = window.WalletConnectQRCodeModal && (window.WalletConnectQRCodeModal.default || window.WalletConnectQRCodeModal);
-
-    async function getConnector() {
-      if (wcConnector && wcConnector.connected) return wcConnector;
-      if (!WalletConnectGlobal) throw new Error("WalletConnect not loaded");
-      wcConnector = new WalletConnectGlobal({ bridge: "https://bridge.walletconnect.org" });
-      return wcConnector;
+      setTimeout(async ()=>{ current.points += 500; current.joinedChannel = true; await userDocRef().update({ points: current.points, joinedChannel:true }); updateUI(); tg.showAlert("500 pts claimed"); }, 3500);
     }
 
-    document.getElementById('connect-wallet').onclick = async () => {
-      try {
-        const connector = await getConnector();
-        if (connector.connected) {
-          const wallet = connector.accounts[0];
-          await saveWallet(wallet);
-          showWallet(wallet);
-          tg.showAlert("Wallet already connected");
-          return;
-        }
-        await connector.createSession();
-        const uri = connector.uri;
-        const deep = `https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`;
-        const popup = window.open(deep, '_blank');
-        if (!popup && QRCodeModal && typeof QRCodeModal.open === "function") {
-          QRCodeModal.open(uri, ()=>{});
-        }
-        connector.on("connect", async (err, payload) => {
-          if (err) { console.error(err); tg.showAlert("Connection failed"); return; }
-          try { QRCodeModal && QRCodeModal.close(); } catch(e){}
-          const accounts = payload.params[0].accounts;
-          const wallet = accounts[0];
-          await saveWallet(wallet); showWallet(wallet); tg.showAlert("Wallet connected");
-        });
-        connector.on("session_update", (err, payload)=>{ if (!err) { const accounts = payload.params[0].accounts; if (accounts && accounts[0]) { saveWallet(accounts[0]); showWallet(accounts[0]); } }});
-        connector.on("disconnect", (err, payload)=>{ current.wallet=""; userDocRef().update({ wallet: "" }).catch(()=>{}); document.getElementById('wallet-status').innerText = "Not Connected"; document.getElementById('eth-balance').innerText=""; document.getElementById('token-balance').innerText=""; wcConnector = null; });
-      } catch (e) {
-        console.error("connect error:", e);
-        tg.showAlert("Cannot connect wallet right now");
-      }
-    };
-
-    // Disconnect
-    document.getElementById('disconnect-wallet').onclick = async () => {
-      try {
-        if (wcConnector && wcConnector.connected) {
-          await wcConnector.killSession();
-          wcConnector = null;
-        }
-        current.wallet = ""; await userDocRef().update({ wallet: "" });
-        document.getElementById('wallet-status').innerText = "Not Connected";
-        document.getElementById('eth-balance').innerText = ""; document.getElementById('token-balance').innerText = "";
-        tg.showAlert("Disconnected");
-      } catch (e) { console.error(e); tg.showAlert("Error disconnecting"); }
-    };
-
-    async function saveWallet(addr) {
-      current.wallet = addr;
-      try { await userDocRef().update({ wallet: addr }); } catch(e){ console.error(e); }
-    }
-    function showWallet(addr) { document.getElementById('wallet-status').innerText = `${addr.slice(0,6)}...${addr.slice(-4)}`; }
-
-    // Show balances
-    document.getElementById('show-balance').onclick = async () => {
-      try {
-        const addr = current.wallet;
-        if (!addr) return tg.showAlert("Connect wallet first");
-        const provider = new ethers.providers.JsonRpcProvider(READ_RPC);
-        const native = await provider.getBalance(addr);
-        const eth = ethers.utils.formatEther(native);
-        document.getElementById('eth-balance').innerText = `Balance: ${eth} ETH`;
-        if (TOKEN_CONTRACT && TOKEN_CONTRACT.length === 42) {
-          const token = new ethers.Contract(TOKEN_CONTRACT, ERC20_ABI, provider);
-          const raw = await token.balanceOf(addr);
-          const decimals = await token.decimals().catch(()=>18);
-          const sym = await token.symbol().catch(()=> "TOKEN");
-          const formatted = ethers.utils.formatUnits(raw, decimals);
-          document.getElementById('token-balance').innerText = `${sym}: ${formatted}`;
-        } else document.getElementById('token-balance').innerText = "";
-      } catch (e) { console.error(e); tg.showAlert("Error reading balance"); }
-    };
-
-    // Simple mining loop
-    let mining = false;
-    document.getElementById('start-mining').onclick = () => {
-      if (mining) return;
-      mining = true;
-      setInterval(async () => {
-        current.points = (current.points || 0) + (current.speed || 1);
+    // Mining
+    let mining=false;
+    document.getElementById('start-mining').onclick = ()=>{
+      if (mining) return; mining=true;
+      setInterval(async ()=>{
+        current.points = (current.points||0) + (current.speed||1);
         await userDocRef().update({ points: current.points }).catch(()=>{});
         document.getElementById('points').innerText = Math.floor(current.points);
       }, 1000);
     };
 
-    // init called from auth sign-in flow
-    // (already called in signInAnonymously.then)
+    /***************** WALLETCONNECT IMPROVEMENT: try app deep-links first *****************/
+    const WalletConnectGlobal = window.WalletConnect && (window.WalletConnect.default || window.WalletConnect);
+    const QRCodeModal = window.WalletConnectQRCodeModal && (window.WalletConnectQRCodeModal.default || window.WalletConnectQRCodeModal);
+
+    // list of popular wallet deep link schemes (works for many mobile wallets)
+    const DEEP_LINKS = [
+      { name: "MetaMask", scheme: "metamask://wc?uri=" },
+      { name: "Trust", scheme: "trust://wc?uri=" },
+      { name: "Coinbase", scheme: "coinbase://wc?uri=" },
+      { name: "OKX", scheme: "okxwallet://wc?uri=" },
+      { name: "ImToken", scheme: "imtokenv2://wc?uri=" },
+      { name: "Rainbow", scheme: "rainbow://wc?uri=" }
+    ];
+
+    async function getConnector(){ if (wcConnector && wcConnector.connected) return wcConnector; if (!WalletConnectGlobal) throw new Error("WalletConnect not loaded"); wcConnector = new WalletConnectGlobal({ bridge: "https://bridge.walletconnect.org" }); return wcConnector; }
+
+    // utility: try to open deep link, fallback to walletconnect.com redirect or QR
+    function openDeepOrFallback(uri){
+      // try deep links quickly
+      let opened = false;
+      for (const d of DEEP_LINKS) {
+        try {
+          const link = d.scheme + encodeURIComponent(uri);
+          // try to open scheme via top.location first (some in-app browsers allow)
+          window.location.href = link;
+          opened = true;
+          // we break so we don't attempt all; if blocked, next fallback runs
+          break;
+        } catch(e){}
+      }
+      // If none worked or blocked, open walletconnect.com redirect in new tab
+      try {
+        const redirect = `https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`;
+        const w = window.open(redirect, "_blank");
+        if (!w && QRCodeModal && typeof QRCodeModal.open === "function") { QRCodeModal.open(uri, ()=>{}); }
+      } catch(e){ if (QRCodeModal && typeof QRCodeModal.open === "function") QRCodeModal.open(uri, ()=>{}); else tg.showAlert("Open your wallet app and paste the connection URI (manual)"); }
+    }
+
+    document.getElementById('connect-wallet').onclick = async ()=>{
+      try {
+        const connector = await getConnector();
+        if (connector.connected) { const wallet = connector.accounts[0]; await saveWallet(wallet); showWallet(wallet); tg.showAlert("Wallet already connected"); return; }
+        await connector.createSession();
+        const uri = connector.uri;
+        // try deep-open specific wallet apps first (MetaMask, Trust, etc). If blocked, walletconnect.com redirect appears
+        openDeepOrFallback(uri);
+
+        // listen for connect
+        connector.on("connect", async (err, payload)=> {
+          if (err) { console.error(err); tg.showAlert("Connection failed"); return; }
+          try { QRCodeModal && QRCodeModal.close(); } catch(e){}
+          const accounts = payload.params[0].accounts; const wallet = accounts[0];
+          await saveWallet(wallet); showWallet(wallet); tg.showAlert("Wallet connected");
+        });
+
+        connector.on("session_update", (err, payload)=>{ if (!err) { const accounts = payload.params[0].accounts; if (accounts && accounts[0]) { saveWallet(accounts[0]); showWallet(accounts[0]); } }});
+        connector.on("disconnect", (err, payload)=>{ current.wallet=""; userDocRef().update({ wallet:"" }).catch(()=>{}); document.getElementById('wallet-status').innerText="Not Connected"; document.getElementById('eth-balance').innerText=""; document.getElementById('token-balance').innerText=""; wcConnector=null; });
+
+      } catch(e){ console.error("connect error",e); tg.showAlert("Cannot connect wallet right now"); }
+    };
+
+    document.getElementById('disconnect-wallet').onclick = async ()=>{
+      try {
+        if (wcConnector && wcConnector.connected) { await wcConnector.killSession(); wcConnector=null; }
+        current.wallet=""; await userDocRef().update({ wallet:"" });
+        document.getElementById('wallet-status').innerText="Not Connected"; document.getElementById('eth-balance').innerText=""; document.getElementById('token-balance').innerText="";
+        tg.showAlert("Disconnected");
+      } catch(e){ console.error(e); tg.showAlert("Error disconnecting"); }
+    };
+         async function saveWallet(addr){ current.wallet = addr; try { await userDocRef().update({ wallet: addr }); } catch(e){ console.error(e); } }
+    function showWallet(addr){ document.getElementById('wallet-status').innerText = `${addr.slice(0,6)}...${addr.slice(-4)}`; }
+
+    document.getElementById('show-balance').onclick = async ()=>{
+      try {
+        const addr = current.wallet; if (!addr) return tg.showAlert("Connect wallet first");
+        const provider = new ethers.providers.JsonRpcProvider(READ_RPC);
+        const native = await provider.getBalance(addr); const eth = ethers.utils.formatEther(native);
+        document.getElementById('eth-balance').innerText = `Balance: ${eth} ${READ_RPC.includes("polygon") ? "MATIC" : "ETH"}`;
+        if (TOKEN_CONTRACT && TOKEN_CONTRACT.length === 42) {
+          const token = new ethers.Contract(TOKEN_CONTRACT, ERC20_ABI, provider);
+          const raw = await token.balanceOf(addr); const decimals = await token.decimals().catch(()=>18); const sym = await token.symbol().catch(()=>"TOKEN"); const formatted = ethers.utils.formatUnits(raw, decimals);
+          document.getElementById('token-balance').innerText = `${sym}: ${formatted}`;
+        } else document.getElementById('token-balance').innerText = "";
+      } catch(e){ console.error(e); tg.showAlert("Error reading balance"); }
+    };
   </script>
 </body>
 </html>
