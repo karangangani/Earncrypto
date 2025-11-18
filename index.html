@@ -1,60 +1,63 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AETHER — TON Wallet + Referral (Mini App)</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AETHER — Mini App (TON + Firebase)</title>
 
-  <!-- Telegram WebApp -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Telegram WebApp -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Firebase compat -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<!-- Firebase compat (we use compat for simplicity) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-  <!-- Optional ad SDK (replace zone) -->
-  <!-- <script src="//libtl.com/sdk.js" data-zone="YOUR_ZONE" data-sdk="show_YOUR_ZONE"></script> -->
+<!-- TonConnect (UMD) -->
+<script src="https://unpkg.com/@tonconnect/sdk/dist/tonconnect.umd.min.js"></script>
 
-  <style>
-    :root{
-      --bg:#070b10; --panel:#0e1720; --muted:#9fb6c1; --accent:#4af3d3; --accent2:#7c6cff;
-      --radius:14px;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:linear-gradient(180deg,#031017,#07121a);color:#e6f9f4;font-family:Inter,system-ui,Arial;padding:14px;min-height:100vh}
-    .wrap{max-width:640px;margin:8px auto}
-    .header{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.02)}
-    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#012;overflow:hidden}
-    .logo img{width:100%;height:100%;object-fit:cover}
-    .title h1{margin:0;font-size:18px}
-    .title p{margin-top:4px;color:var(--muted);font-size:13px}
-    .card{background:var(--panel);border-radius:14px;padding:14px;margin-top:12px;border:1px solid rgba(255,255,255,0.02)}
-    .stats{display:flex;gap:10px;justify-content:space-between}
-    .stat{flex:1;padding:10px;background:rgba(255,255,255,0.02);border-radius:10px;text-align:center}
-    .v{font-weight:800;color:var(--accent);font-size:20px}
-    .l{font-size:12px;color:var(--muted);margin-top:6px}
-    .tabs{display:flex;gap:8px;margin-top:12px}
-    .tab{flex:1;padding:8px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);border:1px solid rgba(255,255,255,0.01)}
-    .tab.active{background:linear-gradient(90deg, rgba(74,243,211,0.08), rgba(124,108,255,0.04));color:var(--accent)}
-    .section{display:none;padding-top:12px}
-    .section.active{display:block}
-    .btn{display:block;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021;padding:12px;border-radius:10px;border:none;font-weight:800;cursor:pointer;width:100%}
-    .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.02)}
-    .hint{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
-    .ref-box{background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;display:flex;gap:8px;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,0.02)}
-    .ref-link{color:var(--accent);font-weight:800;word-break:break-all}
-    .copy{background:#07121a;color:var(--accent);border-radius:8px;padding:8px 10px;border:none;cursor:pointer}
-    .levels{margin-top:10px;max-height:360px;overflow:auto}
-    .level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border:1px solid rgba(255,255,255,0.02)}
-    .input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:#e6f9f4;margin-top:8px}
-    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
-  </style>
+<style>
+  :root{
+    --bg:#05060a; --panel:#0d1116; --muted:#9fb6c1; --accent:#00ff88; --accent2:#7c6cff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 800px at 10% 10%, #07121a, #03040a);color:#e6f9f4;font-family:Inter,system-ui,Arial;padding:14px;min-height:100vh}
+  .wrap{max-width:720px;margin:10px auto}
+  .header{display:flex;gap:14px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.02)}
+  .coin-3d{width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,#fff 0%, #e3ffd8 30%, #b8ffdf 100%);display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 10px 40px rgba(0,255,136,0.08)}
+  .coin-3d img{width:70%;height:70%}
+  /* rotation */
+  .spin{animation:spin 6s linear infinite; transform-origin:center;}
+  @keyframes spin{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
+  .title h1{font-size:20px;margin:0}
+  .title p{color:var(--muted);font-size:13px;margin-top:4px}
+  .card{background:var(--panel);padding:12px;border-radius:12px;margin-top:12px;border:1px solid rgba(255,255,255,0.02)}
+  .stats{display:flex;gap:10px}
+  .stat{flex:1;padding:10px;background:rgba(255,255,255,0.01);border-radius:8px;text-align:center}
+  .v{font-weight:900;color:var(--accent);font-size:18px}
+  .l{color:var(--muted);font-size:12px;margin-top:6px}
+  .tabs{display:flex;gap:8px;margin-top:12px}
+  .tab{flex:1;padding:8px;border-radius:8px;text-align:center;cursor:pointer;color:var(--muted);border:1px solid rgba(255,255,255,0.01)}
+  .tab.active{background:linear-gradient(90deg, rgba(0,255,136,0.06), rgba(124,108,255,0.03));color:var(--accent)}
+  .btn{display:block;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021;padding:10px;border-radius:10px;border:none;font-weight:800;cursor:pointer;width:100%}
+  .btn.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.02)}
+  .hint{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+  .ref-box{background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .ref-link{color:var(--accent);font-weight:800;word-break:break-all}
+  .copy{background:#07121a;color:var(--accent);border-radius:8px;padding:8px 10px;border:none;cursor:pointer}
+  .levels{margin-top:10px;max-height:420px;overflow:auto;padding-right:8px}
+  .level{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:8px;border:1px solid rgba(255,255,255,0.02)}
+  .input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:#e6f9f4;margin-top:8px}
+  footer{margin-top:12px;text-align:center;color:var(--muted);font-size:12px}
+</style>
 </head>
 <body>
   <div class="wrap">
     <div class="header">
-      <div class="logo" id="logoBox"><img id="logoImg" src="" alt="Aether" style="display:none"></div>
+      <div class="coin-3d spin" id="coin3d">
+        <!-- replace src with your Aether logo, small white icon on transparent bg works best -->
+        <img id="logoImg" src="" alt="Aether Logo" />
+      </div>
       <div class="title">
         <h1>AETHER</h1>
         <p id="username">Loading...</p>
@@ -65,60 +68,49 @@
       <div class="stats">
         <div class="stat"><div class="v" id="points">0</div><div class="l">Points</div></div>
         <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
-        <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
+        <div class="stat"><div class="v" id="lvl">1</div><div class="l">Level</div></div>
       </div>
 
-      <div class="tabs">
+      <div class="tabs" style="margin-top:12px">
         <div class="tab active" onclick="openTab('home')">Home</div>
         <div class="tab" onclick="openTab('tasks')">Tasks</div>
-        <div class="tab" onclick="openTab('referral')">Referral</div>
+        <div class="tab" onclick="openTab('ref')">Referral</div>
         <div class="tab" onclick="openTab('wallet')">Wallet</div>
       </div>
 
-      <!-- HOME -->
       <div id="home" class="section active">
         <div style="margin-top:12px">
-          <button id="start" class="btn">Start Earning</button>
-          <p class="hint">Daily streak + referral + ads → claim levels & airdrop later.</p>
+          <button id="startEarn" class="btn">Start Earning</button>
+          <p class="hint">Watch ads and invite friends. Save wallet to claim on TON later.</p>
         </div>
       </div>
 
-      <!-- TASKS -->
-      <div id="tasks" class="section">
-        <div style="margin-top:8px">
-          <button id="watchAd" class="btn">Watch Ad (+50)</button>
+      <div id="tasks" class="section" style="display:none">
+        <div style="margin-top:10px">
+          <button id="watchAd" class="btn">Watch Rewarded Ad (+50)</button>
           <p class="hint">Ads today: <span id="adsToday">0</span> / <span id="adsLimit">100</span></p>
           <div class="levels" id="levelsList"></div>
         </div>
       </div>
 
-      <!-- REFERRAL -->
-      <div id="referral" class="section">
+      <div id="ref" class="section" style="display:none">
         <div style="margin-top:12px">
-          <p style="margin-bottom:6px">Invite friends — each referral = <strong>+500 pts</strong></p>
+          <p style="margin-bottom:8px">Invite friends — each valid referral = <strong>+500 pts</strong></p>
           <div class="ref-box">
             <div class="ref-link" id="refLink">Generating...</div>
-            <div><button class="copy" id="copyRef">COPY</button></div>
+            <div><button class="copy" id="copyBtn">COPY</button></div>
           </div>
-          <p class="hint">Share the link. Only first-time joins count.</p>
+          <p class="hint">Open the link in Telegram for it to register as a referral.</p>
         </div>
       </div>
 
-      <!-- WALLET -->
-      <div id="wallet" class="section">
+      <div id="wallet" class="section" style="display:none">
         <div style="margin-top:12px">
           <div style="display:flex;gap:8px">
-            <button id="connectTon" class="btn">Connect Telegram Wallet (Recommended)</button>
-            <button id="paste" class="btn ghost">Paste Wallet</button>
+            <button id="connectWalletBtn" class="btn">Connect TON Wallet</button>
+            <button id="pasteBtn" class="btn ghost">Paste Wallet</button>
           </div>
-
-          <div class="hint" id="walletStatus" style="margin-top:8px">Not Connected</div>
-
-          <div style="margin-top:10px">
-            <label style="font-size:13px;color:var(--muted)">Optional: Save Polygon address for future Polygon airdrop</label>
-            <input id="polygonAddr" class="input" placeholder="0x... (Polygon address)" />
-            <button id="savePolygon" class="btn ghost" style="margin-top:8px">Save Polygon Address</button>
-          </div>
+          <div class="hint" id="walletStatus" style="margin-top:10px">Not connected</div>
         </div>
       </div>
 
@@ -128,9 +120,9 @@
   </div>
 
 <script>
-/* ====== CONFIG - update these ====== */
-const LOGO_URL = ""; // put your Aether logo direct url (png/svg)
-const BOT_USERNAME = "AetherMineXBot"; // update if different
+/* ================= CONFIG ================= */
+const LOGO_URL = ""; // <-- paste your Aether small logo (png/svg)
+const MANIFEST_URL = ""; // optional TonConnect manifest hosted publicly (recommended). if empty, TonConnect still works.
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -139,288 +131,295 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-const REF_REWARD = 500;
+const BOT_USERNAME = "AetherMineXBot"; // keep as is
+const REF_BONUS = 500;
 const AD_REWARD = 50;
-const LEVEL_COUNT = 100;
-/* =================================== */
+const LEVELS_COUNT = 20; // set 100 if you want, 20 for faster initial test
+/* ========================================= */
 
-if (LOGO_URL) {
-  const img = document.getElementById('logoImg'); img.src = LOGO_URL; img.style.display = 'block';
-}
+if (LOGO_URL) document.getElementById('logoImg').src = LOGO_URL;
 
+/* Telegram WebApp */
 const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) tg.ready();
-const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : {};
-document.getElementById('username').innerText = tgUser.username ? "@" + tgUser.username : (tgUser.first_name || "Guest");
 
 /* Firebase init */
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+let current = { points:0, refs:[], adsToday:0, claimed:[], wallet:null, level:1, lastLogin:null, streak:0 };
 let firebaseUid = null;
-let current = { points:0, refs:[], adsToday:0, adsMilestones:[], wallet:"", polygonAddress:"", level:1, claimedLevels:[], lastLogin:null, streak:0, referredBy:null };
+
+/* TonConnect setup */
+const TonConnect = window.TonConnect; // from UMD bundle
+let tonConnect = null;
+try {
+  tonConnect = new TonConnect.TonConnect({ manifestUrl: MANIFEST_URL || undefined });
+} catch(e){ console.warn("TonConnect lib unavailable", e); }
 
 /* start param detection */
 const startParam = (tg && (tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp)) || (new URLSearchParams(window.location.search).get('start') || new URLSearchParams(window.location.search).get('startapp')) || '';
 
-/* sign-in anonymous */
-auth.signInAnonymously().then(()=>{ firebaseUid = auth.currentUser.uid; initApp(); }).catch(e=>{ console.warn("anon auth failed",e); firebaseUid = "anon_"+Date.now(); initApp(); });
+/* auth */
+auth.signInAnonymously().then(()=>{ firebaseUid = auth.currentUser.uid; init(); }).catch(e=>{ console.error("auth fail", e); firebaseUid = "anon_"+Date.now(); init(); });
 
-function userRef(){ return db.collection('users').doc(firebaseUid); }
+function userDoc(){ return db.collection('users').doc(firebaseUid); }
 
-async function initApp(){
-  try {
-    const doc = await userRef().get();
-    if (!doc.exists) {
-      // use telegram id as refCode if available
-      const refCode = tgUser.id ? tgUser.id.toString() : ('AE' + Math.random().toString(36).substr(2,6).toUpperCase());
-      await userRef().set({
-        firebaseUid,
-        telegramId: tgUser.id ? tgUser.id.toString() : null,
-        username: tgUser.username || tgUser.first_name || null,
-        refCode,
-        points:0, refs:[], adsToday:0, adsMilestones:[], wallet:"", polygonAddress:"", level:1, claimedLevels:[], lastLogin:null, streak:0, referredBy:null, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge:true });
-      current = { points:0, refs:[], adsToday:0, adsMilestones:[], wallet:"", polygonAddress:"", level:1, claimedLevels:[], lastLogin:null, streak:0 };
-    } else {
-      current = doc.data();
-    }
+async function init(){
+  // fetch/create user doc
+  const doc = await userDoc().get();
+  if (!doc.exists) {
+    const refCode = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) ? tg.initDataUnsafe.user.id.toString() : firebaseUid;
+    await userDoc().set({
+      firebaseUid,
+      telegramId: (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? (tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : null) : null,
+      username: (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name) : null,
+      refCode,
+      points:0, refs:[], adsToday:0, claimed:[], wallet:null, level:1, lastLogin:null, streak:0, referredBy:null, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+    current = { points:0, refs:[], adsToday:0, claimed:[], wallet:null, level:1, lastLogin:null, streak:0 };
+  } else {
+    current = doc.data();
+  }
 
-    // build referral link (prefer telegram id so it matches BUGminer style)
-    const refIdForLink = (tgUser.id ? tgUser.id.toString() : firebaseUid);
-    const myLink = `https://t.me/${BOT_USERNAME}?startapp=ref_${refIdForLink}`;
-    document.getElementById('refLink').innerText = myLink;
-    document.getElementById('copyRef').onclick = ()=>{ navigator.clipboard.writeText(myLink); if (tg) tg.showAlert("Link copied"); else alert("Copied"); };
+  // build referral link (prefer telegram id)
+  const refId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) ? tg.initDataUnsafe.user.id.toString() : firebaseUid;
+  const myLink = `https://t.me/${BOT_USERNAME}?startapp=ref_${refId}`;
+  document.getElementById('refLink').innerText = myLink;
+  document.getElementById('copyBtn').onclick = ()=>{ navigator.clipboard.writeText(myLink); if (tg) tg.showAlert("Link copied"); else alert("Copied"); };
 
-    await handleReferralParam();
+  // handle incoming referral param
+  await handleReferral();
+
+  // realtime listener
+  db.collection('users').doc(firebaseUid).onSnapshot(snap=>{
+    if (!snap.exists) return;
+    current = snap.data();
+    refreshUI();
     renderLevels();
-    updateUI();
+  });
 
-    // realtime update
-    db.collection('users').doc(firebaseUid).onSnapshot(snap=>{
-      if (!snap.exists) return;
-      current = snap.data();
-      updateUI(); renderLevels();
-    });
-
-    // check daily bonus
-    checkDaily();
-
-  } catch(e){ console.error("initApp error", e); if (tg) tg.showAlert("Init error"); }
+  refreshUI();
+  renderLevels();
+  checkDaily();
 }
 
-/* referral handling (allow telegram id or firestore doc id) */
-async function handleReferralParam(){
+/* referral handler */
+async function handleReferral(){
   try {
     if (!startParam || !startParam.startsWith('ref_')) return;
-    const refId = startParam.split('_')[1]; if (!refId) return;
-    const meDoc = await userRef().get(); const meData = meDoc.exists ? meDoc.data() : {};
+    const refId = startParam.split('_')[1];
+    if (!refId) return;
+    const meSnap = await userDoc().get();
+    const meData = meSnap.exists ? meSnap.data() : {};
     if (meData.referredBy) return; // already referred
-    if (refId === firebaseUid) return; // self
+
+    // prevent self referral
+    if (refId === firebaseUid) return;
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id && refId === tg.initDataUnsafe.user.id.toString()) return;
 
     // try direct doc lookup
     let refDoc = await db.collection('users').doc(refId).get();
     if (!refDoc.exists) {
-      const snap = await db.collection('users').where('telegramId','==',refId).limit(1).get();
-      if (!snap.empty) refDoc = snap.docs[0];
-      else { console.log("ref not found"); return; }
+      const q = await db.collection('users').where('telegramId','==', refId).limit(1).get();
+      if (!q.empty) refDoc = q.docs[0];
+      else { console.log("referrer not found", refId); return; }
     }
+
     const refDocId = refDoc.id;
+    // credit referrer
     await db.collection('users').doc(refDocId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(firebaseUid),
-      points: firebase.firestore.FieldValue.increment(REF_REWARD)
+      points: firebase.firestore.FieldValue.increment(REF_BONUS)
     });
-    await userRef().set({ referredBy: refDocId }, { merge:true });
+    // mark current user as referred
+    await userDoc().set({ referredBy: refDocId }, { merge:true });
     if (tg) tg.showAlert("Referral applied. Referrer +500 pts");
-  } catch(e){ console.error("ref err", e); }
+    else alert("Referral applied");
+  } catch(e){ console.error("handleReferral err", e); }
+}
+  /* UI helpers */
+function refreshUI(){
+  document.getElementById('points').innerText = Math.floor(current.points || 0);
+  document.getElementById('refs').innerText = (current.refs || []).length;
+  document.getElementById('lvl').innerText = current.level || 1;
+  document.getElementById('adsToday').innerText = current.adsToday || 0;
+  document.getElementById('adsLimit').innerText = 100 + ((current.refs && current.refs.length) || 0) * 2;
+  document.getElementById('username').innerText = current.username ? current.username : ((tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) || "Guest");
+  document.getElementById('walletStatus').innerText = current.wallet ? `${current.wallet.slice(0,6)}...${current.wallet.slice(-4)}` : "Not connected";
 }
 
-/* daily */
-const DAILY = [100,150,200,300,500,700,1000];
+/* tabs */
+function openTab(id){
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`[onclick="openTab('${id}')"]`).classList.add('active');
+}
+
+/* levels (simple formula) */
+function levelReq(n){ return { refs: Math.ceil(n/2), ads: n*5, reward: n*1000 }; }
+function renderLevels(){
+  const c = document.getElementById('levelsList'); c.innerHTML = '';
+  for (let i=1;i<=LEVELS_COUNT;i++){
+    const r = levelReq(i);
+    const refs = (current.refs && current.refs.length) || 0;
+    const ads = current.adsToday || 0;
+    const claimed = current.claimed || [];
+    const eligible = refs >= r.refs && ads >= r.ads && !claimed.includes(i);
+    const div = document.createElement('div'); div.className='level';
+    div.innerHTML = `<div><strong>Level ${i}</strong><div style="font-size:12px;color:${'#9fb6c1'}">Req: ${r.refs} refs & ${r.ads} ads • Reward ${r.reward} pts</div></div>`;
+    if (eligible) {
+      const b = document.createElement('button'); b.className='btn'; b.textContent='Claim'; b.onclick = ()=>claimLevel(i);
+      div.appendChild(b);
+    } else {
+      const p = document.createElement('div'); p.style.color='#9fb6c1'; p.style.fontSize='13px';
+      p.textContent = `Progress: ${Math.min(refs,r.refs)}/${r.refs} refs • ${Math.min(ads,r.ads)}/${r.ads} ads`;
+      div.appendChild(p);
+    }
+    c.appendChild(div);
+  }
+}
+
+/* claimLevel */
+async function claimLevel(i){
+  const r = levelReq(i);
+  const refs = (current.refs && current.refs.length) || 0;
+  const ads = current.adsToday || 0;
+  const claimed = current.claimed || [];
+  if (refs < r.refs || ads < r.ads) return (tg ? tg.showAlert("Not eligible") : alert("Not eligible"));
+  if (claimed.includes(i)) return (tg ? tg.showAlert("Already claimed") : alert("Already claimed"));
+  current.points = (current.points || 0) + r.reward;
+  claimed.push(i);
+  current.claimed = claimed;
+  if (i > (current.level || 1)) current.level = i;
+  await userDoc().update({ points: current.points, claimed: current.claimed, level: current.level });
+  if (tg) tg.showAlert(`Level ${i} claimed: +${r.reward} pts`);
+}
+
+/* ads (simulated) */
+let adLock=false;
+document.getElementById('watchAd').onclick = async ()=>{
+  if (adLock) return;
+  const limit = 100 + ((current.refs && current.refs.length) || 0) * 2;
+  if ((current.adsToday || 0) >= limit) return (tg ? tg.showAlert("Daily ad limit") : alert("Daily ad limit"));
+  adLock=true; const btn = document.getElementById('watchAd'); btn.disabled=true; btn.innerText='Loading...';
+  try {
+    // integrate your ad SDK here (show_XXXXX)
+    // fallback: simulate
+    await new Promise(r=>setTimeout(r,900));
+    current.points = (current.points||0) + AD_REWARD;
+    current.adsToday = (current.adsToday||0) + 1;
+    // milestone bonus example
+    const milestones = {10:500,20:1000,50:3000};
+    if (milestones[current.adsToday] && !(current.adsMilestones||[]).includes(current.adsToday)){
+      current.points += milestones[current.adsToday];
+      current.adsMilestones = current.adsMilestones || []; current.adsMilestones.push(current.adsToday);
+    }
+    await userDoc().update({ points: current.points, adsToday: current.adsToday, adsMilestones: current.adsMilestones });
+    if (tg) tg.showAlert(`+${AD_REWARD} pts`);
+  } catch(e){ console.error("ad err", e); if (tg) tg.showAlert("Ad failed"); }
+  finally { btn.disabled=false; btn.innerText='Watch Rewarded Ad (+50)'; adLock=false; }
+};
+
+/* start earning */
+let earning=false;
+document.getElementById('startEarn').onclick = ()=>{
+  if (earning) return;
+  earning=true;
+  setInterval(async ()=>{
+    current.points = (current.points||0) + 1; // +1 per sec
+    await userDoc().update({ points: current.points }).catch(()=>{});
+  },1000);
+  if (tg) tg.showAlert("Earning started");
+};
+
+/* WALLET flow: 1) tg.requestWallet() 2) TonConnect 3) manual paste */
+async function tryTelegramWallet(){
+  try {
+    if (!tg) throw new Error("No Telegram WebApp");
+    if (typeof tg.requestWallet === 'function') {
+      try {
+        await tg.requestWallet(); // prompts in Telegram
+        // some clients populate initDataUnsafe with wallet
+        const maybe = (tg.initDataUnsafe && (tg.initDataUnsafe.wallet || (tg.initDataUnsafe.user && tg.initDataUnsafe.user.wallet))) || null;
+        if (maybe) return maybe;
+        await new Promise(r=>setTimeout(r,700));
+        const after = (tg.initDataUnsafe && (tg.initDataUnsafe.wallet || (tg.initDataUnsafe.user && tg.initDataUnsafe.user.wallet))) || null;
+        if (after) return after;
+      } catch(e){ console.warn("tg.requestWallet error", e); }
+    }
+  } catch(e){ console.warn("telegram wallet err", e); }
+  return null;
+}
+
+async function tryTonConnect(){
+  try {
+    if (!tonConnect) throw new Error("TonConnect not loaded");
+    const connector = tonConnect;
+    // connect() will open wallet modal / deep link
+    await connector.connect();
+    // TonConnect stores account in connector.account or getProvider
+    // API: connector.accounts is array of connected accounts
+    const accounts = connector?.accounts || [];
+    if (accounts.length) return accounts[0].address || accounts[0];
+    // fallback: try get account method
+    try { const acc = await connector.getAccount(); if (acc && acc.address) return acc.address; } catch(e){}
+  } catch(e){ console.warn("TonConnect err", e); }
+  return null;
+}
+
+document.getElementById('connectWalletBtn').onclick = async ()=>{
+  // 1. try telegram in-app wallet
+  const tw = await tryTelegramWallet();
+  if (tw) { await saveWallet(tw); if (tg) tg.showAlert("Telegram wallet connected"); return; }
+
+  // 2. try TonConnect
+  const tc = await tryTonConnect();
+  if (tc) { await saveWallet(tc); if (tg) tg.showAlert("Wallet connected (TonConnect)"); return; }
+
+  // 3. manual paste fallback
+  const p = prompt("Paste your wallet address (TON address) here:");
+  if (p) { await saveWallet(p.trim()); if (tg) tg.showAlert("Wallet saved (manual)"); }
+};
+
+/* paste button */
+document.getElementById('pasteBtn').onclick = async ()=>{
+  const p = prompt("Paste your wallet address (TON) here:");
+  if (!p) return;
+  await saveWallet(p.trim());
+  if (tg) tg.showAlert("Wallet saved");
+};
+
+/* save wallet to firestore */
+async function saveWallet(addr){
+  if (!addr) return;
+  current.wallet = addr;
+  try { await userDoc().update({ wallet: addr }); } catch(e){ console.error("save wallet err", e); }
+}
+
+/* daily check */
 async function checkDaily(){
   try {
     const today = new Date().toDateString();
     if (current.lastLogin !== today) {
       const streak = (current.streak || 0) % 7;
-      const bonus = DAILY[streak] || DAILY[0];
-      current.points = (current.points || 0) + bonus;
-      current.streak = (current.streak || 0) + 1;
+      const bonuses = [100,150,200,300,500,700,1000];
+      const add = bonuses[streak] || 100;
+      current.points = (current.points||0) + add;
+      current.streak = (current.streak||0) + 1;
       current.lastLogin = today;
-      await userRef().update({ points: current.points, streak: current.streak, lastLogin: today, adsToday: 0, adsMilestones: [] });
-      if (tg) tg.showAlert(`Daily Bonus: +${bonus} pts`);
+      await userDoc().update({ points: current.points, streak: current.streak, lastLogin: today, adsToday: 0, adsMilestones: [] });
+      if (tg) tg.showAlert(`Daily +${add} pts`);
     }
   } catch(e){ console.error("daily err", e); }
 }
 
-/* UI helpers */
-function updateUI(){
-  document.getElementById('points').innerText = Math.floor(current.points || 0);
-  document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0;
-  document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('adsToday').innerText = current.adsToday || 0;
-  document.getElementById('adsLimit').innerText = 100 + ((current.refs && current.refs.length) || 0) * 2;
-  document.getElementById('walletStatus').innerText = current.wallet ? `${current.wallet.slice(0,6)}...${current.wallet.slice(-4)}` : "Not Connected";
-  if (current.polygonAddress) document.getElementById('polygonAddr').value = current.polygonAddress;
-}
+/* realtime doc listener set earlier in init() */
 
-/* tabs */
-function openTab(t){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(t).classList.add('active'); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active'); }
-
-/* levels implementation */
-function levelReq(n){ return { refs: Math.max(1, Math.ceil(n/2)), ads: n*5, reward: n*1000 }; }
-function renderLevels(){
-  const wrap = document.getElementById('levelsList'); wrap.innerHTML = '';
-  for (let i=1;i<=LEVEL_COUNT;i++){
-    const req = levelReq(i);
-    const hasRefs = (current.refs && current.refs.length) || 0;
-    const adsDone = current.adsToday || 0;
-    const claimed = current.claimedLevels || [];
-    const eligible = hasRefs >= req.refs && adsDone >= req.ads && !(claimed.includes(i));
-    const div = document.createElement('div'); div.className = 'level';
-    div.innerHTML = `<div><strong>Level ${i}</strong><div style="font-size:12px;color:${'#9fb6c1'}">Req: ${req.refs} refs & ${req.ads} ads • Reward ${req.reward} pts</div></div>`;
-    if (eligible) {
-      const b = document.createElement('button'); b.className='btn'; b.textContent = 'Claim'; b.onclick = ()=>claimLevel(i);
-      div.appendChild(b);
-    } else {
-      const span = document.createElement('div'); span.style.color='#9fb6c1'; span.style.fontSize='13px';
-      span.textContent = `Progress: ${Math.min(hasRefs,req.refs)}/${req.refs} refs • ${Math.min(adsDone,req.ads)}/${req.ads} ads`;
-      div.appendChild(span);
-    }
-    wrap.appendChild(div);
-  }
-}
-
-/* claim level */
-async function claimLevel(i){
-  const req = levelReq(i);
-  const hasRefs = (current.refs && current.refs.length) || 0;
-  const adsDone = current.adsToday || 0;
-  const claimed = current.claimedLevels || [];
-  if (hasRefs < req.refs || adsDone < req.ads) return (tg ? tg.showAlert("Not eligible") : alert("Not eligible"));
-  if (claimed.includes(i)) return (tg ? tg.showAlert("Already claimed") : alert("Already claimed"));
-  current.points = (current.points || 0) + req.reward;
-  claimed.push(i); current.claimedLevels = claimed;
-  if (i > (current.level || 1)) current.level = i;
-  await userRef().update({ points: current.points, claimedLevels: current.claimedLevels, level: current.level });
-  if (tg) tg.showAlert(`Level ${i} claimed: +${req.reward} pts`); else alert(`+${req.reward} pts`);
-}
-
-/* Ads flow (simple) */
-let adLock=false;
-document.getElementById('watchAd').onclick = async ()=>{
-  if (adLock) return;
-  const limit = 100 + ((current.refs && current.refs.length) || 0) * 2;
-  if ((current.adsToday || 0) >= limit) return (tg ? tg.showAlert("Daily limit reached") : alert("Limit reached"));
-  adLock=true; const btn = document.getElementById('watchAd'); btn.disabled=true; btn.innerText = "Loading...";
-  try {
-    // if you have ad SDK, call it here (e.g. show_XXXXX). For testing, fallback to timeout:
-    if (typeof show_10192178 === 'function') {
-      await show_10192178('pop');
-    } else {
-      await new Promise(r=>setTimeout(r,900));
-    }
-    current.points = (current.points || 0) + AD_REWARD;
-    current.adsToday = (current.adsToday || 0) + 1;
-    // milestone logic example
-    const milestones = {10:500,20:1000,50:3000};
-    if (milestones[current.adsToday] && !(current.adsMilestones||[]).includes(current.adsToday)) {
-      current.points += milestones[current.adsToday];
-      current.adsMilestones = current.adsMilestones || []; current.adsMilestones.push(current.adsToday);
-    }
-    await userRef().update({ points: current.points, adsToday: current.adsToday, adsMilestones: current.adsMilestones });
-    if (tg) tg.showAlert(`+${AD_REWARD} pts awarded`);
-    renderLevels();
-  } catch(e){ console.error("ad error", e); if (tg) tg.showAlert("Ad failed/closed"); }
-  finally { btn.disabled=false; btn.innerText="Watch Ad (+50)"; adLock=false; updateUI(); }
-};
-  
-/* ----------------- WALLET (TON preferred) ------------------ */
-
-/*
-  Strategy:
-  1) Try Telegram wallet request (tg.requestWallet()) — recommended and in-app
-  2) If not available or fail → show "Paste Wallet" prompt (manual)
-  3) Save whatever wallet address we get to Firestore at `wallet` field
-*/
-
-async function tryTelegramWallet(){
-  try {
-    if (!tg) throw new Error("No Telegram WebApp");
-    // Not all clients implement requestWallet. Try it if exists.
-    if (typeof tg.requestWallet === 'function') {
-      try {
-        await tg.requestWallet(); // prompt in Telegram to connect wallet
-        // After approval, wallet info may be present in initDataUnsafe or tg.getUser (client dependent).
-        // Try to read likely locations:
-        const possible = (tg.initDataUnsafe && (tg.initDataUnsafe.wallet || (tg.initDataUnsafe.user && tg.initDataUnsafe.user.wallet))) || null;
-        if (possible) return possible;
-        // small wait and re-check (some clients update)
-        await new Promise(r=>setTimeout(r,800));
-        const after = (tg.initDataUnsafe && (tg.initDataUnsafe.wallet || (tg.initDataUnsafe.user && tg.initDataUnsafe.user.wallet))) || null;
-        if (after) return after;
-      } catch(e){ console.warn("requestWallet rejected/failed", e); }
-    }
-  } catch(e){ console.warn("Telegram wallet not available", e); }
-  return null;
-}
-
-/* connect button logic */
-document.getElementById('connectTon').onclick = async ()=>{
-  // 1) try telegram
-  const tw = await tryTelegramWallet();
-  if (tw) { await saveWallet(tw); if (tg) tg.showAlert("Telegram wallet connected"); return; }
-
-  // 2) fallback: ask user to paste TON address
-  const pasted = prompt("Paste your Wallet address (TON / or preferred) here:");
-  if (!pasted) return;
-  await saveWallet(pasted.trim());
-  if (tg) tg.showAlert("Wallet saved");
-};
-
-/* paste wallet button */
-document.getElementById('paste').onclick = async ()=>{
-  const val = prompt("Paste your wallet address here (TON or 0x for Polygon):");
-  if (!val) return;
-  await saveWallet(val.trim());
-  if (tg) tg.showAlert("Address saved");
-};
-
-/* save wallet & polygon address functions */
-async function saveWallet(addr){
-  current.wallet = addr;
-  try { await userRef().update({ wallet: addr }); } catch(e){ console.error("save wallet err", e); }
-  updateUI();
-}
-document.getElementById('savePolygon').onclick = async ()=>{
-  const v = document.getElementById('polygonAddr').value.trim();
-  if (!v) return (tg ? tg.showAlert("Enter address") : alert("Enter address"));
-  // no strict validation here (TON vs 0x), but you can add regex if needed
-  current.polygonAddress = v;
-  await userRef().update({ polygonAddress: v });
-  if (tg) tg.showAlert("Polygon address saved");
-};
-
-/* start earning */
-document.getElementById('start').onclick = ()=>{
-  // simple +1 pts per second demo (you can change)
-  if (window._earning) return;
-  window._earning = setInterval(async ()=>{
-    current.points = (current.points || 0) + 1;
-    await userRef().update({ points: current.points }).catch(()=>{});
-  }, 1000);
-  if (tg) tg.showAlert("Earning started");
-};
-
-/* claim-level helper button to claim first eligible level */
-document.getElementById('levelsList').addEventListener('click', ()=>{}); // placeholder
-
-/* fallback: copy link helper already bound earlier */
-
-/* small safety console message */
-console.log("Aether Mini App (TON-ready) loaded. Replace LOGO_URL and BOT_USERNAME if needed.");
+/* console help */
+console.log("Aether MiniApp loaded. Referral and TON wallet flows implemented. Check console for debugging.");
 </script>
 </body>
 </html>
-
