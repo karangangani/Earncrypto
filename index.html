@@ -8,103 +8,80 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- LATEST TONCONNECT UI (2025 WORKING) -->
+  <!-- LATEST TONCONNECT UI -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
 
-  <!-- REWARDED ADS SDK -->
+  <!-- ADS -->
   <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
   <style>
-    body { background:#000; color:#fff; font-family:Arial; padding:15px; margin:0; text-align:center; }
-    .logo { font-size:50px; font-weight:900; color:#00ff88; margin:20px 0; text-shadow:0 0 20px #00ff88; }
-    .card { background:#111; padding:20px; border-radius:20px; margin:15px 0; border:2px solid #333; }
-    .btn { background:#00ff88; color:#000; padding:16px; border:none; border-radius:16px; width:100%; margin:10px 0; font-size:18px; font-weight:bold; cursor:pointer; }
-    .btn:disabled { background:#333; }
-    .stats { display:flex; justify-content:space-around; background:#111; padding:15px; border-radius:16px; margin:15px 0; }
-    .stat { text-align:center; }
-    .big { font-size:28px; font-weight:bold; color:#00ff88; }
-    .wallet { color:#00ff88; word-break:break-all; font-size:14px; margin:10px 0; }
-    .tab { padding:12px; background:#222; margin:5px; border-radius:12px; flex:1; }
-    .tab.active { background:#00ff88; color:#000; }
+    body { background:#000; color:#fff; font-family:Arial; text-align:center; padding:15px; }
+    .logo { font-size:50px; font-weight:900; color:#00ff88; margin:30px 0; }
+    .card { background:#111; padding:20px; border-radius:20px; margin:15px 0; }
+    .btn { background:#00ff88; color:#000; padding:18px; border:none; border-radius:16px; font-size:18px; font-weight:bold; margin:10px 0; width:100%; }
+    .big { font-size:32px; color:#00ff88; }
+    .wallet { margin:20px 0; font-size:15px; word-break:break-all; }
   </style>
 </head>
 <body>
 
   <div class="logo">Aether</div>
-  <div id="username">Loading...</div>
+  <div id="username" style="margin-bottom:20px;">Loading...</div>
 
-  <div class="stats">
-    <div class="stat"><div class="big" id="points">0</div><small>Points</small></div>
-    <div class="stat"><div class="big" id="refs">0</div><small>Referrals</small></div>
+  <div class="card">
+    <div class="big" id="points">0</div>
+    <small>Points</small>
+    <div style="margin:15px 0;" class="big" id="refs">0</div>
+    <small>Referrals</small>
   </div>
 
-  <div style="display:flex;">
-    <div class="tab active" onclick="openTab('home')">Home</div>
-    <div class="tab" onclick="openTab('tasks')">Tasks</div>
-    <div class="tab" onclick="openTab('referral')">Referral</div>
-    <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
-  </div>
+  <!-- TON CONNECT BUTTON -->
+  <div id="ton-connect"></div>
 
-  <div id="home" class="card active">
-    <button class="btn" id="mine">Start Mining</button>
-  </div>
+  <div class="wallet" id="wallet">Not Connected</div>
 
-  <div id="tasks" class="card">
-    <button class="btn" id="watchAd">Watch Ad (+50 Points)</button>
+  <div class="card">
+    <button class="btn" id="ad">Watch Ad (+50 Points)</button>
     <p>Daily: <span id="adsToday">0</span>/100</p>
   </div>
 
-  <div id="referral" class="card">
-    <p>Referrals: <span id="refCount">0</span></p>
-    <div style="background:#222;padding:15px;border-radius:12px;word-break:break-all;" id="refLink">Loading...</div>
-    <button class="btn" onclick="copyLink()">COPY LINK</button>
-  </div>
-
-  <div id="airdrop" class="card">
-    <h3>Airdrop: 1 Jan 2026</h3>
-    <div id="countdown" style="color:#00ff88;font-size:20px;margin:20px 0;"></div>
-    
-    <!-- TON CONNECT BUTTON (OFFICIAL) -->
-    <div id="ton-connect"></div>
-    
-    <div class="wallet" id="walletAddr">Not Connected</div>
+  <div class="card">
+    <p>Your Referral Link:</p>
+    <div style="background:#222;padding:15px;border-radius:12px;margin:10px 0;word-break:break-all;" id="refLink">Loading...</div>
   </div>
 
   <script>
-    // Firebase
+    // REPLACE YE URL APNE GITHUB WALE SE
+    const MANIFEST_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/aethermine-ton/main/tonconnect-manifest.json";
+
     firebase.initializeApp({
       apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
       authDomain: "earncryptomp.firebaseapp.com",
       projectId: "earncryptomp",
-      storageBucket: "earncryptomp.firebasestorage.app",
-      messagingSenderId: "405204250643",
       appId: "1:405204250643:web:8841299bceb46f6752cfe6"
     });
     const db = firebase.firestore();
 
-    // Telegram
     const tg = window.Telegram.WebApp;
     tg.ready();
-    const user = tg.initDataUnsafe.user || { id: Date.now(), first_name: "Guest" };
+    const user = tg.initDataUnsafe.user || { id: 123456, first_name: "Test" };
     const userId = user.id.toString();
 
-    let points = 0, refs = 0, adsToday = 0;
-    let wallet = "";
-
-    // TON CONNECT UI (LATEST 2025)
+    // TON CONNECT UI
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
+      manifestUrl: MANIFEST_URL,
       buttonRootId: 'ton-connect'
     });
 
-    // On wallet connect
-    tonConnectUI.onStatusChange(async (walletInfo) => {
-      if (walletInfo) {
-        wallet = walletInfo.account.address;
-        document.getElementById('walletAddr').innerText = wallet.slice(0,6) + "..." + wallet.slice(-4);
-        await db.collection('users').doc(userId).update({ tonWallet: wallet });
-        tg.showAlert("TON Wallet Connected!");
+    let points = 0, adsToday = 0;
+
+    // Wallet status
+    tonConnectUI.onStatusChange(async (w) => {
+      if (w) {
+        const addr = w.account.address;
+        document.getElementById('wallet').innerHTML = `<b>Connected:</b><br>\( {addr.slice(0,8)}... \){addr.slice(-6)}`;
+        await db.collection('users').doc(userId).set({ tonWallet: addr }, { merge: true });
       }
     });
 
@@ -113,103 +90,47 @@
 
       const doc = await db.collection('users').doc(userId).get();
       if (!doc.exists) {
-        const refCode = 'AM' + Math.random().toString(36).substr(2,6).toUpperCase();
-        await db.collection('users').doc(userId).set({
-          points: 0, refs: 0, adsToday: 0, refCode, tonWallet: ""
-        });
+        await db.collection('users').doc(userId).set({ points: 0, adsToday: 0 });
       } else {
-        const data = doc.data();
-        points = data.points || 0;
-        refs = data.refs || 0;
-        adsToday = data.adsToday || 0;
-        wallet = data.tonWallet || "";
-        if (wallet) document.getElementById('walletAddr').innerText = wallet.slice(0,6) + "..." + wallet.slice(-4);
+        const d = doc.data();
+        points = d.points || 0;
+        adsToday = d.adsToday || 0;
+        if (d.tonWallet) document.getElementById('wallet').innerHTML = `<b>Connected:</b><br>\( {d.tonWallet.slice(0,8)}... \){d.tonWallet.slice(-6)}`;
       }
 
-      document.getElementById('refLink').innerText = `https://t.me/AetherMineXBot?start=ref_${userId}`;
-      updateUI();
-      handleReferral();
-      startCountdown();
-    }
-
-    function updateUI() {
       document.getElementById('points').innerText = points;
-      document.getElementById('refs').innerText = refs;
       document.getElementById('adsToday').innerText = adsToday;
-      document.getElementById('refCount').innerText = refs;
-    }
+      document.getElementById('refLink').innerText = `https://t.me/AetherMineXBot?start=ref_${userId}`;
 
-    async function handleReferral() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const ref = urlParams.get('startapp') || urlParams.get('start');
-      if (ref && ref.startsWith('ref_')) {
+      // Referral handle
+      const params = new URLSearchParams(location.search);
+      const ref = params.get('startapp') || params.get('start');
+      if (ref?.startsWith('ref_')) {
         const refId = ref.split('_')[1];
         if (refId !== userId) {
           await db.collection('users').doc(refId).update({
-            points: firebase.firestore.FieldValue.increment(500),
-            refs: firebase.firestore.FieldValue.increment(1)
+            points: firebase.firestore.FieldValue.increment(500)
           });
-          tg.showAlert("Referral Bonus: +500 Points!");
+          tg.showAlert("Referral +500 Points!");
         }
       }
     }
 
-    function copyLink() {
-      navigator.clipboard.writeText(document.getElementById('refLink').innerText);
-      tg.showAlert("Link Copied!");
-    }
-
     // Watch Ad
-    document.getElementById('watchAd').onclick = () => {
-      if (adsToday >= 100) return tg.showAlert("Daily limit reached");
-      const btn = document.getElementById('watchAd');
-      btn.disabled = true;
-      btn.innerText = "Playing...";
-
+    document.getElementById('ad').onclick = () => {
+      if (adsToday >= 100) return tg.showAlert("Limit reached");
+      document.getElementById('ad').disabled = true;
       show_10192178('pop').then(async () => {
-        points += 50;
-        adsToday += 1;
+        points += 50; adsToday += 1;
         await db.collection('users').doc(userId).update({ points, adsToday });
-        updateUI();
+        document.getElementById('points').innerText = points;
+        document.getElementById('adsToday').innerText = adsToday;
         tg.showAlert("+50 Points!");
-        btn.disabled = false;
-        btn.innerText = "Watch Ad (+50 Points)";
+        document.getElementById('ad').disabled = false;
       }).catch(() => {
-        btn.disabled = false;
-        btn.innerText = "Watch Ad (+50 Points)";
+        document.getElementById('ad').disabled = false;
       });
     };
-
-    // Mining
-    document.getElementById('mine').onclick = () => {
-      setInterval(async () => {
-        points += 1;
-        await db.collection('users').doc(userId).update({ points });
-        updateUI();
-      }, 1000);
-    };
-
-    function startCountdown() {
-      const target = new Date('2026-01-01T00:00:00+05:30').getTime();
-      setInterval(() => {
-        const diff = target - Date.now();
-        if (diff <= 0) {
-          document.getElementById('countdown').innerText = "AIRDROP LIVE!";
-          return;
-        }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        document.getElementById('countdown').innerText = `\( {d}d \){h}h ${m}m`;
-      }, 1000);
-    }
-
-    function openTab(tab) {
-      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      event.target.classList.add('active');
-    }
 
     init();
   </script>
