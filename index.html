@@ -1,138 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AetherMine</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AetherMine — Final</title>
+
+  <!-- Telegram WebApp -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Firebase (compat - easier for anonymous auth + simple API) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-  <!-- LATEST TONCONNECT UI -->
+  <!-- WalletConnect v1 + QR modal (EVM wallets) -->
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@1.6.6/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/qrcode-modal@1.6.0/dist/umd/index.min.js"></script>
+
+  <!-- ethers (for address validation / balance reads) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+
+  <!-- LATEST TONCONNECT UI (FIXED MANIFEST) -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css" />
 
-  <!-- ADS -->
+  <!-- Ad SDK (Rewarded Popup) -->
   <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
   <style>
-    body { background:#000; color:#fff; font-family:Arial; text-align:center; padding:15px; }
-    .logo { font-size:50px; font-weight:900; color:#00ff88; margin:30px 0; }
-    .card { background:#111; padding:20px; border-radius:20px; margin:15px 0; }
-    .btn { background:#00ff88; color:#000; padding:18px; border:none; border-radius:16px; font-size:18px; font-weight:bold; margin:10px 0; width:100%; }
-    .big { font-size:32px; color:#00ff88; }
-    .wallet { margin:20px 0; font-size:15px; word-break:break-all; }
+    /* BLACK & WHITE AETHER THEME */
+    :root{ --bg:#020203; --panel:#0b0d0f; --muted:#9aa0a6; --accent:#f8f8f8; --green:#00d38a }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:linear-gradient(180deg,#000,#080808);color:var(--muted);font-family:Inter,Arial,sans-serif;padding:14px;min-height:100vh}
+    .wrap{max-width:720px;margin:12px auto}
+    .top{display:flex;gap:12px;align-items:center}
+    .logo{width:64px;height:64px;border-radius:12px;background:#111;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+    h1{color:var(--accent);font-size:20px}
+    .card{background:var(--panel);border-radius:12px;padding:14px;margin-top:12px;border:1px solid rgba(255,255,255,0.03)}
+    .stats{display:flex;gap:10px;justify-content:space-between}
+    .stat{flex:1;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center}
+    .v{font-weight:800;color:var(--accent);font-size:18px}
+    .tabs{display:flex;gap:8px;margin-top:12px}
+    .tab{flex:1;padding:10px;border-radius:10px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.02);cursor:pointer;color:var(--muted)}
+    .tab.active{background:rgba(255,255,255,0.02);color:var(--accent)}
+    .section{display:none;padding-top:12px}
+    .section.active{display:block}
+    .btn{background:linear-gradient(90deg,#fff,#e6eef8);color:#051;padding:12px;border-radius:10px;border:none;font-weight:700;cursor:pointer;width:100%}
+    .ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+    .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+    .ref-box{display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,0.02);border-radius:8px}
+    .ref-link{color:var(--accent);word-break:break-all}
+    .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
+    .level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
+    .claim{background:var(--green);color:#001;padding:8px;border-radius:8px;border:none;cursor:pointer}
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+    #ton-connect { margin:10px 0; }
+    .wallet-connected { color: #00ff88; font-weight: bold; }
+    @media (max-width:480px){ .top{flex-direction:column;align-items:flex-start} }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="top">
+      <div class="logo" id="logo">Ae</div>
+      <div>
+        <h1>AETHER — Mine & Airdrop</h1>
+        <div id="userLine" class="small">Loading...</div>
+      </div>
+    </div>
 
-  <div class="logo">Aether</div>
-  <div id="username" style="margin-bottom:20px;">Loading...</div>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
+        <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
+        <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
+      </div>
 
-  <div class="card">
-    <div class="big" id="points">0</div>
-    <small>Points</small>
-    <div style="margin:15px 0;" class="big" id="refs">0</div>
-    <small>Referrals</small>
+      <div class="tabs">
+        <div class="tab active" onclick="openTab('home')">Home</div>
+        <div class="tab" onclick="openTab('tasks')">Tasks</div>
+        <div class="tab" onclick="openTab('referral')">Referral</div>
+        <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
+      </div>
+
+      <!-- HOME -->
+      <div id="home" class="section active">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="flex:1">
+            <button id="startMining" class="btn">Start Earning (Passive)</button>
+            <p class="small">Daily login streak gives bonus for 7 days. Level rewards available in Tasks.</p>
+          </div>
+          <div style="width:90px;text-align:center">
+            <div style="width:64px;height:64px;border-radius:10px;background:linear-gradient(135deg,#111,#222);display:flex;align-items:center;justify-content:center">Ae</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div id="tasks" class="section">
+        <button id="watchAd" class="btn">Watch Rewarded Ad (+50)</button>
+        <p class="small">Daily ads: <span id="adsToday">0</span> / <span id="adsLimit">20</span></p>
+        <div class="levels" id="levels"></div>
+      </div>
+
+      <!-- REFERRAL -->
+      <div id="referral" class="section">
+        <div class="ref-box">
+          <div class="ref-link" id="myRef">Generating...</div>
+          <div><button id="copyRef" class="ghost">COPY</button></div>
+        </div>
+        <p class="small">Invite friends using your unique link. First-time joins count.</p>
+      </div>
+
+      <!-- AIRDROP / WALLET -->
+      <div id="airdrop" class="section">
+        <div style="display:flex;gap:8px">
+          <button id="connectEVM" class="btn">Connect EVM Wallet</button>
+          <button id="connectTON" class="btn ghost">Connect TON Wallet</button>
+        </div>
+        <div class="small" id="walletStatus">Not Connected</div>
+        <div style="margin-top:10px">
+          <button id="showBal" class="ghost">Show Balance</button>
+        </div>
+        <p class="small">Eligibility for airdrop: 10 referrals + 5000 points</p>
+      </div>
+
+    </div>
+
+    <footer>© Aether — Bot: @AetherMineXBot</footer>
   </div>
 
-  <!-- TON CONNECT BUTTON -->
-  <div id="ton-connect"></div>
+<script>
+// ---------------- CONFIG ----------------
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
+  authDomain: "earncryptomp.firebaseapp.com",
+  projectId: "earncryptomp",
+  storageBucket: "earncryptomp.firebasestorage.app",
+  messagingSenderId: "405204250643",
+  appId: "1:405204250643:web:8841299bceb46f6752cfe6"
+};
+const BOT_USERNAME = "AetherMineXBot";
+const AD_FN = 'show_10192178';
+const DAILY_BASE = 20; // base daily ads
+const ADS_COOLDOWN = 5000; // ms
+const LEVELS_MAX = 100;
+const TON_MANIFEST = 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json';
 
-  <div class="wallet" id="wallet">Not Connected</div>
+// ----------------------------------------
 
-  <div class="card">
-    <button class="btn" id="ad">Watch Ad (+50 Points)</button>
-    <p>Daily: <span id="adsToday">0</span>/100</p>
-  </div>
+// Firebase init
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-  <div class="card">
-    <p>Your Referral Link:</p>
-    <div style="background:#222;padding:15px;border-radius:12px;margin:10px 0;word-break:break-all;" id="refLink">Loading...</div>
-  </div>
+// Telegram
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) tg.ready();
+const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
 
-  <script>
-    // REPLACE YE URL APNE GITHUB WALE SE
-    const MANIFEST_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/aethermine-ton/main/tonconnect-manifest.json";
+// TonConnect
+const TonSDK = window.TonConnect ? window.TonConnect : null;
+let tonClient = TonSDK ? new TonSDK.TonConnect({ manifestUrl: TON_MANIFEST }) : null;
 
-    firebase.initializeApp({
-      apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
-      authDomain: "earncryptomp.firebaseapp.com",
-      projectId: "earncryptomp",
-      appId: "1:405204250643:web:8841299bceb46f6752cfe6"
-    });
-    const db = firebase.firestore();
+// WalletConnect (EVM)
+const WC = window.WalletConnect && (window.WalletConnect.default || window.WalletConnect);
+const QR = window.WalletConnectQRCodeModal && (window.WalletConnectQRCodeModal.default || window.WalletConnectQRCodeModal);
+let wcConnector = null;
 
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    const user = tg.initDataUnsafe.user || { id: 123456, first_name: "Test" };
-    const userId = user.id.toString();
+// State
+let firebaseUid = null; // anonymous uid used as doc id
+let current = { points:0, refs:[], level:1, adsToday:0, adsMilestones:[], wallet:'', tonWallet:'', lastLogin:null, streak:0, joinedChannel:false, claimedLevels:[] };
 
-    // TON CONNECT UI
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: MANIFEST_URL,
-      buttonRootId: 'ton-connect'
-    });
+// Start param detection
+const startParam = (tg && (tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp)) || new URLSearchParams(window.location.search).get('start') || new URLSearchParams(window.location.search).get('startapp') || '';
 
-    let points = 0, adsToday = 0;
+// Auth & init
+auth.signInAnonymously().then(()=>{ firebaseUid = auth.currentUser.uid; init(); }).catch(e=>{ console.error('auth',e); firebaseUid = 'anon_' + Date.now(); init(); });
 
-    // Wallet status
-    tonConnectUI.onStatusChange(async (w) => {
-      if (w) {
-        const addr = w.account.address;
-        document.getElementById('wallet').innerHTML = `<b>Connected:</b><br>\( {addr.slice(0,8)}... \){addr.slice(-6)}`;
-        await db.collection('users').doc(userId).set({ tonWallet: addr }, { merge: true });
-      }
-    });
+function userRef(){ return db.collection('users').doc(firebaseUid); }
 
-    async function init() {
-      document.getElementById('username').innerText = user.username || user.first_name;
+async function init(){
+  // create user doc if missing
+  const docSnap = await userRef().get();
+  if (!docSnap.exists){
+    const preferRef = (tgUser && tgUser.id) ? tgUser.id.toString() : null;
+    const refCode = preferRef || ('AM' + Math.random().toString(36).substr(2,6).toUpperCase());
+    current.refCode = refCode;
+    await userRef().set({ firebaseUid, telegramId: tgUser.id || null, username: tgUser.username || tgUser.first_name || null, refCode, points:0, refs:[], level:1, adsToday:0, adsMilestones:[], wallet:'', tonWallet:'', lastLogin:null, streak:0, joinedChannel:false, claimedLevels:[] }, { merge:true });
+  } else {
+    const data = docSnap.data();
+    current = { points: data.points || 0, refs: data.refs || [], level: data.level || 1, adsToday: data.adsToday || 0, adsMilestones: data.adsMilestones || [], wallet: data.wallet || '', tonWallet: data.tonWallet || '', lastLogin: data.lastLogin || null, streak: data.streak || 0, joinedChannel: data.joinedChannel || false, claimedLevels: data.claimedLevels || [], refCode: data.refCode || '' };
+  }
 
-      const doc = await db.collection('users').doc(userId).get();
-      if (!doc.exists) {
-        await db.collection('users').doc(userId).set({ points: 0, adsToday: 0 });
-      } else {
-        const d = doc.data();
-        points = d.points || 0;
-        adsToday = d.adsToday || 0;
-        if (d.tonWallet) document.getElementById('wallet').innerHTML = `<b>Connected:</b><br>\( {d.tonWallet.slice(0,8)}... \){d.tonWallet.slice(-6)}`;
-      }
+  // referral link
+  const refIdForLink = (tgUser && tgUser.id) ? tgUser.id.toString() : firebaseUid;
+  const myRefLink = `https://t.me/\( {BOT_USERNAME}?startapp=ref_ \){refIdForLink}`;
+  document.getElementById('myRef').innerText = myRefLink;
+  document.getElementById('copyRef').onclick = ()=>{ navigator.clipboard.writeText(myRefLink); if (tg) tg.showAlert('Link copied'); else alert('Copied'); };
+await handleReferral();
+  renderLevels();
+  updateUI();
+  checkDailyLogin();
+}
 
-      document.getElementById('points').innerText = points;
-      document.getElementById('adsToday').innerText = adsToday;
-      document.getElementById('refLink').innerText = `https://t.me/AetherMineXBot?start=ref_${userId}`;
+// HANDLE REFERRAL
+async function handleReferral(){
+  try{
+    if (!startParam || !startParam.startsWith('ref_')) return;
+    const refId = startParam.split('_')[1]; if (!refId) return;
+    const meDoc = await userRef().get(); const meData = meDoc.exists ? meDoc.data() : {};
+    if (meData.referredBy) return; // already referred
+    if (refId === firebaseUid) return; if (tgUser && tgUser.id && refId === tgUser.id.toString()) return;
 
-      // Referral handle
-      const params = new URLSearchParams(location.search);
-      const ref = params.get('startapp') || params.get('start');
-      if (ref?.startsWith('ref_')) {
-        const refId = ref.split('_')[1];
-        if (refId !== userId) {
-          await db.collection('users').doc(refId).update({
-            points: firebase.firestore.FieldValue.increment(500)
-          });
-          tg.showAlert("Referral +500 Points!");
-        }
-      }
+    // try find ref doc by id
+    let refDoc = await db.collection('users').doc(refId).get();
+    if (!refDoc.exists){
+      const snap = await db.collection('users').where('telegramId','==', refId).limit(1).get();
+      if (!snap.empty) refDoc = snap.docs[0]; else return;
     }
+    const refDocId = refDoc.id;
+    await db.collection('users').doc(refDocId).update({ refs: firebase.firestore.FieldValue.arrayUnion(firebaseUid), points: firebase.firestore.FieldValue.increment(500) });
+    await userRef().set({ referredBy: refDocId }, { merge:true });
+    if (tg) tg.showAlert('Referral applied. Referrer +500 pts');
+  } catch(e){ console.error('ref',e); }
+}
 
-    // Watch Ad
-    document.getElementById('ad').onclick = () => {
-      if (adsToday >= 100) return tg.showAlert("Limit reached");
-      document.getElementById('ad').disabled = true;
-      show_10192178('pop').then(async () => {
-        points += 50; adsToday += 1;
-        await db.collection('users').doc(userId).update({ points, adsToday });
-        document.getElementById('points').innerText = points;
-        document.getElementById('adsToday').innerText = adsToday;
-        tg.showAlert("+50 Points!");
-        document.getElementById('ad').disabled = false;
-      }).catch(() => {
-        document.getElementById('ad').disabled = false;
-      });
-    };
+// DAILY login
+const BONUS = [100,200,300,400,500,700,1000];
+async function checkDailyLogin(){ try{ const today = new Date().toDateString(); if (current.lastLogin !== today){ const streak = (current.streak % 7) + 1; const bonus = BONUS[streak-1] || 100; current.points += bonus; current.streak = streak; current.lastLogin = today; current.adsToday = 0; current.adsMilestones = []; await userRef().update({ points: current.points, streak: current.streak, lastLogin: today, adsToday:0, adsMilestones:[] }); if (tg) tg.showAlert(`Day \( {streak} Bonus: + \){bonus} pts`); } updateUI(); } catch(e){ console.error(e);} }
 
-    init();
-  </script>
+// UI update
+function updateUI(){ document.getElementById('points').innerText = Math.floor(current.points || 0); document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0; document.getElementById('level').innerText = current.level || 1; document.getElementById('adsToday').innerText = current.adsToday || 0; document.getElementById('adsLimit').innerText = DAILY_BASE; document.getElementById('userLine').innerText = (tgUser.username ? '@'+tgUser.username : (tgUser.first_name || 'Guest')) + ' • ' + (current.refCode || ''); if (current.wallet) document.getElementById('walletStatus').innerText = current.wallet; if (current.tonWallet) document.getElementById('walletStatus').innerText = 'TON: ' + current.tonWallet; }
+
+// Tabs
+function openTab(tab){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(tab).classList.add('active'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.querySelector(`[onclick="openTab('${tab}')"]`).classList.add('active'); }
+
+// LEVELS UI
+function renderLevels(){ const container = document.getElementById('levels'); container.innerHTML = ''; const showCount = 20; for (let i=1;i<=Math.min(LEVELS_MAX, showCount);i++){ const refsNeeded = i; const adsNeeded = 10 + (i*5); const reward = i*1000; const el = document.createElement('div'); el.className='level'; el.innerHTML = `<div style="font-weight:700;color:#fff">Level \( {i}</div><div class="small">Need \){refsNeeded} refs & \( {adsNeeded} ads — Reward \){reward}</div><div style="margin-top:8px"><button id="claim_\( {i}" class="claim" disabled>Claim</button></div>`; container.appendChild(el); document.getElementById(`claim_ \){i}`).onclick = ()=> claimLevel(i, refsNeeded, adsNeeded, reward); } setInterval(updateLevelProgress,1500); }
+
+async function updateLevelProgress(){ try{ const snap = await userRef().get(); const data = snap.exists ? snap.data() : {}; const refsCount = (data.refs && data.refs.length) || 0; const adsDone = data.adsToday || 0; for (let i=1;i<=Math.min(LEVELS_MAX,20);i++){ const refsNeeded = i; const adsNeeded = 10 + (i*5); const progressEl = document.getElementById(`claim_${i}`); if (!progressEl) continue; const claimed = (data.claimedLevels || []).includes(i); progressEl.disabled = claimed || !(refsCount>=refsNeeded && adsDone>=adsNeeded); progressEl.innerText = claimed ? 'Claimed' : 'Claim'; } }catch(e){console.error(e);} }
+
+async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){ try{ const snap = await userRef().get(); const data = snap.exists ? snap.data() : {}; const refsCount = (data.refs && data.refs.length) || 0; const adsDone = data.adsToday || 0; if (refsCount < refsNeeded || adsDone < adsNeeded){ if (tg) tg.showAlert('Req not met'); else alert('Req not met'); return; } const claimed = data.claimedLevels || []; if (claimed.includes(levelNo)){ if (tg) tg.showAlert('Already claimed'); else alert('Already claimed'); return; } await userRef().update({ points: firebase.firestore.FieldValue.increment(reward), claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo) }); current.points += reward; updateUI(); if (tg) tg.showAlert(`Level \( {levelNo} claimed + \){reward}`); }catch(e){console.error(e);} }
+
+// Ads logic
+let lastAd = 0;
+document.getElementById('watchAd').onclick = async ()=>{
+  try{
+    const limit = DAILY_BASE;
+    if ((current.adsToday||0) >= limit) return (tg?tg.showAlert('Daily ad limit reached'):alert('Daily ad limit reached'));
+    const now = Date.now(); if (now - lastAd < ADS_COOLDOWN) return (tg?tg.showAlert('Wait a few seconds'):alert('Wait'));
+    lastAd = now; const btn = document.getElementById('watchAd'); btn.disabled=true; btn.innerText='Loading Ad...';
+    if (typeof window[AD_FN] === 'function'){
+      try{ await window[AD_FN]('pop'); await grantAd(); }catch(e){ if (tg) tg.showAlert('Ad not completed'); }
+    } else { await new Promise(r=>setTimeout(r,1200)); await grantAd(); }
+    btn.disabled=false; btn.innerText='Watch Rewarded Ad (+50)';
+  }catch(e){console.error(e);} };
+
+async function grantAd(){ current.points +=50; current.adsToday = (current.adsToday||0)+1; const M = {10:500,20:1000,50:3000}; if (M[current.adsToday] && !(current.adsMilestones||[]).includes(current.adsToday)){ current.points += M[current.adsToday]; current.adsMilestones = current.adsMilestones||[]; current.adsMilestones.push(current.adsToday); } await userRef().update({ points: current.points, adsToday: current.adsToday, adsMilestones: current.adsMilestones }); updateUI(); if (tg) tg.showAlert('+50 pts awarded'); }
+
+// Join channel
+document.getElementById('join-channel')?.addEventListener('click', async ()=>{ if (current.joinedChannel) return (tg?tg.showAlert('Already'):alert('Already')); if (tg) tg.openTelegramLink('https://t.me/AetherMineX'); setTimeout(async ()=>{ current.points +=500; current.joinedChannel=true; await userRef().update({ points: current.points, joinedChannel:true }); updateUI(); if (tg) tg.showAlert('500 pts claimed'); },3500); });
+
+// Mining (passive)
+let mining=false; document.getElementById('startMining').onclick = ()=>{ if (mining) return; mining=true; setInterval(async ()=>{ current.points = (current.points||0) + 1; await userRef().update({ points: current.points }).catch(()=>{}); updateUI(); },1000); };
+        // WalletConnect (EVM)
+function getConnector(){ if (wcConnector && wcConnector.connected) return wcConnector; if (!WC) throw new Error('WalletConnect missing'); wcConnector = new WC({ bridge: 'https://bridge.walletconnect.org' }); return wcConnector; }
+
+document.getElementById('connectEVM').onclick = async ()=>{
+  try{
+    const connector = getConnector();
+    if (connector.connected){ const addr = connector.accounts[0]; await saveWallet(addr); showWallet(addr); if (tg) tg.showAlert('Wallet already connected'); return; }
+    await connector.createSession(); const uri = connector.uri; const redirect = `https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`; const pop = window.open(redirect,'_blank'); if (!pop && QR && typeof QR.open === 'function') QR.open(uri, ()=>{});
+    connector.on('connect', async (err, payload)=>{ if (err) { console.error(err); if (tg) tg.showAlert('Conn failed'); return; } try{ QR.close(); }catch(e){} const accounts = payload.params[0].accounts; const wallet = accounts[0]; await saveWallet(wallet); showWallet(wallet); if (tg) tg.showAlert('Wallet connected'); });
+    connector.on('session_update',(err,payload)=>{ if (!err){ const acc = payload.params[0].accounts; if (acc && acc[0]) { saveWallet(acc[0]); showWallet(acc[0]); } } });
+    connector.on('disconnect',(err,payload)=>{ current.wallet=''; userRef().update({ wallet:'' }).catch(()=>{}); document.getElementById('walletStatus').innerText='Not Connected'; wcConnector=null; });
+  }catch(e){ console.error('wc',e); if (tg) tg.showAlert('Cannot connect wallet in this browser. Try Ton or Paste'); else alert('WC error'); }
+};
+
+// Paste wallet fallback
+document.getElementById('connectEVM')?.addEventListener('contextmenu', async (ev)=>{ ev.preventDefault(); const pasted = prompt('Paste EVM address:'); if (!pasted) return; if (!ethers.utils.isAddress(pasted)) { alert('Invalid address'); return; } await saveWallet(pasted); showWallet(pasted); if (tg) tg.showAlert('Saved'); });
+
+async function saveWallet(addr){ current.wallet = addr; try{ await userRef().update({ wallet: addr }); }catch(e){ console.error('save',e); } }
+function showWallet(addr){ document.getElementById('walletStatus').innerText = `\( {addr.slice(0,6)}... \){addr.slice(-4)}`; }
+
+// TON connect
+document.getElementById('connectTON').onclick = async ()=>{
+  try{
+    if (!tonClient) { if (tg) tg.showAlert('TON SDK not loaded'); return; }
+    const connection = await tonClient.connectWallet();
+    if (connection && connection.account){ const tonAddr = connection.account.address || connection.account; current.tonWallet = tonAddr; await userRef().update({ tonWallet: tonAddr }); document.getElementById('walletStatus').innerText = 'TON: ' + tonAddr.slice(0,6) + '...' + tonAddr.slice(-4); if (tg) tg.showAlert('TON connected'); }
+  } catch(e){ console.error('ton',e); if (tg) tg.showAlert('TON connect failed. Ensure manifest hosted and open from Bot link'); }
+};
+  // Show balance (basic)
+document.getElementById('showBal').onclick = async ()=>{
+  try{ const addr = current.wallet; if (!addr) return (tg?tg.showAlert('Connect wallet first'):alert('Connect')); if (ethers.utils.isAddress(addr)){ const provider = new ethers.providers.JsonRpcProvider('https://rpc.ankr.com/eth'); const bal = await provider.getBalance(addr); const eth = ethers.utils.formatEther(bal); alert(`Balance: ${eth} ETH`); } else alert('No EVM address'); } catch(e){ console.error(e); if (tg) tg.showAlert('Error reading'); }
+};
+
+// helper: userRef getter already defined
+
+// Firestore rules snippet (for your console):
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /users/{userId} {
+//       allow read, write: if request.auth != null || request.resource == null;
+//     }
+//   }
+// }
+
+</script>
 </body>
 </html>
