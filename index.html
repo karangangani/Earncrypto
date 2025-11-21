@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -107,9 +107,10 @@
     const userId = user?.id?.toString() || 'test';
     const username = user?.username ? `@${user.username}` : user?.first_name;
 
-    // TON Connect Manifest (Fixed - Your JSON)
+    // TON Connect Manifest (Fixed with your JSON)
+    const manifestUrl = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json' // Your manifest URL
+      manifestUrl: manifestUrl
     });
 
     let current = { points: 0, level: 1, refs: [], wallet: "", refCode: '', adsToday: 0, lastAdsReset: Date.now(), adsCooldown: 0, miningInterval: null };
@@ -128,7 +129,10 @@
       } else {
         current = doc.data();
       }
-    document.getElementById('ref-link').innerText = `https://t.me/AetherMineX?start=ref_${current.refCode || 'XXXX'}`;
+
+      // Unique Referral Link (Fixed - Bot style: ref_5973954829)
+      const refLink = `https://t.me/AetherMineX?startapp=ref_${current.refCode}`;
+      document.getElementById('ref-link').innerText = refLink;
 
       // TON Wallet Status (Fixed - Your Manifest)
       tonConnectUI.onStatusChange(wallet => {
@@ -159,7 +163,7 @@
 
     async function handleReferral() {
       const params = new URLSearchParams(window.location.search);
-      const ref = params.get('start');
+      const ref = params.get('startapp');
       if (ref?.startsWith('ref_')) {
         const refCode = ref.split('_')[1];
         const snap = await db.collection('users').where('refCode', '==', refCode).get();
@@ -264,7 +268,6 @@
       } else {
         current.adsCooldown = Math.ceil((3600000 - (now - lastReset)) / 1000);
       }
-
       document.getElementById('ads-count').innerText = current.adsToday;
       document.getElementById('cooldown-timer').innerText = current.adsCooldown;
 
@@ -283,11 +286,11 @@
     // Level Logic (1 referral + 10 ads = 1 level, max 100)
     async function updateLevel() {
       const referrals = current.refs ? current.refs.length : 0;
-      const ads = current.adsToday; // Or total ads if tracked
+      const ads = current.adsToday;
       const newLevel = Math.min(100, referrals + Math.floor(ads / 10));
       if (newLevel > current.level) {
         current.level = newLevel;
-        current.speed = newLevel; // Speed = level
+        current.speed = newLevel;
         db.collection('users').doc(userId).update({ level: newLevel, speed: newLevel });
         tg.showAlert(`Level Up! Level ${newLevel}`);
         document.getElementById('level').innerText = newLevel;
@@ -310,7 +313,7 @@
 
     init();
     checkAdsCooldown();
-    updateLevel(); // Initial check
+    updateLevel();
   </script>
 </body>
 </html>
