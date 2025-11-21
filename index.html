@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -38,12 +38,12 @@
     <div class="level-bar">
       <div class="level-fill" id="level-fill" style="width:0%;"></div>
     </div>
-    <div style="font-size:14px;">Level <span id="level">1</span>/1000</div>
+    <div style="font-size:14px;">Level <span id="level">1</span>/100</div>
   </div>
 
   <div class="stats">
     <div><div class="stat-value" id="points">0</div><small>Coins</small></div>
-    <div><div class="stat-value" id="speed">1</div><small>Level</small></div>
+    <div><div class="stat-value" id="speed">1</div><small>pts/sec</small></div>
     <div><div class="stat-value" id="refs">0</div><small>Referrals</small></div>
   </div>
 
@@ -107,10 +107,9 @@
     const userId = user?.id?.toString() || 'test';
     const username = user?.username ? `@${user.username}` : user?.first_name;
 
-    // TON Connect (Don't change - as per request)
+    // TON Connect Manifest (Fixed - Your JSON)
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
-      buttonRootId: 'connect-ton'
+      manifestUrl: 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json' // Your manifest URL
     });
 
     let current = { points: 0, level: 1, refs: [], wallet: "", refCode: '', adsToday: 0, lastAdsReset: Date.now(), adsCooldown: 0, miningInterval: null };
@@ -129,28 +128,30 @@
       } else {
         current = doc.data();
       }
+    document.getElementById('ref-link').innerText = `https://t.me/AetherMineX?start=ref_${current.refCode || 'XXXX'}`;
 
-      document.getElementById('ref-link').innerText = `https://t.me/AetherMineX?start=ref_${current.refCode || 'XXXX'}`;
-
-      // TON Wallet Status
+      // TON Wallet Status (Fixed - Your Manifest)
       tonConnectUI.onStatusChange(wallet => {
         if (wallet) {
           const tonAddress = wallet.account.address;
           db.collection('users').doc(userId).update({ wallet: tonAddress });
           document.getElementById('wallet-status').innerText = tonAddress.slice(0,6) + "..." + tonAddress.slice(-4);
+        } else {
+          document.getElementById('wallet-status').innerText = 'Not Connected';
         }
       });
 
       // Update Level Bar
       document.getElementById('level').innerText = current.level;
-      document.getElementById('level-fill').style.width = `${(current.level / 1000) * 100}%`;
+      document.getElementById('level-fill').style.width = `${(current.level / 100) * 100}%`;
 
       updateUI();
       handleReferral();
       checkAdsCooldown();
       startCountdown();
     }
-  function updateUI() {
+
+    function updateUI() {
       document.getElementById('points').innerText = current.points || 0;
       document.getElementById('refs').innerText = (current.refs || []).length;
       document.getElementById('ref-count').innerText = (current.refs || []).length;
@@ -172,6 +173,7 @@
           }
           tg.showAlert("Referral +1000 Coins!");
           updateUI();
+          updateLevel();
         }
       }
     }
@@ -222,6 +224,7 @@
         db.collection('users').doc(userId).update({ points: current.points, adsToday: current.adsToday });
         tg.showAlert('Ad Watched! +50 Coins');
         updateUI();
+        updateLevel();
 
         // 5 sec gap
         setTimeout(() => {
@@ -272,21 +275,23 @@
         document.getElementById('watch-ad').disabled = true;
         document.getElementById('cooldown-msg').innerText = `Cooldown: ${current.adsCooldown}s`;
         setTimeout(checkAdsCooldown, 1000);
+      } else {
+        setTimeout(checkAdsCooldown, 1000);
       }
     }
 
-    // Level Logic (1 referral + 10 ads = 1 level)
+    // Level Logic (1 referral + 10 ads = 1 level, max 100)
     async function updateLevel() {
       const referrals = current.refs ? current.refs.length : 0;
       const ads = current.adsToday; // Or total ads if tracked
-      const newLevel = Math.min(1000, referrals + Math.floor(ads / 10));
+      const newLevel = Math.min(100, referrals + Math.floor(ads / 10));
       if (newLevel > current.level) {
         current.level = newLevel;
         current.speed = newLevel; // Speed = level
         db.collection('users').doc(userId).update({ level: newLevel, speed: newLevel });
         tg.showAlert(`Level Up! Level ${newLevel}`);
         document.getElementById('level').innerText = newLevel;
-        document.getElementById('level-fill').style.width = `${(newLevel / 1000) * 100}%`;
+        document.getElementById('level-fill').style.width = `${(newLevel / 100) * 100}%`;
       }
     }
 
