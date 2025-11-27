@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — 1.1 (Earn · Referral · TON)</title>
+<title>AetherMine v3.0 — Earn · Referral · TON</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Firebase compat (easy) -->
+<!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -53,16 +53,16 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
   <div class="header">
     <div class="logo">Ae</div>
     <div>
-      <h1>AETHER — Earn & Airdrop</h1>
+      <h1>AetherMine v3.0 — Earn & Airdrop</h1>
       <div id="userLine" class="sub">Loading...</div>
     </div>
   </div>
 
   <div class="card">
     <div class="stats">
-      <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
+      <div class="stat"><div class="v" id="coins">0</div><div class="l">Coins</div></div>
       <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
-      <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
+      <div class="stat"><div class="v" id="level">0</div><div class="l">Level</div></div>
     </div>
 
     <div class="tabs">
@@ -76,7 +76,7 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
     <div id="home" class="section active">
       <div style="display:flex;gap:10px;align-items:center">
         <div style="flex:1">
-          <button id="startMining" class="btn">Start Earning (Passive)</button>
+          <button id="startMining" class="btn">Start Mining (Passive)</button>
           <p class="small">Daily login streak gives bonus. Claim level rewards in Tasks.</p>
         </div>
         <div style="width:88px;text-align:center">
@@ -120,14 +120,12 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
       <div style="margin-top:12px"><button id="showBalance" class="ghost">Show Connected TON Address</button></div>
       <p class="small" style="margin-top:8px">Eligibility for airdrop: 10 referrals + 5000 coins. Airdrop date: Jan 1, 2026 — wallet changes blocked 7 days before airdrop.</p>
     </div>
-
-  </div>
-
-  <div class="footer">© Aether — Bot: @AetherMineXBot</div>
+        </div>
+    <div class="footer">© Aether — Bot: @AetherMineXBot</div>
 </div>
 
 <script>
-/* ========== CONFIG ========== */
+/* ----------------- CONFIG ----------------- */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -142,8 +140,8 @@ const ADS_COOLDOWN_MS = 5000;
 const LEVELS_MAX = 1000;
 const LEVEL_RENDER_CHUNK = 100;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
-const AIRDROP_DATE = new Date('2026-01-01T00:00:00Z').getTime(); // UTC millis
-/* ============================ */
+const AIRDROP_DATE = new Date('2026-01-01T00:00:00Z');
+/* ------------------------------------------ */
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -155,24 +153,26 @@ const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
 
 let firebaseUid = null;
 let current = {
-  coins:0, refs:[], level:1, adsToday:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false, refCode:''
+  coins:0, refs:[], level:0, adsToday:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false, refCode:''
 };
 
 let tonUI = null;
 let adLastTime = 0;
 let levelsRendered = 0;
 
-/* read start param (tg or url) */
-const startParam = (tg && (tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp)) || new URLSearchParams(window.location.search).get('start') || new URLSearchParams(window.location.search).get('startapp') || '';
+/* start param (TG startapp or URL) */
+const startParam = (tg && (tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp)) ||
+                   new URLSearchParams(window.location.search).get('start') ||
+                   new URLSearchParams(window.location.search).get('startapp') || '';
 
-/* sign-in anonymous & init */
+/* anonymous auth then init */
 auth.signInAnonymously().then(()=>{ firebaseUid = auth.currentUser.uid; initApp(); }).catch(e=>{ console.error('auth',e); firebaseUid = 'anon_'+Date.now(); initApp(); });
 
 function userRef(){ return db.collection('users').doc(firebaseUid); }
 
 async function initApp(){
   try {
-    // create or load user doc
+    // load or create doc
     const doc = await userRef().get();
     if (!doc.exists) {
       const preferRef = (tgUser && tgUser.id) ? tgUser.id.toString() : null;
@@ -180,51 +180,50 @@ async function initApp(){
       current.refCode = refCode;
       await userRef().set({
         firebaseUid, telegramId: tgUser.id || null, username: (tgUser.username || tgUser.first_name) || null,
-        refCode, coins:0, refs:[], level:1, adsToday:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false
+        refCode, coins:0, refs:[], level:0, adsToday:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false
       }, { merge:true });
     } else {
       const data = doc.data();
-      current = {
-        coins: data.coins || 0,
-        refs: data.refs || [],
-        level: data.level || 1,
-        adsToday: data.adsToday || 0,
-        adsMilestones: data.adsMilestones || [],
-        claimedLevels: data.claimedLevels || [],
-        tonWallet: data.tonWallet || '',
-        lastWalletChange: data.lastWalletChange || 0,
-        lastLogin: data.lastLogin || null,
-        streak: data.streak || 0,
-        joinedChannel: data.joinedChannel || false,
-        refCode: data.refCode || ('AM' + Math.random().toString(36).substr(2,6).toUpperCase())
-      };
+      current.coins = data.coins || 0;
+      current.refs = data.refs || [];
+      current.level = data.level || 0;
+      current.adsToday = data.adsToday || 0;
+      current.adsMilestones = data.adsMilestones || [];
+      current.claimedLevels = data.claimedLevels || [];
+      current.tonWallet = data.tonWallet || '';
+      current.lastWalletChange = data.lastWalletChange || 0;
+      current.lastLogin = data.lastLogin || null;
+      current.streak = data.streak || 0;
+      current.joinedChannel = data.joinedChannel || false;
+      current.refCode = data.refCode || current.refCode;
     }
-          // realtime listener for live UI & admin view
-    userRef().onSnapshot(d => {
-      if (!d.exists) return;
-      const dd = d.data();
-      current.coins = dd.coins || 0;
-      current.refs = dd.refs || [];
-      current.level = dd.level || 1;
-      current.adsToday = dd.adsToday || 0;
-      current.adsMilestones = dd.adsMilestones || [];
-      current.claimedLevels = dd.claimedLevels || [];
-      current.tonWallet = dd.tonWallet || '';
-      current.lastWalletChange = dd.lastWalletChange || 0;
-      current.joinedChannel = dd.joinedChannel || false;
-      current.refCode = dd.refCode || current.refCode;
+
+    // realtime listener to keep UI & admin in sync
+    userRef().onSnapshot(docSnap => {
+      if (!docSnap.exists) return;
+      const d = docSnap.data();
+      current.coins = d.coins || 0;
+      current.refs = d.refs || [];
+      current.level = d.level || 0;
+      current.adsToday = d.adsToday || 0;
+      current.adsMilestones = d.adsMilestones || [];
+      current.claimedLevels = d.claimedLevels || [];
+      current.tonWallet = d.tonWallet || '';
+      current.lastWalletChange = d.lastWalletChange || 0;
+      current.joinedChannel = d.joinedChannel || false;
+      current.refCode = d.refCode || current.refCode;
       updateUI();
       updateLevelProgressUI();
-    }, err => console.warn('snapshot err', err));
+    });
 
-    // header & referral link
+    // display header & ref link
     document.getElementById('userLine').innerText = ((tgUser.username ? '@'+tgUser.username : (tgUser.first_name || 'Guest')) + ' • ' + (current.refCode || ''));
     const botUser = 'AetherMineX';
     const refLink = `https://t.me/${botUser}?startapp=ref_${ (tgUser && tgUser.id) ? tgUser.id.toString() : firebaseUid }`;
     document.getElementById('myRef').innerText = refLink;
-    document.getElementById('copyRef').onclick = ()=>{ navigator.clipboard.writeText(refLink); if (tg) tg.showAlert('Link copied'); else alert('Link copied'); };
+    document.getElementById('copyRef').onclick = ()=>{ navigator.clipboard.writeText(refLink); if (tg) tg.showAlert('Link copied'); else alert('Copied'); };
 
-    // TON UI mount
+    // TON UI init
     if (window.TON_CONNECT_UI) {
       tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
       if (tonUI && tonUI.onStatusChange) {
@@ -235,31 +234,28 @@ async function initApp(){
           }
         });
       }
-    } else console.warn('TON UI lib missing');
+    } else console.warn('TON UI missing');
 
-    // click handlers
+    // handlers
     document.getElementById('connectTon').onclick = ()=> { if (tonUI && tonUI.connectWallet) tonUI.connectWallet(); else alert('TON UI not available'); };
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = ()=> { if (tg) tg.openTelegramLink('https://t.me/AetherMineX'); else window.open('https://t.me/AetherMineX','_blank'); };
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = ()=> renderLevelsChunk(LEVELS_MAX);
-    document.getElementById('showBalance').onclick = ()=> { if (!current.tonWallet) return (tg?tg.showAlert('Connect TON first'):alert('Connect TON first')); alert(`TON: ${current.tonWallet}`); };
+    document.getElementById('showBalance').onclick = async ()=> { const snap = await userRef().get(); const d = snap.exists ? snap.data() : {}; if (!d.tonWallet) return (tg?tg.showAlert('Connect TON first'):alert('Connect TON first')); alert(`TON address:\n${d.tonWallet}`); };
 
-    // Apply referral param (robust)
+    // apply referral param (only first-time)
     await handleReferralParam();
 
-    // render levels
+    // initial levels chunk & daily login
     renderLevelsChunk(LEVEL_RENDER_CHUNK);
-
-    // daily login
     await checkDailyLogin();
-
     updateUI();
 
   } catch(e){ console.error('initApp', e); if (tg) tg.showAlert('Init error'); }
 }
 
-/* REFERRAL handler (atomic-ish using arrayUnion & increment) */
+/* -------- Referrals (robust) -------- */
 async function handleReferralParam(){
   try {
     if (!startParam || !startParam.startsWith('ref_')) return;
@@ -274,34 +270,35 @@ async function handleReferralParam(){
     if (meData.referredBy) return; // already referred
 
     // try find ref by doc id
-    let refDocSnap = await db.collection('users').doc(refRaw).get();
-    if (!refDocSnap.exists) {
+    let refDoc = await db.collection('users').doc(refRaw).get();
+    if (!refDoc.exists) {
+      // search by telegramId
       const snap = await db.collection('users').where('telegramId','==', refRaw).limit(1).get();
-      if (!snap.empty) refDocSnap = snap.docs[0];
+      if (!snap.empty) refDoc = snap.docs[0];
     }
-    if (!refDocSnap.exists) {
+    if (!refDoc.exists) {
+      // search by refCode
       const snap2 = await db.collection('users').where('refCode','==', refRaw).limit(1).get();
-      if (!snap2.empty) refDocSnap = snap2.docs[0];
+      if (!snap2.empty) refDoc = snap2.docs[0];
     }
-    if (!refDocSnap.exists) return;
+    if (!refDoc.exists) return;
 
-    const refId = refDocSnap.id;
+    const refId = refDoc.id;
     if (refId === firebaseUid) return;
 
-    // update referrer: add this uid to refs[] and increment coins once
+    // Atomically: add this user to ref.refs[] and increment coins only once
     await db.collection('users').doc(refId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(firebaseUid),
       coins: firebase.firestore.FieldValue.increment(500)
     });
-
-    // mark current user as referred (store referrer id)
+    // mark current as referred so it won't count again
     await userRef().set({ referredBy: refId }, { merge:true });
 
     if (tg) tg.showAlert('Referral applied. Referrer +500 coins');
   } catch(e){ console.error('handleReferralParam', e); }
 }
 
-/* DAILY LOGIN bonus (7-day) */
+/* -------- Daily login bonus (7-day streak) -------- */
 const BONUS = [100,200,300,400,500,700,1000];
 async function checkDailyLogin(){
   try {
@@ -323,19 +320,18 @@ async function checkDailyLogin(){
   } catch(e){ console.error('checkDailyLogin', e); }
 }
 
-/* UI update */
+/* -------- UI update (reads current object) -------- */
 function updateUI(){
-  document.getElementById('points').innerText = Math.floor(current.coins || 0);
+  document.getElementById('coins').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0;
-  document.getElementById('level').innerText = current.level || 1;
+  document.getElementById('level').innerText = current.level || 0;
   document.getElementById('adsToday').innerText = current.adsToday || 0;
-  const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||1)-1) * 20);
+  const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||0)-1) * 20);
   document.getElementById('adsLimit').innerText = dailyLimit;
   if (current.tonWallet) document.getElementById('walletStatus').innerText = `TON: ${current.tonWallet.slice(0,6)}...${current.tonWallet.slice(-4)}`;
   document.getElementById('userLine').innerText = ((tgUser.username ? '@'+tgUser.username : (tgUser.first_name || 'Guest')) + ' • ' + (current.refCode || ''));
 }
-
-/* TABS */
+  /* tabs */
 function openTab(tab){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
@@ -343,7 +339,7 @@ function openTab(tab){
   document.querySelector(`[onclick="openTab('${tab}')"]`).classList.add('active');
 }
 
-/* PASSIVE MINING */
+/* passive mining: increment coins by 1 per second on server */
 let mining=false;
 function startPassiveMining(){
   if (mining) return;
@@ -353,35 +349,37 @@ function startPassiveMining(){
   }, 1000);
 }
 
-/* ADS logic */
+/* -------- Ads logic: rewarded popup + server-safe increment -------- */
 async function watchAdHandler(){
   try {
-    // refresh user doc first to avoid race
+    // get fresh data
     const snap = await userRef().get();
     const data = snap.exists ? snap.data() : {};
     current.adsToday = data.adsToday || 0;
     current.lastAdTime = data.lastAdTime || 0;
+    current.level = data.level || 0;
 
     const now = Date.now();
     const oneDay = 24*60*60*1000;
     if (current.lastAdTime && now - current.lastAdTime > oneDay) current.adsToday = 0;
 
-    const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||1)-1) * 20);
+    const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||0)-1) * 20);
     if ((current.adsToday||0) >= dailyLimit) return (tg?tg.showAlert('Daily ad limit reached'):alert('Daily ad limit reached'));
     if (now - adLastTime < ADS_COOLDOWN_MS) return (tg?tg.showAlert('Please wait between ads'):alert('Please wait'));
     adLastTime = now;
 
     const btn = document.getElementById('watchAd');
-    btn.disabled=true; btn.innerText='Loading Ad...';
+    btn.disabled = true; btn.innerText = 'Loading Ad...';
 
-    if (typeof window[AD_FN] === 'function'){
+    if (typeof window[AD_FN] === 'function') {
       try {
-        await window[AD_FN]('pop');
+        await window[AD_FN]('pop'); // monetag rewarded popup
         await grantAdReward();
-      } catch(e){
+      } catch(e) {
         if (tg) tg.showAlert('Ad not completed'); else alert('Ad not completed');
       }
     } else {
+      // fallback (simulate)
       await new Promise(r=>setTimeout(r,1200));
       await grantAdReward();
     }
@@ -390,27 +388,56 @@ async function watchAdHandler(){
 }
 
 async function grantAdReward(){
-  // read current server-side then update atomically via update() (arrayUnion and increment)
-  const snap = await userRef().get();
-  const data = snap.exists ? snap.data() : {};
-  let adsTodayLocal = data.adsToday || 0;
-  adsTodayLocal++;
-  const milestoneMap = {10:500,20:1000,50:3000};
-  let bonus = 0;
-  if (milestoneMap[adsTodayLocal] && !(data.adsMilestones || []).includes(adsTodayLocal)) bonus = milestoneMap[adsTodayLocal];
+  // server-safe: read, compute and update atomically via transaction
+  const userDoc = userRef();
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userDoc);
+    const data = snap.exists ? snap.data() : {};
+    let adsTodayLocal = data.adsToday || 0;
+    adsTodayLocal++;
+    const milestoneMap = {10:500,20:1000,50:3000};
+    let bonus = 0;
+    if (milestoneMap[adsTodayLocal] && !((data.adsMilestones||[]).includes(adsTodayLocal))) bonus = milestoneMap[adsTodayLocal];
 
-  await userRef().update({
-    coins: firebase.firestore.FieldValue.increment(50 + bonus),
-    adsToday: adsTodayLocal,
-    adsMilestones: firebase.firestore.FieldValue.arrayUnion(adsTodayLocal),
-    lastAdTime: Date.now()
+    // coins increment = 50 + bonus
+    const inc = 50 + bonus;
+    // also increment 'level' by 1 per ad (level = total ads watched)
+    const newLevel = (data.level||0) + 1;
+
+    tx.update(userDoc, {
+      coins: firebase.firestore.FieldValue.increment(inc),
+      adsToday: adsTodayLocal,
+      adsMilestones: firebase.firestore.FieldValue.arrayUnion(adsTodayLocal),
+      lastAdTime: Date.now(),
+      level: newLevel
+    });
   });
-  if (tg) tg.showAlert('+50 coins awarded' + (bonus ? ' + milestone '+bonus : ''));
-  // after ad reward, recalc level server-side if you want (or leave claim-based)
-  await recalcLevelForUser(); // keep level in sync
+  if (tg) tg.showAlert('+50 coins awarded');
 }
 
-/* LEVELS rendering & claim */
+/* -------- TON wallet save with rules (12h cooldown + 7 days lock) -------- */
+async function trySaveTonWallet(addr){
+  try {
+    const now = Date.now();
+    const sevenDaysMs = 7*24*60*60*1000;
+    if (AIRDROP_DATE.getTime() - now <= sevenDaysMs){
+      return (tg?tg.showAlert('Wallet change blocked 7 days before airdrop'):alert('Wallet change blocked'));
+    }
+    const snap = await userRef().get();
+    const data = snap.exists ? snap.data() : {};
+    const lastChange = data.lastWalletChange || 0;
+    const twelveHours = 12*60*60*1000;
+    if (lastChange && (now - lastChange) < twelveHours){
+      const remH = Math.ceil((twelveHours - (now - lastChange))/3600000);
+      return (tg?tg.showAlert(`You can change wallet after ${remH} hours`):alert('Change cooldown active'));
+    }
+    // save
+    await userRef().update({ tonWallet: addr, lastWalletChange: now });
+    if (tg) tg.showAlert('TON wallet saved');
+  } catch(e){ console.error('trySaveTonWallet', e); if (tg) tg.showAlert('Wallet save failed'); }
+}
+
+/* -------- Levels UI & claim logic ---------- */
 function renderLevelsChunk(max){
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
@@ -436,7 +463,7 @@ async function updateLevelProgressUI(){
     const snap = await userRef().get();
     const data = snap.exists ? snap.data() : {};
     const refsCount = (data.refs && data.refs.length) || 0;
-    const adsDone = data.adsToday || 0;
+    const adsDone = data.level || 0; // level == total ads watched
     for (let i=1;i<=levelsRendered;i++){
       const claimBtn = document.getElementById(`claim_${i}`);
       if (!claimBtn) continue;
@@ -447,68 +474,30 @@ async function updateLevelProgressUI(){
       claimBtn.innerText = claimed ? 'Claimed' : 'Claim';
     }
   } catch(e){ console.error('updateLevelProgressUI', e); }
-  }
-  
+}
+
 async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   try {
-    const snap = await userRef().get();
-    const data = snap.exists ? snap.data() : {};
-    const refsCount = (data.refs && data.refs.length) || 0;
-    const adsDone = data.adsToday || 0;
-    if (refsCount < refsNeeded || adsDone < adsNeeded){ if (tg) tg.showAlert('Requirements not met'); else alert('Requirements not met'); return; }
-    const claimed = data.claimedLevels || [];
-    if (claimed.includes(levelNo)){ if (tg) tg.showAlert('Already claimed'); else alert('Already claimed'); return; }
-    await userRef().update({
-      coins: firebase.firestore.FieldValue.increment(reward),
-      claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo)
+    await db.runTransaction(async (tx)=>{
+      const snap = await tx.get(userRef());
+      const data = snap.exists ? snap.data() : {};
+      const refsCount = (data.refs && data.refs.length) || 0;
+      const adsDone = data.level || 0;
+      if (refsCount < refsNeeded || adsDone < adsNeeded) throw new Error('Req not met');
+      const claimed = data.claimedLevels || [];
+      if (claimed.includes(levelNo)) throw new Error('Already claimed');
+      tx.update(userRef(), {
+        coins: firebase.firestore.FieldValue.increment(reward),
+        claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo)
+      });
     });
     if (tg) tg.showAlert(`Level ${levelNo} claimed: +${reward} coins`);
-    await recalcLevelForUser();
-  } catch(e){ console.error('claimLevel', e); if (tg) tg.showAlert('Claim failed'); }
+  } catch(e){ console.error('claimLevel', e); if (tg) tg.showAlert('Claim failed or requirements not met'); }
 }
 
-/* recalc level from coins+refs+ads (server-side-ish: client triggers) */
-async function recalcLevelForUser(){
-  try {
-    const snap = await userRef().get();
-    const data = snap.exists ? snap.data() : {};
-    const coins = data.coins || 0;
-    const refsVal = (data.refs && data.refs.length) || 0;
-    const adsVal = data.adsToday || 0;
-    // Score formula (you can change): coins + refs*1000 + ads*50
-    const score = coins + (refsVal * 1000) + (adsVal * 50);
-    const newLevel = Math.max(1, Math.floor(score / 500));
-    if (newLevel !== (data.level || 1)) {
-      await userRef().update({ level: newLevel });
-    }
-  } catch(e){ console.error('recalcLevelForUser', e); }
-}
-
-/* TON wallet save with cooldowns and block before airdrop */
-async function trySaveTonWallet(addr){
-  try {
-    const now = Date.now();
-    const sevenDaysMs = 7*24*60*60*1000;
-    if (AIRDROP_DATE - now <= sevenDaysMs){
-      return (tg?tg.showAlert('Wallet change blocked 7 days before airdrop'):alert('Wallet change blocked 7 days before airdrop'));
-    }
-    const snap = await userRef().get();
-    const data = snap.exists ? snap.data() : {};
-    const lastChange = data.lastWalletChange || 0;
-    const twelveHours = 12*60*60*1000;
-    if (lastChange && (now - lastChange) < twelveHours){
-      const hoursLeft = Math.ceil((twelveHours - (now - lastChange))/3600000);
-      return (tg?tg.showAlert(`You can change wallet after ${hoursLeft} hours`):alert('Change cooldown active'));
-    }
-    await userRef().update({ tonWallet: addr, lastWalletChange: now });
-    if (tg) tg.showAlert('TON wallet saved');
-  } catch(e){ console.error('trySaveTonWallet', e); if (tg) tg.showAlert('Wallet save failed'); }
-}
-
-/* small periodic refresh for level buttons */
+/* small periodic update */
 setInterval(updateLevelProgressUI, 2000);
 
 </script>
 </body>
 </html>
-
