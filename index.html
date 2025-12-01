@@ -1,278 +1,414 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Aether - Earn & Airdrop</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
-  <style>
-    body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f0f1a,#1a1a2e);color:#fff;margin:0;padding:0;overflow-x:hidden}
-    .container{max-width:480px;margin:0 auto;padding:15px}
-    .header{background:#16213e;border-radius:15px;padding:15px;text-align:center;margin-bottom:20px}
-    .logo{font-size:36px;margin-bottom:10px}
-    .stats{display:flex;justify-content:space-around;background:#16213e;border-radius:12px;padding:15px;margin-bottom:15px}
-    .stat{text-align:center}
-    .stat big{font-size:24px;font-weight:bold;display:block}
-    .tabs{display:flex;background:#16213e;border-radius:12px;overflow:hidden;margin-bottom:15px}
-    .tab{flex:1;padding:12px;text-align:center;cursor:pointer;transition:0.3s}
-    .tab.active{background:#00d4ff;color:#000;font-weight:bold}
-    .content{background:#16213e;border-radius:12px;padding:20px;min-height:400px}
-    .btn{background:#00d4ff;color:#000;border:none;padding:14px;border-radius:12px;width:100%;font-size:16px;font-weight:bold;margin:10px 0;cursor:pointer}
-    .btn:disabled{background:#555;cursor:not-allowed}
-    .level{margin:15px 0;padding:15px;background:#1e1e2e;border-radius:12px}
-    .claim-btn{background:#00ff9d;color:#000}
-    .join-btn{background:#7289da;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px}
-    .monthly{font-size:15px;text-align:center;margin:15px 0;color:#00d4ff;font-weight:bold}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AETHER — 1.1 (Earn · Referral · TON)</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
+
+<!-- LibTL Ads -->
+<script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
+
+<style>
+:root{ --bg:#000; --panel:#0b0d0f; --muted:#9aa0a6; --accent:#fff; --green:#00d38a; --cyan:#00d4ff }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#000,#070707);color:var(--muted);padding:14px;min-height:100vh}
+.wrap{max-width:720px;margin:0 auto;position:relative}
+.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03)}
+.logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#111,#222);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:900;font-size:32px}
+h1{color:var(--accent);font-size:18px;margin-bottom:2px}
+.sub{color:var(--muted);font-size:13px}
+.monthly{position:absolute;top:8px;right:12px;background:rgba(0,212,255,0.15);padding:5px 12px;border-radius:10px;color:var(--cyan);font-weight:bold;font-size:13px}
+.card{background:var(--panel);padding:14px;border-radius:12px;margin-top:12px;border:1px solid rgba(255,255,255,0.02)}
+.stats{display:flex;gap:10px}
+.stat{flex:1;padding:12px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center}
+.v{font-weight:800;color:var(--accent);font-size:18px}
+.tabs{display:flex;gap:8px;margin-top:12px}
+.tab{flex:1;padding:10px;border-radius:10px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.02);cursor:pointer;color:var(--muted)}
+.tab.active{background:rgba(255,255,255,0.02);color:var(--accent);border-color:var(--green)}
+.section{display:none;padding-top:12px}
+.section.active{display:block}
+button.btn{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#fff,#dfeaf6);color:#071018;font-weight:800;cursor:pointer}
+button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
+.small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+.ref-box{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);word-break:break-all}
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
+.level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
+.claimBtn{background:var(--green);color:#001;padding:8px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12px}
+</style>
 </head>
 <body>
-<div class="container">
+<div class="wrap">
   <div class="header">
     <div class="logo">Ae</div>
-    <h2>AETHER — Earn & Airdrop</h2>
-    <div id="username">@username</div>
+    <div>
+      <h1>AETHER — Earn & Airdrop</h1>
+      <div id="userLine" class="sub">Loading...</div>
+    </div>
+    <div class="monthly" id="monthlyUsers">Loading users...</div>
   </div>
 
-  <div class="stats">
-    <div class="stat"><big id="coins">0</big>Coins</div>
-    <div class="stat"><big id="refs">0</big>Referrals</div>
-    <div class="stat"><big id="level">1</big>Level</div>
-  </div>
+  <div class="card">
+    <div class="stats">
+      <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
+      <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
+      <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
+    </div>
 
-  <div class="monthly" id="monthlyUsers">Loading monthly users...</div>
+    <div class="tabs">
+      <div class="tab active" onclick="openTab('home')">Home</div>
+      <div class="tab" onclick="openTab('tasks')">Tasks</div>
+      <div class="tab" onclick="openTab('referral')">Referral</div>
+      <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
+    </div>
 
-  <div class="tabs">
-    <div class="tab active" onclick="show('home')">Home</div>
-    <div class="tab" onclick="show('tasks')">Tasks</div>
-    <div class="tab" onclick="show('refer')">Referral</div>
-    <div class="tab" onclick="show('airdrop')">Airdrop</div>
-  </div>
+    <!-- HOME -->
+    <div id="home" class="section active">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="flex:1">
+          <button id="startMining" class="btn">Start Earning (Passive)</button>
+          <p class="small">Daily login streak gives bonus. Claim level rewards in Tasks.</p>
+        </div>
+        <div style="width:88px;text-align:center">
+          <div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#111,#222);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:800">Ae</div>
+        </div>
+      </div>
+    </div>
 
-  <div id="home" class="content">
-    <button class="btn" id="adBtn">Watch Rewarded Ad (+50)</button>
-    <p>Daily ads: <span id="dailyAds">0</span>/20 | Total: <span id="totalAds">0</span></p>
-    <div style="margin-top:30px">
-      <button class="btn join-btn" onclick="window.open('https://t.me/AetherMineX','_Community','_blank')">
-        Join Channel
-      </button>
+    <!-- TASKS -->
+    <div id="tasks" class="section">
+      <button id="watchAd" class="btn">Watch Rewarded Ad (+50)</button>
+      <p class="small">Daily ads watched: <span id="adsToday">0</span> / <span id="adsLimit">20</span> | Total ads: <span id="totalAds">0</span></p>
+
+      <div style="margin-top:20px">
+        <button class="btn" style="background:#5865f2;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px" onclick="tg.openTelegramLink('https://t.me/AetherMineX')">
+          Join Channel
+        </button>
+      </div>
+
+      <div class="small" style="margin-top:20px">Levels (claimable rewards):</div>
+      <div id="levelsList" class="levels"></div>
+      <div style="margin-top:10px;text-align:center"><button id="showAllLevels" class="ghost">Show More Levels</button></div>
+    </div>
+
+    <!-- REFERRAL -->
+    <div id="referral" class="section">
+      <div style="margin-bottom:8px">Invite friends — each successful referral = <strong>+1000 coins</strong></div>
+      <div class="ref-box">
+        <div id="myRef" style="color:var(--accent)">Generating..."></div>
+        <div><button id="copyRef" class="ghost">COPY</button></div>
+      </div>
+      <p class="small" style="margin-top:8px">Share your link — when someone joins using it, you get 1000 coins instantly!</p>
+    </div>
+
+    <!-- AIRDROP -->
+    <div id="airdrop" class="section">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1"><button id="connectTon" class="btn">Connect TON Wallet</button></div>
+        <div style="width:140px"><div id="tonBtnRoot"></div></div>
+      </div>
+      <div class="small" id="walletStatus">Not Connected</div>
+      <p class="small" style="margin-top:12px">Airdrop: Jan 1, 2026 — Stay active!</p>
     </div>
   </div>
 
-  <div id="tasks" class="content" style="display:none"><div id="levels"></div></div>
-  <div id="refer" class="content" style="display:none">
-    <h3>Invite & Earn 1000 Coins</h3>
-    <button class="btn" onclick="share()">Share Link</button>
-    <p style="margin-top:20px;word-break:break-all" id="refLink">Loading...</p>
-  </div>
-  <div id="airdrop" class="content" style="display:none">
-    <h3>Connect TON Wallet</h3>
-    <div id="ton-connect"></div>
-    <p id="walletAddress">Not connected</p>
-  </div>
+  <div class="footer">© Aether — @AetherMineXBot</div>
 </div>
 
 <script>
-// LIBTL ADS
-function show_10192178(type) {
-  return new Promise((resolve, reject) => {
-    if (window.LibTL && window.LibTL.show) {
-      window.LibTL.show(type, resolve, reject);
-    } else {
-      reject();
-    }
-  });
-}
-
-// Firebase Config (तेरा असली)
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
-  databaseURL: "https://earncryptomp-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "earncryptomp",
   storageBucket: "earncryptomp.firebasestorage.app",
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
-const BOT_TOKEN = "8359547898:AAGwkv22tGbWQZQChk8buqQnXXjC9i0ErDg"; // तेरा असली token
+const BOT_TOKEN = "8359547898:AAGwkv22tGbWQZQChk8buqQnXXjC9i0ErDg";
 const REFERRAL_BONUS = 1000;
-const AD_COINS = 50;
-const DAILY_LIMIT = 20;
+const DAILY_BASE = 20;
+const ADS_COOLDOWN_MS = 5000;
+const LEVEL_RENDER_CHUNK = 100;
 
-let user = null;
-let tg = window.Telegram.WebApp;
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
+const tgUser = tg.initDataUnsafe.user || {};
+const startParam = tg.initDataUnsafe.start_param || '';
 
-const connector = new TON_CONNECT.UI.TonConnectUI({
-  manifestUrl: 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json'
-});
+let firebaseUid = null;
+let current = {coins:0, refs:0, level:1, adsToday:0, totalAds:0, tonWallet:'', refCode:'', streak:0, lastLogin:null};
+let tonUI = null;
+let levelsRendered = 0;
+let mining = false;
 
-// INIT
-if(tg.initDataUnsafe.user) {
-  user = tg.initDataUnsafe.user;
-  document.getElementById("username").textContent = "@"+(user.username || user.first_name);
-  loadUser();
-  loadMonthlyUsers();
-  sendAutoReminder();
-}
-
-// Load / Create User + Referral Fix
-async function loadUser() {
-  const refParam = tg.initDataUnsafe.start_param;
-  const docRef = db.collection("users").doc(user.id.toString());
-  const doc = await docRef.get();
-
-  if (!doc.exists) {
-    const newUser = {
-      id: user.id,
-      username: user.username || user.first_name,
-      coins: 0,
-      referrals: 0,
-      level: 1,
-      dailyAds: 0,
-      totalAds: 0,
-      lastAdDate: new Date().toDateString(),
-      joinedAt: new Date(),
-      lastActive: new Date()
-    };
-    if (refParam && refParam.startsWith("ref_")) {
-      const refId = refParam.split("_")[1];
-      if (refId != user.id) newUser.referrer = refId;
-    }
-    await docRef.set(newUser);
-    if (refParam && refParam.startsWith("ref_")) await giveReferralBonus(refParam.split("_")[1]);
-  } else {
-    await docRef.update({ lastActive: new Date() });
-    if (refParam && refParam.startsWith("ref_") && !doc.data().referrer) {
-      await giveReferralBonus(refParam.split("_")[1]);
-    }
-  }
-
-  const data = (await docRef.get()).data();
-  updateUI(data);
-  showLevels(data);
-  document.getElementById("refLink").textContent = `https://t.me/AetherMineXBot?startapp=ref_${user.id}`;
-}
-
-// Referral Bonus (Admin panel में भी दिखेगा)
-async function giveReferralBonus(refId) {
-  if (!refId || refId == user.id) return;
-  const refDoc = db.collection("users").doc(refId);
-  await db.runTransaction(async t => {
-    const d = await t.get(refDoc);
-    if (d.exists) {
-      t.update(refDoc, {
-        referrals: firebase.firestore.FieldValue.increment(1),
-        coins: firebase.firestore.FieldValue.increment(REFERRAL_BONUS)
-      });
-    }
-  });
-}
-
-// Watch Ad
-document.getElementById("adBtn").onclick = async () => {
-  const docRef = db.collection("users").doc(user.id.toString());
-  const snap = await docRef.get();
-  const data = snap.data();
-  const today = new Date().toDateString();
-
-  if (data.lastAdDate !== today && data.dailyAds > 0) {
-    await docRef.update({ dailyAds: 0, lastAdDate: today });
-  }
-  if (data.dailyAds >= DAILY_LIMIT) return alert("Daily limit reached!");
-
-  show_10192178('pop').then(async () => {
-    await docRef.update({
-      coins: firebase.firestore.FieldValue.increment(AD_COINS),
-      dailyAds: firebase.firestore.FieldValue.increment(1),
-      totalAds: firebase.firestore.FieldValue.increment(1)
-    });
-    loadUser();
-  }).catch(() => {});
-};
-
-// Share
-function share() {
-  const link = `https://t.me/AetherMineXBot?startapp=ref_${user.id}`;
-  navigator.clipboard.writeText(link);
-  tg.showPopup({message: "Referral link copied!" });
-}
-
-// UI Update
-function updateUI(d) {
-  document.getElementById("coins").textContent = d.coins || 0;
-  document.getElementById("refs").textContent = d.referrals || 0;
-  document.getElementById("level").textContent = d.level || 1;
-  document.getElementById("dailyAds").textContent = d.dailyAds || 0;
-  document.getElementById("totalAds").textContent = d.totalAds || 0;
-}
-  // Levels System (same as before)
-async function showLevels(d) {
-  let html = "";
-  for (let i=1; i<=10; i++) {
-    const rRefs = i, rAds = i*15, rew = i*500;
-    const ok = (d.referrals||0)>=rRefs && (d.totalAds||0)>=rAds;
-    const claimed = d[`level${i}Claimed`];
-    html += `<div class="level"><strong>Level \( {i}</strong><br>Need \){rRefs} refs & \( {rAds} ads → \){rew} coins
-      <button class="btn claim-btn" \( {ok && !claimed?'':'disabled'} onclick="claim( \){i},${rew})">
-        ${ok && !claimed?'Claim':ok?'Claimed':'Locked'}</button></div>`;
-  }
-  document.getElementById("levels").innerHTML = html;
-}
-async function claim(l,r) {
-  await db.collection("users").doc(user.id.toString()).update({
-    coins: firebase.firestore.FieldValue.increment(r),
-    level: firebase.firestore.FieldValue.increment(1),
-    [`level${l}Claimed`]: true
-  });
-  loadUser();
-}
-
-// Monthly Active Users
-async function loadMonthlyUsers() {
-  const monthAgo = new Date(); monthAgo.setMonth(monthAgo.getMonth()-1);
-  const snap = await db.collection("users").where("lastActive", ">=", monthAgo).get();
-  document.getElementById("monthlyUsers").textContent = `${snap.size.toLocaleString()} monthly users`;
+// Monthly Users Counter
+async function updateMonthlyUsers() {
+  try {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const snap = await db.collection("users").where("lastActive", ">=", oneMonthAgo).get();
+    document.getElementById("monthlyUsers").textContent = snap.size.toLocaleString() + " monthly users";
+  } catch(e) { document.getElementById("monthlyUsers").textContent = "Error"; }
 }
 
 // 8-Hour Auto Reminder
-async function sendAutoReminder() {
-  const key = "lastReminder";
+function sendAutoReminder() {
+  const key = "lastReminder_" + (tgUser.id || "guest");
   const last = localStorage.getItem(key);
   const now = Date.now();
   if (!last || now - parseInt(last) > 8*60*60*1000) {
     const msgs = [
       "Hey! Don't forget your daily tasks — 1000+ coins waiting!",
       "Aether airdrop coming soon — keep mining!",
-      "Daily login bonus active — watch ads now!",
-      "New level unlocked? Check Tasks tab!"
+      "New levels unlocked! Check Tasks tab",
+      "Watch ads & earn 50 coins each!"
     ];
     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({chat_id:user.id, text:msgs[Math.floor(Math.random()*msgs.length)]})
-    });
-    localStorage.setItem(key, now);
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({chat_id:tgUser.id, text:msgs[Math.floor(Math.random()*msgs.length)]})
+    }).catch(()=>{});
+    localStorage.setItem(key, now.toString());
   }
 }
 
-// Tab Switch
-function show(t){ document.querySelectorAll(".content").forEach(c=>c.style.display="none");
-  document.getElementById(t).style.display="block";
-  document.querySelectorAll(".tab").forEach(tab=>tab.classList.remove("active"));
-  event.target.classList.add("active");
+auth.signInAnonymously().then(cred => {
+  firebaseUid = cred.user.uid;
+  initApp();
+});
+
+async function initApp() {
+  updateMonthlyUsers();
+  setInterval(updateMonthlyUsers, 60000);
+  sendAutoReminder();
+
+  const userRef = db.collection('users').doc(firebaseUid);
+
+  let doc = await userRef.get();
+  if (!doc.exists) {
+    current.refCode = tgUser.id ? tgUser.id.toString() : 'AM' + Math.random().toString(36).substr(2,6).toUpperCase();
+    await userRef.set({
+      firebaseUid, telegramId: tgUser.id||null, username: tgUser.username||tgUser.first_name||"User",
+      refCode: current.refCode, coins:0, refs:0, level:1, adsToday:0, totalAds:0,
+      lastActive: new Date(), streak:0, lastLogin:null, tonWallet:''
+    });
+  } else {
+    Object.assign(current, doc.data());
+  }
+
+  // REAL REFERRAL SYSTEM
+  if (startParam && startParam.startsWith('ref_')) {
+    const referrerTgId = startParam.split('_')[1];
+    if (referrerTgId && referrerTgId != tgUser.id) {
+      const referrerSnap = await db.collection('users').where('telegramId', '==', parseInt(referrerTgId)).limit(1).get();
+      if (!referrerSnap.empty) {
+        const referrerRef = referrerSnap.docs[0].ref;
+        const alreadyReferred = (await userRef.get()).data().referredBy;
+        if (!alreadyReferred) {
+          await db.runTransaction(async t => {
+            t.update(referrerRef, {
+              coins: firebase.firestore.FieldValue.increment(REFERRAL_BONUS), refs: firebase.firestore.FieldValue.increment(1) });
+            t.update(userRef, { referredBy: referrerRef.id });
+          });
+          tg.showAlert("Referral successful! +1000 coins added to your friend!");
+        }
+      }
+    }
+  }
+
+  // Setup UI
+  const refLink = `https://t.me/AetherMineXBot?startapp=ref_${tgUser.id || current.refCode}`;
+  document.getElementById('myRef').textContent = refLink;
+  document.getElementById('copyRef').onclick = () => {
+    navigator.clipboard.writeText(refLink);
+    tg.showAlert("Referral link copied!");
+  };
+
+  document.getElementById('userLine').textContent = (tgUser.username ? '@'+tgUser.username : tgUser.first_name||"User") + ' • ' + current.refCode;
+
+  // TON Connect
+  tonUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: 'https://raw.githubusercontent.com/karangangani/Earncrypto/main/tonconnect-manifest.json',
+    buttonRootId: 'tonBtnRoot'
+  });
+  tonUI.onStatusChange(w => {
+    document.getElementById('walletStatus').textContent = w ? `Connected: \( {w.account.address.slice(0,6)}... \){w.account.address.slice(-4)}` : 'Not Connected';
+  });
+
+  // Listeners
+  document.getElementById('watchAd').onclick = watchAdHandler;
+  document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/AetherMineX');
+  document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
+  document.getElementById('startMining').onclick = startPassiveMining;
+  document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(500);
+
+  // Daily login bonus
+  checkDailyLogin();
+
+  // Realtime listener
+  userRef.onSnapshot(d => {
+    if(!d.exists) return;
+    const data = d.data();
+    current.coins = data.coins||0;
+    current.refs = data.refs||0;
+    current.level = data.level||1;
+    current.adsToday = data.adsToday||0;
+    current.totalAds = data.totalAds||0;
+    updateUI();
+    updateLevelProgressUI();
+  });
+
+  renderLevelsChunk(LEVEL_RENDER_CHUNK);
+  updateUI();
 }
 
-// TON Connect
-document.getElementById("ton-connect").innerHTML = '<ton-connect-button></ton-connect-button>';
-connector.onStatusChange(w=> {
-  document.getElementById("walletAddress").textContent = w ? w.account.address.slice(0,6)+"..."+w.account.address.slice(-4) : "Not connected";
-});
+// Passive Mining
+function startPassive() {
+  if(mining) return;
+  mining = true;
+  setInterval(async () => {
+    await db.collection('users').doc(firebaseUid).update({
+      coins: firebase.firestore.FieldValue.increment(1)
+    }).catch(()=>{});
+  }, 1000);
+}
+  // Ad Handler
+async function watchAdHandler() {
+  const now = Date.now();
+  if (now - (window.lastAdTime || 0) < ADS_COOLDOWN_MS) return tg.showAlert("Wait a few seconds");
+  window.lastAdTime = now;
+
+  const userSnap = await db.collection('users').doc(firebaseUid).get();
+  const data = userSnap.data();
+  const today = new Date().toDateString();
+  if (data.lastLogin !== today) await checkDailyLogin();
+
+  const dailyLimit = DAILY_BASE + Math.max(0, (current.level-1))*10;
+  if (data.adsToday >= dailyLimit) return tg.showAlert("Daily ad limit reached!");
+
+  document.getElementById('watchAd').disabled = true;
+  document.getElementById('watchAd').textContent = "Loading Ad...";
+
+  try {
+    await window.show_10192178('pop');
+    await db.collection('users').doc(firebaseUid).update({
+      coins: firebase.firestore.FieldValue.increment(50),
+      adsToday: firebase.firestore.FieldValue.increment(1),
+      totalAds: firebase.firestore.FieldValue.increment(1)
+    });
+    tg.showAlert("+50 Coins!");
+  } catch { tg.showAlert("Ad not completed"); }
+
+  document.getElementById('watchAd').disabled = false;
+  document.getElementById('watchAd').textContent = "Watch Rewarded Ad (+50)";
+}
+
+// Daily Login Bonus
+async function checkDailyLogin() {
+  const today = new Date().toDateString();
+  const snap = await db.collection('users').doc(firebaseUid).get();
+  const data = snap.data() || {};
+  if (data.lastLogin !== today) {
+    const streak = (data.streak || 0) + 1;
+    const bonus = [100,200,300,400,500,700,1000][(streak-1)%7] || 1000;
+    await db.collection('users').doc(firebaseUid).update({
+      coins: firebase.firestore.FieldValue.increment(bonus),
+      streak, lastLogin: today, adsToday: 0
+    });
+    tg.showAlert(`Daily login bonus: +\( {bonus} coins! Streak: \){streak}`);
+  }
+}
+
+function updateUI() {
+  document.getElementById('points').textContent = (current.coins||0).toLocaleString();
+  document.getElementById('refs').textContent = current.refs||0;
+  document.getElementById('level').textContent = current.level||1;
+  document.getElementById('adsToday').textContent = current.adsToday||0;
+  document.getElementById('totalAds').textContent = current.totalAds||0;
+  const limit = DAILY_BASE + Math.max(0, (current.level||1)-1)*10;
+  document.getElementById('adsLimit').textContent = limit;
+}
+
+function openTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Levels System
+function renderLevelsChunk(count) {
+  const container = document.getElementById('levelsList');
+  const start = levelsRendered + 1;
+  const end = start + count - 1;
+  for(let i=start; i<=end; i++) {
+    const refsNeed = i;
+    const adsNeed = 10 + (i*8);
+    const reward = 500 * i;
+    const div = document.createElement('div');
+    div.className = 'level';
+    div.innerHTML = `
+      <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
+      <div class="small">Need \( {refsNeed} refs & \){adsNeed} ads → ${reward} coins</div>
+      <div style="margin-top:8px">
+        <button class="claimBtn" id="claim_\( {i}" onclick="claimLevel( \){i})">Claim</button>
+      </div>
+    `;
+    container.appendChild(div);
+  }
+  levelsRendered = end;
+  updateLevelProgressUI();
+}
+
+async function updateLevelProgressUI() {
+  const snap = await db.collection('users').doc(firebaseUid).get();
+  const data = snap.data() || {};
+  const refs = data.refs || 0;
+  const ads = data.totalAds || 0;
+  const claimed = data.claimedLevels || [];
+
+  for(let i=1; i<=levelsRendered; i++) {
+    const btn = document.getElementById('claim_'+i);
+    if(!btn) continue;
+    const needRefs = i;
+    const needAds = 10 + (i*8);
+    const canClaim = refs >= needRefs && ads >= needAds && !claimed.includes(i);
+    btn.disabled = !canClaim;
+    btn.textContent = canClaim ? 'Claim' : (claimed.includes(i) ? 'Claimed' : 'Locked');
+  }
+}
+
+async function claimLevel(lvl) {
+  const snap = await db.collection('users').doc(firebaseUid).get();
+  const data = snap.data();
+  const refs = data.refs || 0;
+  const ads = data.totalAds || 0;
+  const needRefs = lvl;
+  const needAds = 10 + (lvl*8);
+  if (refs < needRefs || ads < needAds) return tg.showAlert("Requirements not met");
+  if ((data.claimedLevels || []).includes(lvl)) return;
+
+  await db.collection('users').doc(firebaseUid).update({
+    coins: firebase.firestore.FieldValue.increment(500 * lvl),
+    claimedLevels: firebase.firestore.FieldValue.arrayUnion(lvl),
+    level: firebase.firestore.FieldValue.increment(1)
+  });
+  tg.showAlert(`Level \( {lvl} claimed! + \){500*lvl} coins`);
+}
+
+updateMonthlyUsers();
 </script>
 </body>
 </html>
