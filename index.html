@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
+<script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
 :root{ --bg:#000; --panel:#0b0d0f; --muted:#9aa0a6; --accent:#fff; --green:#00d38a }
@@ -36,7 +37,8 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
 .ref-box{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);word-break:break-all}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
 .level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
-.claimBtn{background:var(--green);color:#001;padding:8px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.claimBtn{background:var(--green);color:#000;padding:8px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.claimBtn:disabled{background:#333;color:#888;cursor:not-allowed}
 .footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12px}
 </style>
 </head>
@@ -87,23 +89,24 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
 
       <div class="small" style="margin-top:10px">Levels (claimable rewards):</div>
       <div id="levelsList" class="levels"></div>
+      <div style="margin-top:10px;text-align:center"><button id="showAllLevels" class="ghost">Show More Levels</button></div>
     </div>
 
     <div id="referral" class="section">
       <div style="margin-bottom:8px">Invite friends — each successful referral = <strong>+500 coins</strong></div>
       <div class="ref-box">
-        <div id="myRef" style="color:var(--accent);word-break:break-all">Loading...</div>
+        <div id="myRef" style="color:var(--accent);word-break:break-all">Generating...</div>
         <div><button id="copyRef" class="ghost">COPY</button></div>
       </div>
     </div>
 
     <div id="airdrop" class="section">
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
         <div style="flex:1"><button id="connectTon" class="btn">Connect TON Wallet</button></div>
-        <div style="width:140px"><div id="tonBtnRoot"></div></div>
+        <div id="tonBtnRoot" style="width:140px"></div>
       </div>
       <div class="small" id="walletStatus">Not Connected</div>
-      <p class="small" style="margin-top:8px">Eligibility: 10 referrals + 5000 coins</p>
+      <p class="small" style="margin-top:8px">Eligibility: 10 referrals + 5000 coins • Airdrop: Jan 1, 2026</p>
     </div>
   </div>
 
@@ -111,74 +114,85 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
 </div>
 
 <script>
-const FIREBASE_CONFIG = {apiKey:"AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",authDomain:"earncryptomp.firebaseapp.com",projectId:"earncryptomp",storageBucket:"earncryptomp.firebasestorage.app",messagingSenderId:"405204250643",appId:"1:405204250643:web:8841299bceb46f6752cfe6"};
-
-firebase.initializeApp(FIREBASE_CONFIG);
+const firebaseConfig = {apiKey:"AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",authDomain:"earncryptomp.firebaseapp.com",projectId:"earncryptomp",storageBucket:"earncryptomp.firebasestorage.app",messagingSenderId:"405204250643",appId:"1:405204250643:web:8841299bceb46f6752cfe6"};
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 
 let uid = null;
-let userData = {};
+let user = {};
 
 auth.signInAnonymously().then(c => { uid = c.user.uid; init(); });
 
-async function init() {
-  const userRef = db.collection('users').doc(uid);
-  let snap = await userRef.get();
+function userRef() { return db.collection('users').doc(uid); }
 
+async function init() {
+  const snap = await userRef().get();
   if (!snap.exists) {
-    await userRef.set({
+    await userRef().set({
       telegramId: tg.initDataUnsafe.user?.id || null,
-      username: tg.initDataUnsafe.user?.username || tg.initDataUnsafe.user?.first_name || 'User',
+      username: tg.initDataUnsafe.user?.username || tg.initDataUnsafe.user?.first_name || "User",
       coins: 0,
       refs: [],
       level: 1,
       adsToday: 0,
       totalAds: 0,
       claimedLevels: [],
-      tonWallet: '',
+      tonWallet: "",
       referredBy: null
     });
   }
 
-  // 100% WORKING REFERRAL FIX
-  const param = tg.initDataUnsafe.start_param;
-  if (param && param.startsWith('ref_') && !snap.data()?.referredBy) {
-    const refTgId = parseInt(param.split('_')[1]);
-    if (refTgId && refTgId !== tg.initDataUnsafe.user?.id) {
-      const refSnap = await db.collection('users').where('telegramId', '==', refTgId).get();
-      if (!refSnap.empty) {
-        const referrer = refSnap.docs[0];
-        await db.runTransaction(async t => {
-          t.update(referrer.ref, {
-            coins: firebase.firestore.FieldValue.increment(500),
-            refs: firebase.firestore.FieldValue.arrayUnion(uid)
+  // 100% WORKING REFERRAL (Telegram ID से)
+  const param = tg.initDataUnsafe.start_param || '';
+  if (param.startsWith('ref_')) {
+    const refTgId = parseInt(param.split('ref_')[1]);
+    const myId = tg.initDataUnsafe.user?.id;
+    if (refTgId && refTgId !== myId) {
+      const meSnap = await userRef().get();
+      if (!meSnap.data()?.referredBy) {
+        const refSnap = await db.collection('users').where('telegramId', '==', refTgId).limit(1).get();
+        if (!refSnap.empty) {
+          const refDoc = refSnap.docs[0];
+          await db.runTransaction(async t => {
+            t.update(refDoc.ref, {
+              coins: firebase.firestore.FieldValue.increment(500),
+              refs: firebase.firestore.FieldValue.arrayUnion(uid)
+            });
+            t.update(userRef(), { referredBy: refDoc.id });
           });
-          t.update(userRef, {referredBy: referrer.id});
-        });
-        tg.showAlert("Referral successful! +500 coins added!");
+          tg.showAlert("Referral successful! +500 coins");
+        }
       }
     }
   }
+  // Referral Link - सिर्फ Telegram ID से
+  const myTgId = tg.initDataUnsafe.user?.id || "unknown";
+  const myLink = `https://t.me/AetherMineXBot?startapp=ref_${myTgId}`;
+  document.getElementById('myRef').textContent = myLink;
+  document.getElementById('copyRef').onclick = () => {
+    navigator.clipboard.writeText(myLink);
+    tg.showAlert("Copied!");
+  };
+  document.getElementById('userLine').textContent = `\( {tg.initDataUnsafe.user?.username ? '@'+tg.initDataUnsafe.user.username : 'User'} • ID: \){myTgId}`;
 
-  // Referral link
-  const myId = tg.initDataUnsafe.user?.id || uid;
-  const refLink = `https://t.me/AetherMineXBot?startapp=ref_${myId}`;
-  document.getElementById('myRef').textContent = refLink;
-  document.getElementById('copyRef').onclick = () => { navigator.clipboard.writeText(refLink); tg.showAlert("Copied!"); };
-
-  document.getElementById('userLine').textContent = `@\( {tg.initDataUnsafe.user?.username || 'user'} • ID: \){myId}`;
-
-  // Real-time updates
-  userRef.onSnapshot(doc => {
-    userData = doc.data() || {};
-    updateUI();
+  // Real-time listener
+  userRef().onSnapshot(doc => {
+    user = doc.data() || {};
+    document.getElementById('points').textContent = (user.coins || 0).toLocaleString();
+    document.getElementById('refs').textContent = user.refs?.length || 0;
+    document.getElementById('level').textContent = user.level || 1;
+    document.getElementById('adsToday').textContent = user.adsToday || 0;
+    document.getElementById('totalAds').textContent = user.totalAds || 0;
+    document.getElementById('adsLimit').textContent = 20 + (user.level-1)*10;
+    if (user.tonWallet) {
+      document.getElementById('walletStatus').innerHTML = `TON: \( {user.tonWallet.slice(0,6)}... \){user.tonWallet.slice(-4)}`;
+    }
     renderLevels();
   });
 
-  // TON Connect
+  // TON Connect (अब बिल्कुल काम करेगा)
   const tonConnectUI = new TonConnectUI({
     manifestUrl: 'https://tonconnect.github.io/demo-dapp-with-wallet/tonconnect-manifest.json',
     buttonRootId: 'tonBtnRoot'
@@ -186,15 +200,15 @@ async function init() {
   document.getElementById('connectTon').onclick = () => tonConnectUI.connectWallet();
   tonConnectUI.onStatusChange(w => {
     if (w?.account?.address) {
-      userRef.update({tonWallet: w.account.address});
-      document.getElementById('walletStatus').textContent = `Connected: \( {w.account.address.slice(0,6)}... \){w.account.address.slice(-4)}`;
+      userRef().update({ tonWallet: w.account.address });
     }
   });
 
+  // Buttons
   document.getElementById('watchAd').onclick = () => {
-    const limit = 20 + (userData.level-1)*10;
-    if (userData.adsToday >= limit) return tg.showAlert("Daily limit reached!");
-    userRef.update({
+    const limit = 20 + (user.level-1)*10;
+    if ((user.adsToday || 0) >= limit) return tg.showAlert("Daily limit reached");
+    userRef().update({
       coins: firebase.firestore.FieldValue.increment(50),
       adsToday: firebase.firestore.FieldValue.increment(1),
       totalAds: firebase.firestore.FieldValue.increment(1)
@@ -202,67 +216,52 @@ async function init() {
   };
 
   document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/AetherMineX');
+  document.getElementById('showAllLevels').onclick = () => renderLevels(100);
 }
 
-function updateUI() {
-  document.getElementById('points').textContent = (userData.coins || 0).toLocaleString();
-  document.getElementById('refs').textContent = userData.refs?.length || 0;
-  document.getElementById('level').textContent = userData.level || 1;
-  document.getElementById('adsToday').textContent = userData.adsToday || 0;
-  document.getElementById('totalAds').textContent = userData.totalAds || 0;
-  document.getElementById('adsLimit').textContent = 20 + (userData.level-1)*10;
-  if (userData.tonWallet) {
-    document.getElementById('walletStatus').textContent = `TON: \( {userData.tonWallet.slice(0,6)}... \){userData.tonWallet.slice(-4)}`;
-  }
-}
-
-function renderLevels() {
-  const container = document.getElementById('levelsList');
-  container.innerHTML = '';
-  const refs = userData.refs?.length || 0;
-  const ads = userData.totalAds || 0;
-  for (let i = 1; i <= 50; i++) {
-    const needRefs = i;
-    const needAds = 10 + i * 5;
+function renderLevels(max = 40) {
+  const list = document.getElementById('levelsList');
+  list.innerHTML = '';
+  const refs = user.refs?.length || 0;
+  const ads = user.totalAds || 0;
+  for (let i = 1; i <= max; i++) {
+    const needR = i;
+    const needA = 10 + i*5;
     const reward = 500 * i;
-    const claimed = userData.claimedLevels?.includes(i);
-    const canClaim = refs >= needRefs && ads >= needAds && !claimed;
+    const claimed = user.claimedLevels?.includes(i) || false;
+    const can = refs >= needR && ads >= needA && !claimed;
 
     const div = document.createElement('div');
     div.className = 'level';
     div.innerHTML = `
-      <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
-      <div class="small">Need \( {needRefs} refs & \){needAds} ads → ${reward.toLocaleString()} coins</div>
-      <button class="claimBtn" \( {canClaim ? '' : 'disabled'} onclick="claimLevel( \){i})">
-        ${canClaim ? 'Claim' : claimed ? 'Claimed' : 'Locked'}
+      <div style="font-weight:800;color:#fff">Level ${i}</div>
+      <div class="small">Need \( {needR} refs & \){needA} ads → ${reward.toLocaleString()} coins</div>
+      <button class="claimBtn" \( {can ? '' : 'disabled'} onclick="claim( \){i})">
+        ${can ? 'Claim' : claimed ? 'Claimed' : 'Locked'}
       </button>
     `;
-    container.appendChild(div);
+    list.appendChild(div);
   }
 }
 
-async function claimLevel(lvl) {
-  const needRefs = lvl;
-  const needAds = 10 + lvl * 5;
-  const refs = userData.refs?.length || 0;
-  const ads = userData.totalAds || 0;
-  if (refs < needRefs || ads < needAds || userData.claimedLevels?.includes(lvl)) return;
-
-  await db.collection('users').doc(uid).update({
-    coins: firebase.firestore.FieldValue.increment(500 * lvl),
+async function claim(lvl) {
+  const r = lvl;
+  const a = 10 + lvl*5;
+  if ((user.refs?.length || 0) < r || user.totalAds < a || user.claimedLevels?.includes(lvl)) return;
+  await userRef().update({
+    coins: firebase.firestore.FieldValue.increment(500*lvl),
     level: firebase.firestore.FieldValue.increment(1),
     claimedLevels: firebase.firestore.FieldValue.arrayUnion(lvl)
   });
   tg.showAlert(`Level \( {lvl} claimed! + \){(500*lvl).toLocaleString()} coins`);
 }
 
-function openTab(tab) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-  event.target.classList.add('active');
+function openTab(t) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(tab=>tab.classList.remove('active'));
+  document.getElementById(t).classList.add('active');
+  document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active');
 }
 </script>
 </body>
-</html>
-  
+</html
