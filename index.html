@@ -6,11 +6,14 @@
 <title>AETHER — 1.1 (Earn · Referral · TON)</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
+
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
@@ -65,7 +68,6 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
       <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
     </div>
 
-    <!-- HOME -->
     <div id="home" class="section active">
       <div style="display:flex;gap:10px;align-items:center">
         <div style="flex:1">
@@ -78,32 +80,27 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
       </div>
     </div>
 
-    <!-- TASKS -->
     <div id="tasks" class="section">
       <button id="watchAd" class="btn">Watch Rewarded Ad (+50)</button>
       <p class="small">Daily ads watched: <span id="adsToday">0</span> / <span id="adsLimit">20</span> | Total ads: <span id="totalAds">0</span></p>
-
       <div style="margin-top:12px" class="ref-box">
         <div>Join our channel (no coins):</div>
         <button id="openChannel" class="ghost">Open Channel</button>
       </div>
-
       <div class="small" style="margin-top:10px">Levels (claimable rewards):</div>
       <div id="levelsList" class="levels"></div>
       <div style="margin-top:10px;text-align:center"><button id="showAllLevels" class="ghost">Show All Levels</button></div>
     </div>
 
-    <!-- REFERRAL -->
     <div id="referral" class="section">
       <div style="margin-bottom:8px">Invite friends — each successful referral = <strong>+500 coins</strong></div>
       <div class="ref-box">
         <div id="myRef" style="color:var(--accent);word-break:break-all">Generating...</div>
         <div><button id="copyRef" class="ghost">COPY</button></div>
       </div>
-      <p class="small" style="margin-top:8px">Only first-time joins via your link count. Unique ref code shown in header.</p>
+      <p class="small" style="margin-top:8px">Only first-time joins via your link count.</p>
     </div>
 
-    <!-- AIRDROP -->
     <div id="airdrop" class="section">
       <div style="display:flex;gap:8px">
         <div style="flex:1"><button id="connectTon" class="btn">Connect TON Wallet</button></div>
@@ -111,15 +108,13 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
       </div>
       <div class="small" id="walletStatus">Not Connected</div>
       <div style="margin-top:12px"><button id="showBalance" class="ghost">Show Connected TON Address</button></div>
-      <p class="small" style="margin-top:8px">Eligibility for airdrop: 10 referrals + 5000 coins. Airdrop date: Jan 1, 2026 — wallet changes blocked 7 days before airdrop.</p>
+      <p class="small" style="margin-top:8px">Eligibility: 10 referrals + 5000 coins. Airdrop: Jan 1, 2026</p>
     </div>
-
   </div>
   <div class="footer">© Aether — Bot: @AetherMineXBot</div>
 </div>
 
 <script>
-/* ========== CONFIG ========== */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -128,135 +123,242 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-const AD_FN = 'show_10192178';
-const DAILY_BASE = 20;
-const ADS_COOLDOWN_MS = 5000;
-const LEVELS_MAX = 1000;
-const LEVEL_RENDER_CHUNK = 100;
-const TON_MANIFEST = 'https://unpkg.com/@tonconnect/sdk@1.0.0/dist/tonconnect-manifest.json';
-const AIRDROP_DATE = new Date('2026-01-01T00:00:00Z');
-/* ============================ */
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+const tg = window.Telegram?.WebApp;
 if (tg) tg.ready();
-const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
 
-let firebaseUid = null;
+const tgUser = (tg?.initDataUnsafe?.user) || {};
+const startParam = (tg?.initDataUnsafe?.start_param || tg?.initDataUnsafe?.startapp || '') || '';
+
+// MAIN FIX: UID = Telegram ID (NO MORE DUPLICATES!)
+let UID = tgUser.id ? tgUser.id.toString() : ('guest_' + Date.now());
+function userRef() { return db.collection('users').doc(UID); }
+
+// Anonymous login (sirf security rules ke liye)
+auth.signInAnonymously().catch(() => {});
+
 let current = {
-  coins:0, refs:[], level:1, adsToday:0, totalAds:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false, refCode:''
+  coins:0, refs:[], level:1, adsToday:0, totalAds:0, adsMilestones:[], claimedLevels:[], tonWallet:'', 
+  lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false, refCode:'', telegramId: UID
 };
+
 let tonUI = null;
-let adLastTime = 0;
 let levelsRendered = 0;
+const DAILY_BASE = 20;
+const ADS_COOLDOWN_MS = 5000;
+const LEVELS_MAX = 1000;
+const LEVEL_RENDER_CHUNK = 100;
+const AD_FN = 'show_10192178';
+const BONUS = [100,200,300,400,500,700,1000];
+const AIRDROP_DATE = new Date('2026-01-01T00:00:00Z');
 
-/* FIXED: सही start_param पढ़ना */
-const startParam = tg?.initDataUnsafe?.start_param || '';
-
-auth.signInAnonymously().then((userCred) => {
-  firebaseUid = userCred.user.uid;
-  initApp();
-}).catch(e => {
-  console.error('Auth fail:', e);
-  if (tg) tg.showAlert('Auth failed: ' + e.message);
-  firebaseUid = 'anon_' + Date.now();
-  initApp();
-});
-
-function userRef(){ return db.collection('users').doc(firebaseUid); }
-
-async function initApp(){
+async function initApp() {
   try {
     const doc = await userRef().get();
+
     if (!doc.exists) {
-      const tgId = tgUser.id || null;
-      const refCode = tgId ? tgId.toString() : ('AM' + Math.random().toString(36).substr(2,6).toUpperCase());
-      current.refCode = refCode;
+      // NEW USER
+      current.refCode = UID;
+      current.telegramId = UID;
       await userRef().set({
-        firebaseUid, telegramId: tgId, username: (tgUser.username || tgUser.first_name) || null,
-        refCode, coins:0, refs:[], level:1, adsToday:0, totalAds:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false, referredBy: null
-      }, { merge:true });
+        telegramId: UID,
+        username: tgUser.username || tgUser.first_name || 'Guest',
+        refCode: UID,
+        coins: 100,
+        refs: [], level: 1, adsToday: 0, totalAds: 0, adsMilestones: [], claimedLevels: [],
+        tonWallet: '', lastWalletChange: 0, lastLogin: null, streak: 0, joinedChannel: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      if (tg) tg.showAlert('Welcome! +100 bonus coins');
     } else {
+      // EXISTING USER
       const data = doc.data();
       Object.assign(current, data);
+      if (!current.refCode) {
+        current.refCode = UID;
+        await userRef().update({ refCode: UID });
+      }
     }
 
-    // FIXED: Referral Link — सिर्फ Telegram ID से
-    const myTgId = tgUser.id || current.refCode;
-    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${myTgId}`;
+    // Realtime listener
+    userRef().onSnapshot(d => {
+      if (!d.exists) return;
+      Object.assign(current, d.data());
+      updateUI();
+      updateLevelProgressUI();
+    });
+  // Referral link
+    const botUsername = 'AetherMineXBot';
+    const refLink = `https://t.me/\( {botUsername}?startapp=ref_ \){UID}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
-      tg?.showAlert('Copied!') || alert('Copied');
+      tg?.showAlert('Referral link copied!') || alert('Copied');
     };
-    document.getElementById('userLine').innerText = (tgUser.username ? '@'+tgUser.username : (tgUser.first_name || 'Guest')) + ' • ' + myTgId;
 
-    // बाकी सब वैसा ही
-    userRef().onSnapshot(d => { if(d.exists) { current = d.data(); updateUI(); updateLevelProgressUI(); } });
-
+    // TON Connect
     if (window.TON_CONNECT_UI) {
-      tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
-      tonUI.onStatusChange(async (wallet) => {
-        if (wallet && wallet.account) await trySaveTonWallet(wallet.account.address || wallet.account);
+      tonUI = new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: 'https://unpkg.com/@tonconnect/sdk@1.0.0/dist/tonconnect-manifest.json',
+        buttonRootId: 'tonBtnRoot'
       });
+      tonUI.onStatusChange(w => w?.account?.address && trySaveTonWallet(w.account.address));
     }
 
+    // Event Listeners
     document.getElementById('connectTon').onclick = () => tonUI?.connectWallet();
     document.getElementById('watchAd').onclick = watchAdHandler;
-    document.getElementById('openChannel').onclick = () => tg?.openTelegramLink('https://t.me/AetherMineX');
+    document.getElementById('openChannel').onclick = () => tg?.openTelegramLink('https://t.me/AetherMineX') || window.open('https://t.me/AetherMineX');
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(LEVELS_MAX);
-    document.getElementById('showBalance').onclick = () => alert(current.tonWallet || 'Not connected');
+    document.getElementById('showBalance').onclick = () => tg?.showAlert(current.tonWallet || 'No wallet') || alert(current.tonWallet);
 
-    // FIXED: 100% Working Referral
-    await handleReferralParam();
+    // Handle referral if came from link
+    if (startParam.startsWith('ref_')) {
+      setTimeout(handleReferralParam, 3000); // thoda wait karo data load hone ke liye
+    }
 
     renderLevelsChunk(LEVEL_RENDER_CHUNK);
-    await checkDailyLogin();
+    checkDailyLogin();
     updateUI();
 
-  } catch(e){ console.error(e); tg?.showAlert('Error: '+e.message); }
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Error: ' + e.message);
+  }
 }
-    /* बस यही function बदला है — 100% Working Referral */
-async function handleReferralParam(){
-  if (!startParam || !startParam.startsWith('ref_')) return;
-  const refTgId = parseInt(startParam.split('ref_')[1]);
-  if (!refTgId || refTgId === tgUser.id) return;
+
+// 100% WORKING REFERRAL SYSTEM
+async function handleReferralParam() {
+  if (!startParam.startsWith('ref_')) return;
+  const referrerTgId = startParam.slice(4);
+  if (!referrerTgId || referrerTgId === UID) return;
 
   const meSnap = await userRef().get();
-  if (meSnap.data()?.referredBy) return;
+  if (meSnap.data()?.referredBy) return; // already referred
 
-  const refSnap = await db.collection('users').where('telegramId', '==', refTgId).limit(1).get();
-  if (refSnap.empty) return;
+  const referrerSnap = await db.collection('users').where('telegramId', '==', referrerTgId).limit(1).get();
+  if (referrerSnap.empty) return;
 
-  const referrerDoc = refSnap.docs[0];
+  const referrerDoc = referrerSnap.docs[0];
+  const referrerId = referrerDoc.id;
+
   await db.runTransaction(async t => {
-    t.update(referrerDoc.ref, {
-      refs: firebase.firestore.FieldValue.arrayUnion(firebaseUid),
+    const myRef = userRef();
+    const refRef = db.collection('users').doc(referrerId);
+
+    const [myData, refData] = await Promise.all([t.get(myRef), t.get(refRef)]);
+    if (refData.data()?.refs?.includes(UID)) throw 'already counted';
+
+    t.update(refRef, {
+      refs: firebase.firestore.FieldValue.arrayUnion(UID),
       coins: firebase.firestore.FieldValue.increment(500)
     });
-    t.update(userRef(), { referredBy: referrerDoc.id });
+    t.update(myRef, { referredBy: referrerId, coins: firebase.firestore.FieldValue.increment(300) });
   });
-  tg.showAlert('Referral Successful! +500 coins added to your friend');
+
+  tg?.showAlert('Referral successful! You +300, Friend +500');
 }
 
-/* बाकी सब functions तेरे original जैसे ही हैं — कोई बदलाव नहीं */
-const BONUS = [100,200,300,400,500,700,1000];
-async function checkDailyLogin(){ /* तेरी original */ }
-function updateUI(){ /* तेरी original */ }
-function openTab(tab){ /* तेरी original */ }
-let mining=false;
-function startPassiveMining(){ /* तेरी original */ }
-async function watchAdHandler(){ /* तेरी original */ }
-async function grantAdReward(adsTodayLocal){ /* तेरी original */ }
-async function trySaveTonWallet(addr){ /* तेरी original */ }
-function renderLevelsChunk(max){ /* तेरी original */ }
-async function updateLevelProgressUI(){ /* तेरी original */ }
-async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){ /* तेरी original */ }
-setInterval(updateLevelProgressUI, 2000);
+// Rest of functions (unchanged but cleaned)
+function updateUI() {
+  document.getElementById('points').innerText = Math.floor(current.coins || 0);
+  document.getElementById('refs').innerText = (current.refs?.length || 0);
+  document.getElementById('level').innerText = current.level || 1;
+  document.getElementById('adsToday').innerText = current.adsToday || 0;
+  document.getElementById('totalAds').innerText = current.totalAds || 0;
+  document.getElementById('adsLimit').innerText = DAILY_BASE + (Math.max(0, (current.level || 1) - 1) * 20);
+  document.getElementById('walletStatus').innerText = current.tonWallet ? `TON: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}` : 'Not Connected';
+  document.getElementById('userLine').innerText = `\( {tgUser.username ? '@'+tgUser.username : tgUser.first_name || 'Guest'} • Ref: \){current.refCode || UID}`;
+}
+
+function openTab(t){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(t).classList.add('active'); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelector(`[onclick="openTab('${t}')"]`).classList.add('active'); }
+
+let mining = false;
+function startPassiveMining(){ if(mining) return; mining=true; setInterval(()=>userRef().update({coins: firebase.firestore.FieldValue.increment(1)}), 1000); }
+
+let adLast = 0;
+async function watchAdHandler(){
+  const now = Date.now();
+  if (now - adLast < ADS_COOLDOWN_MS) return tg?.showAlert('Wait 5s');
+  const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||1)-1)*20);
+  if ((current.adsToday||0) >= dailyLimit) return tg?.showAlert('Daily limit reached');
+  adLast = now;
+  document.getElementById('watchAd').disabled = true;
+  if (typeof window[AD_FN] === 'function') await window[AD_FN]('pop');
+  await userRef().update({
+    coins: firebase.firestore.FieldValue.increment(50),
+    adsToday: firebase.firestore.FieldValue.increment(1),
+    totalAds: firebase.firestore.FieldValue.increment(1)
+  });
+  document.getElementById('watchAd').disabled = false;
+  tg?.showAlert('+50 coins');
+}
+
+async function checkDailyLogin(){
+  const today = new Date().toDateString();
+  if (current.lastLogin !== today) {
+    const streak = ((current.streak || 0) % 7) + 1;
+    const bonus = BONUS[streak-1] || 100;
+    await userRef().update({
+      coins: firebase.firestore.FieldValue.increment(bonus),
+      streak, lastLogin: today, adsToday: 0
+    });
+    tg?.showAlert(`Day \( {streak} bonus: + \){bonus} coins`);
+  }
+}
+
+async function trySaveTonWallet(addr){
+  const now = Date.now();
+  if (AIRDROP_DATE - now <= 7*24*60*60*1000) return tg?.showAlert('Wallet locked 7 days before airdrop');
+  if (current.lastWalletChange && now - current.lastWalletChange < 12*60*60*1000) return tg?.showAlert('Wait 12 hours');
+  await userRef().update({ tonWallet: addr, lastWalletChange: now });
+  tg?.showAlert('Wallet connected!');
+}
+
+function renderLevelsChunk(max){
+  const container = document.getElementById('levelsList');
+  const start = levelsRendered + 1;
+  const end = Math.min(LEVELS_MAX, levelsRendered + max);
+  for(let i=start; i<=end; i++){
+    const el = document.createElement('div'); el.className='level';
+    el.innerHTML = `<div style="font-weight:800;color:var(--accent)">Level ${i}</div>
+      <div class="small">Need \( {i} refs & \){10+i*5} ads → Reward ${500*i} coins</div>
+      <button class="claimBtn" onclick="claimLevel(\( {i}, \){i},\( {10+i*5}, \){500*i})">Claim</button>`;
+    container.appendChild(el);
+  }
+  levelsRendered = end;
+  updateLevelProgressUI();
+}
+
+async function updateLevelProgressUI(){
+  const refs = current.refs?.length || 0;
+  const ads = current.totalAds || 0;
+  for(let i=1; i<=levelsRendered; i++){
+    const btn = document.querySelector(`#levelsList .level:nth-child(${i}) button`);
+    if(!btn) continue;
+    const claimed = current.claimedLevels?.includes(i);
+    btn.disabled = claimed || refs < i || ads < (10+i*5);
+    btn.textContent = claimed ? 'Claimed' : 'Claim';
+  }
+}
+
+async function claimLevel(l, refsNeed, adsNeed, reward){
+  if ((current.refs?.length||0) < refsNeed || (current.totalAds||0) < adsNeed) return tg?.showAlert('Not eligible');
+  if (current.claimedLevels?.includes(l)) return;
+  await userRef().update({
+    coins: firebase.firestore.FieldValue.increment(reward),
+    claimedLevels: firebase.firestore.FieldValue.arrayUnion(l)
+  });
+  tg?.showAlert(`Level \( {l} claimed! + \){reward} coins`);
+}
+
+setInterval(updateLevelProgressUI, 3000);
+initApp();
 </script>
 </body>
 </html>
