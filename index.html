@@ -260,7 +260,8 @@ function renderLevelsChunk(max) {
   }
   updateLevelProgressUI();
 }
-  async function updateLevelProgressUI() {
+
+async function updateLevelProgressUI() {
   const refs = current.refs?.length || 0;
   const ads = current.totalAds || 0;
   document.querySelectorAll('#levelsList .level').forEach((el, i) => {
@@ -294,4 +295,4 @@ function openTab(tab) {
 initApp();
 </script>
 </body>
-</html>
+  </html>
