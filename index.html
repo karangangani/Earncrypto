@@ -41,7 +41,7 @@ h1{color:var(--accent);font-size:18px;margin-bottom:2px}
 button.btn{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#fff,#dfeaf6);color:#071018;font-weight:800;cursor:pointer}
 button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03)}
 .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
-.ref-box{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);word-break:break-word}
+.ref-box{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);word-break:break-word;overflow-wrap:break-word}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
 .level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
 .claimBtn{background:var(--green);color:#001;padding:8px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
@@ -169,7 +169,7 @@ let levelsRendered = 0;
 const startParam = (tg && (tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp)) || new URLSearchParams(window.location.search).get('start') || new URLSearchParams(window.location.search).get('startapp') || '';
 
 const loadingOverlay = document.getElementById('loadingOverlay');
-setTimeout(() => loadingOverlay.classList.add('hidden'), 8000); // 8sec timeout
+setTimeout(() => loadingOverlay.classList.add('hidden'), 8000); // Timeout
 
 auth.signInAnonymously().then(() => {
   initApp().finally(() => loadingOverlay.classList.add('hidden'));
@@ -177,7 +177,8 @@ auth.signInAnonymously().then(() => {
   console.error('Auth fail:', e);
   initApp().finally(() => loadingOverlay.classList.add('hidden'));
 });
-  function userRef(){ return db.collection('users').doc(userDocId); }
+
+function userRef(){ return db.collection('users').doc(userDocId); }
 
 async function initApp(){
   try {
@@ -218,7 +219,7 @@ async function initApp(){
         telegramId: data.telegramId || tgId
       };
     }
-
+    
     userRef().onSnapshot(d => {
       if (!d.exists) return;
       const dd = d.data();
@@ -345,7 +346,7 @@ async function handleReferralParam(){
   }
 }
 
-// Other functions (same as before)
+// Other functions (same)
 const BONUS = [100,200,300,400,500,700,1000];
 async function checkDailyLogin(){
   try {
@@ -365,9 +366,8 @@ async function checkDailyLogin(){
       if (tg) tg.showAlert(`Streak bonus: +${bonus} coins`);
     }
   } catch(e){ console.error('Login bonus fail:', e); }
-}
-
-function updateUI(){
+  }
+  function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0;
   document.getElementById('level').innerText = current.level || 1;
@@ -397,8 +397,9 @@ function startPassiveMining(){
   setInterval(async ()=>{
     await userRef().update({ coins: firebase.firestore.FieldValue.increment(1) }).catch(()=>{});
   }, 1000);
-  }
-  let adLastTime = 0;
+}
+
+let adLastTime = 0;
 async function watchAdHandler(){
   try {
     const now = Date.now();
