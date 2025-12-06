@@ -43,7 +43,8 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
 .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
 .ref-box{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);word-break:break-all}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
-.level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
+.level{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);display:none} /* FIXED: Hide by default */
+.level.visible{display:block} /* Show only if requirements met or previous claimed */
 .claimBtn{background:var(--green);color:#001;padding:8px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
 .footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12px}
 </style>
@@ -140,7 +141,7 @@ const DAILY_BASE = 20;
 const ADS_COOLDOWN_MS = 5000;
 const LEVELS_MAX = 1000;
 const LEVEL_RENDER_CHUNK = 100;
-const TON_MANIFEST = 'https://unpkg.com/@tonconnect/sdk@1.0.0/dist/tonconnect-manifest.json'; // FIXED: Valid fallback manifest
+const TON_MANIFEST = 'https://tonconnect-sdk-demo-dapp.vercel.app/tonconnect-manifest.json'; // FIXED: Valid demo manifest URL
 const AIRDROP_DATE = new Date('2026-01-01T00:00:00Z'); // UTC
 /* ============================ */
 
@@ -191,7 +192,7 @@ async function initApp(){
       await userRef().set({
         telegramId: tgId, // String for consistency
         username: (tgUser.username || tgUser.first_name) || null,
-        refCode: tgId, // Use Telegram ID as refCode - no random, ensures uniqueness
+        refCode: tgId, // FIXED: Strictly TG ID, no random fallback
         coins:0, refs:[], level:1, adsToday:0, totalAds:0, adsMilestones:[], claimedLevels:[], tonWallet:'', lastWalletChange:0, lastLogin:null, streak:0, joinedChannel:false
       }, { merge:true });
       if (tg) tg.showAlert('New user created');
@@ -210,7 +211,7 @@ async function initApp(){
         lastLogin: data.lastLogin || null,
         streak: data.streak || 0,
         joinedChannel: data.joinedChannel || false,
-        refCode: data.refCode || tgId,
+        refCode: data.refCode || tgId, // FIXED: Ensure TG ID
         telegramId: data.telegramId || tgId
       };
     }
@@ -238,12 +239,12 @@ async function initApp(){
       console.error('Snapshot fail:', snapErr);
     }
 
-    // FIXED: Referral link uses Telegram ID as param for uniqueness
+    // FIXED: Referral link uses Telegram ID as param for uniqueness - no random
     try {
       document.getElementById('userLine').innerText = ((tgUser.username ? '@'+tgUser.username : (tgUser.first_name || 'Guest')) + ' • ' + (current.refCode || ''));
       const botUser = 'AetherMineXBot';
-      const refParam = current.refCode; // Telegram ID string
-      const refLink = 'https://t.me/' + botUser + '?startapp=ref_' + refParam;
+      const refParam = current.refCode; // Strictly TG ID
+      const refLink = `https://t.me/\( {botUser}?startapp=ref_ \){refParam}`;
       document.getElementById('myRef').innerText = refLink;
       document.getElementById('copyRef').onclick = () => {
         navigator.clipboard.writeText(refLink);
@@ -254,28 +255,36 @@ async function initApp(){
       if (tg) tg.showAlert('Ref link gen failed');
     }
 
-    // FIXED: TON UI with try-catch
+    // FIXED: TON UI with valid manifest URL and better error handling
     try {
       if (window.TON_CONNECT_UI) {
-        tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
+        tonUI = new TON_CONNECT_UI.TonConnectUI({ 
+          manifestUrl: TON_MANIFEST, 
+          buttonRootId: 'tonBtnRoot',
+          walletsListConfiguration: { includeWallets: ['Tonkeeper', 'TON Wallet'] } // FIXED: Limit to reliable wallets
+        });
         tonUI.onStatusChange(async (wallet) => {
           if (wallet && wallet.account) {
             const addr = wallet.account.address || wallet.account;
             await trySaveTonWallet(addr);
           } else {
             await userRef().update({ tonWallet: '', lastWalletChange: 0 }).catch(() => {});
+            document.getElementById('walletStatus').innerText = 'Disconnected';
             if (tg) tg.showAlert('Wallet disconnected');
           }
         });
+      } else {
+        throw new Error('TON_CONNECT_UI not loaded');
       }
     } catch (tonErr) {
       console.error('TON init fail:', tonErr);
-      if (tg) tg.showAlert('TON wallet init failed - airdrop still works');
+      document.getElementById('walletStatus').innerText = 'TON Unavailable (Manifest Error - Check Network/VPN)';
+      if (tg) tg.showAlert('TON wallet init failed: ' + tonErr.message + '. Try without VPN. Airdrop still works with manual address.');
     }
     // click handlers - safe
     document.getElementById('connectTon').onclick = () => { 
       if (tonUI && tonUI.connectWallet) tonUI.connectWallet(); 
-      else if (tg) tg.showAlert('TON not available'); 
+      else if (tg) tg.showAlert('TON not available - Check manifest URL'); 
     };
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = () => { 
@@ -288,10 +297,11 @@ async function initApp(){
       if (!current.tonWallet) return (tg ? tg.showAlert('Connect TON first') : alert('Connect TON first')); 
       alert(`TON: ${current.tonWallet}`); 
     };
-  // handle referral
+
+    // handle referral
     await handleReferralParam();
 
-    // render levels - force
+    // render levels - force initial chunk
     renderLevelsChunk(LEVEL_RENDER_CHUNK);
 
     // daily login
@@ -373,8 +383,7 @@ async function checkDailyLogin(){
     }
   } catch(e){ console.error('Login bonus fail:', e); }
 }
-
-function updateUI(){
+  function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0;
   document.getElementById('level').innerText = current.level || 1;
@@ -383,7 +392,6 @@ function updateUI(){
   const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||1)-1) * 20);
   document.getElementById('adsLimit').innerText = dailyLimit;
   if (current.tonWallet) {
-    // FIXED: Template literal syntax
     document.getElementById('walletStatus').innerText = `TON: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`;
   } else {
     document.getElementById('walletStatus').innerText = 'Not Connected';
@@ -471,22 +479,35 @@ async function trySaveTonWallet(addr){
       return (tg?tg.showAlert(`Change after ${remainingH}h`):alert('Cooldown'));
     }
     await userRef().update({ tonWallet: addr, lastWalletChange: now });
-    if (tg) tg.showAlert('Wallet saved');
+    // FIXED: Update UI immediately
+    current.tonWallet = addr;
+    updateUI();
+    if (tg) tg.showAlert('Wallet saved & updated');
   } catch(e){ console.error('Wallet save fail:', e); if (tg) tg.showAlert('Save failed'); }
   }
   
+// FIXED: Render levels progressively - only show levels where requirements are met or previous is claimed
 function renderLevelsChunk(max){
   try {
     const container = document.getElementById('levelsList');
     const start = levelsRendered + 1;
     const end = Math.min(LEVELS_MAX, levelsRendered + max);
-    for (let i = start; i <= end; i++) {
-      const refsNeeded = i; // FIXED: Ensure calc
+    const snap = await userRef().get(); // Get current data
+    const data = snap.exists ? snap.data() : {};
+    const refsCount = (data.refs && data.refs.length) || 0;
+    const adsDone = data.totalAds || 0;
+    const claimed = data.claimedLevels || [];
+    let maxVisible = 1; // At least level 1
+    for (let i=1; i<=end; i++) {
+      const refsNeeded = i;
       const adsNeeded = 10 + (i * 5);
+      const isVisible = claimed.includes(i-1) || (refsCount >= refsNeeded && adsDone >= adsNeeded); // Show if previous claimed or current met
+      if (isVisible) maxVisible = i;
+      if (i > maxVisible) continue; // Skip rendering if not visible
+
       const reward = 500 * i;
       const el = document.createElement('div');
-      el.className = 'level';
-      // FIXED: Manual string build if template issue
+      el.className = `level ${isVisible ? 'visible' : ''}`;
       let htmlStr = '<div style="font-weight:800;color:var(--accent)">Level ' + i + '</div>';
       htmlStr += '<div class="small">Requires: ' + refsNeeded + ' refs & ' + adsNeeded + ' total ads — Reward ' + reward + ' coins</div>';
       htmlStr += '<div style="margin-top:8px"><button id="claim_' + i + '" class="claimBtn" disabled data-i="' + i + '">Claim</button></div>';
@@ -503,21 +524,33 @@ function renderLevelsChunk(max){
     console.error('Levels render fail:', levelErr);
     if (tg) tg.showAlert('Levels load error');
   }
-  }
-  async function updateLevelProgressUI(){
+}
+
+async function updateLevelProgressUI(){
   try {
     const snap = await userRef().get();
     const data = snap.exists ? snap.data() : {};
     const refsCount = (data.refs && data.refs.length) || 0;
     const adsDone = data.totalAds || 0;
+    const claimed = (data.claimedLevels || []);
+    let maxVisible = 1;
     for (let i=1; i<=levelsRendered; i++){
       const claimBtn = document.getElementById(`claim_${i}`);
       if (!claimBtn) continue;
       const refsNeeded = i;
       const adsNeeded = 10 + (i*5);
-      const claimed = (data.claimedLevels || []).includes(i);
-      claimBtn.disabled = claimed || !(refsCount >= refsNeeded && adsDone >= adsNeeded);
-      claimBtn.innerText = claimed ? 'Claimed' : 'Claim';
+      const isClaimable = !(claimed.includes(i)) && (refsCount >= refsNeeded && adsDone >= adsNeeded);
+      const isVisible = claimed.includes(i-1) || isClaimable;
+      const levelEl = claimBtn.closest('.level');
+      if (levelEl) levelEl.classList.toggle('visible', isVisible);
+      if (isVisible) maxVisible = i;
+      claimBtn.disabled = !isClaimable;
+      claimBtn.innerText = claimed.includes(i) ? 'Claimed' : 'Claim';
+    }
+    // FIXED: Auto-update user level based on max claimed/visible
+    const newLevel = Math.max(...claimed, 1);
+    if (newLevel > current.level) {
+      await userRef().update({ level: newLevel });
     }
   } catch(e){ console.error('Level progress fail:', e); }
 }
@@ -535,8 +568,11 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
       coins: firebase.firestore.FieldValue.increment(reward),
       claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo)
     });
-    // FIXED: Template literal syntax
-    if (tg) tg.showAlert(`Level \( {levelNo}: + \){reward} coins`);
+    // FIXED: Auto level up
+    const newLevel = Math.max(...claimed.concat([levelNo]), current.level);
+    await userRef().update({ level: newLevel });
+    if (tg) tg.showAlert(`Level \( {levelNo}: + \){reward} coins! Level up to ${newLevel}`);
+    updateLevelProgressUI(); // Refresh visibility
   } catch(e){ console.error('Claim fail:', e); if (tg) tg.showAlert('Claim failed'); }
 }
 
