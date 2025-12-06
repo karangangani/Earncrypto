@@ -219,7 +219,6 @@ async function initApp(){
         telegramId: data.telegramId || tgId
       };
     }
-    
     userRef().onSnapshot(d => {
       if (!d.exists) return;
       const dd = d.data();
@@ -366,8 +365,9 @@ async function checkDailyLogin(){
       if (tg) tg.showAlert(`Streak bonus: +${bonus} coins`);
     }
   } catch(e){ console.error('Login bonus fail:', e); }
-  }
-  function updateUI(){
+}
+
+function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = (current.refs && current.refs.length) || 0;
   document.getElementById('level').innerText = current.level || 1;
