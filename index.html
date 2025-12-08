@@ -121,7 +121,7 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid rgba(255
         <div style="flex:1"><button id="connectTon" class="btn">Connect TON Wallet</button></div>
         <div style="width:140px"><div id="tonBtnRoot"></div></div>
       </div>
-      <div class="small" id="walletStatus">Not Connected</div>
+      <div class="small" id="walletStatus">Aether - Not Connected</div>
       <div style="margin-top:12px"><button id="showBalance" class="ghost">Show Connected TON Address</button></div>
       <p class="small" style="margin-top:8px">Eligibility for airdrop: 10 referrals + 5000 coins. Airdrop date: Jan 1, 2026 — wallet changes blocked 7 days before airdrop.</p>
     </div>
@@ -145,7 +145,7 @@ const DAILY_BASE = 20;
 const ADS_COOLDOWN_MS = 5000;
 const LEVELS_MAX = 1000;
 const LEVEL_RENDER_CHUNK = 50;
-const TON_MANIFEST = 'https://aethermine.github.io/tonconnect-manifest.json'; // FIXED: Anonymous domain
+const TON_MANIFEST = 'https://aethermine.github.io/tonconnect-manifest.json'; // Anonymous for "Aether"
 const AIRDROP_DATE = new Date('2026-01-01T00:00:00Z');
 /* ============================ */
 
@@ -182,20 +182,19 @@ async function initApp(){
     
     let doc = await userRef().get().catch(e => console.error('DB get fail:', e));
     
-    // FIXED: Real unique ref code + username only
     let isNewUser = !doc.exists;
     let displayName = tgUser.username ? '@' + tgUser.username : (tgUser.first_name || 'Guest');
     current.username = displayName;
     
     if (isNewUser) {
-      current.refCode = 'ref_' + Math.floor(Math.random() * 9000000 + 1000000); // FIXED: Real 7-digit unique code
+      current.refCode = 'ref_' + Math.floor(Math.random() * 9000000 + 1000000); // 7-digit unique like BUGminer
       current.telegramId = tgId;
       await userRef().set({
         telegramId: tgId,
-        username: displayName, // FIXED: Only username
+        username: displayName, // Only username
         refCode: current.refCode,
         coins: 20,
-        refs: [], // FIXED: Empty
+        refs: [], // Empty like BUGminer
         level: 1,
         adsToday: 0,
         totalAds: 0,
@@ -232,10 +231,10 @@ async function initApp(){
       });
     }
 
-    // FIXED: Username display - only @username or name
-    document.getElementById('userLine').innerText = current.username + ' • ' + current.refCode.split('_')[1]; // Show only digits
+    // FIXED: Username only, no error
+    document.getElementById('userLine').innerText = current.username + ' • ' + (current.refCode ? current.refCode.split('_')[1] : '---');
 
-    // Realtime - FIXED: Update level on refs change
+    // Realtime - auto level on refs/ads
     if (unsubscribeSnapshot) unsubscribeSnapshot();
     unsubscribeSnapshot = userRef().onSnapshot(
       (docSnap) => {
@@ -256,49 +255,49 @@ async function initApp(){
           referredBy: data.referredBy || null,
           username: data.username || current.username
         });
-        // FIXED: Auto level update based on refs + ads
-        const newLevel = Math.min(Math.floor((data.refs?.length || 0 + data.totalAds / 10) / 10) + 1, LEVELS_MAX);
+        // FIXED: Level = floor((refs + ads/10)/10) +1, max 1000
+        const newLevel = Math.min(Math.floor(((data.refs?.length || 0) + (data.totalAds || 0) / 10) / 10) + 1, LEVELS_MAX);
         if (newLevel > current.level) {
           current.level = newLevel;
-          userRef().update({ level: newLevel });
+          userRef().update({ level: newLevel }).catch(console.error);
         }
         updateUI();
         updateLevelProgressUI();
       },
       (error) => console.error('Snapshot error:', error)
     );
-  // FIXED: Real ref link with unique code
-    const refLink = 'https://t.me/AetherMineXBot?startapp=' + current.refCode; // FIXED: Full unique code
+
+    // FIXED: Ref link with full unique code, copy alert
+    const refLink = 'https://t.me/AetherMineXBot?startapp=' + current.refCode;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
-      navigator.clipboard.writeText(refLink).then(() => { if (tg) tg.showAlert('Link copied! Share for +500 coins'); });
+      navigator.clipboard.writeText(refLink).then(() => { if (tg) tg.showAlert('Copied! Share for +500 coins each'); });
     };
 
-    // FIXED: TON - anonymous manifest
+    // TON - "Aether" generic
     try {
       if (typeof TON_CONNECT_UI !== 'undefined') {
         tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
         tonUI.onStatusChange(async (wallet) => {
           if (wallet?.account?.address) {
             await trySaveTonWallet(wallet.account.address);
-            if (tg) tg.showAlert('Wallet connected to Aether!'); // FIXED: Generic message
+            if (tg) tg.showAlert('Connected to Aether!');
           } else {
             await userRef().update({ tonWallet: '', lastWalletChange: 0 }).catch(console.error);
-            if (tg) tg.showAlert('Wallet disconnected');
+            if (tg) tg.showAlert('Disconnected from Aether');
           }
         });
       } else {
-        document.getElementById('tonBtnRoot').innerHTML = '<span style="color:var(--muted)">Connect via TON</span>';
+        document.getElementById('tonBtnRoot').innerHTML = '<span style="color:var(--muted)">Connect to Aether</span>';
       }
     } catch (e) { 
       console.error('TON fail:', e); 
-      document.getElementById('tonBtnRoot').innerHTML = '<span style="color:var(--muted)">TON unavailable</span>';
+      document.getElementById('tonBtnRoot').innerHTML = '<span style="color:var(--muted)">Aether - Unavailable</span>';
     }
-
-    // Handlers
+      // Handlers - FIXED: Ads increment works
     document.getElementById('connectTon').onclick = () => { 
       if (tonUI?.connectWallet) tonUI.connectWallet(); 
-      else if (tg) tg.showAlert('TON unavailable'); 
+      else if (tg) tg.showAlert('Aether - TON unavailable'); 
     };
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = () => { 
@@ -308,11 +307,11 @@ async function initApp(){
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(100);
     document.getElementById('showBalance').onclick = () => { 
-      if (!current.tonWallet) return (tg ? tg.showAlert('Connect TON first') : alert('Connect TON first')); 
-      alert('TON Address: ' + current.tonWallet); 
+      if (!current.tonWallet) return (tg ? tg.showAlert('Connect to Aether first') : alert('Connect to Aether first')); 
+      alert('Aether TON: ' + current.tonWallet); 
     };
 
-    // FIXED: Referral only if param & new user, updates admin
+    // FIXED: Referral like BUGminer - only if param & new, mutual arrayUnion + coins
     if (startParam && startParam.startsWith('ref_') && isNewUser) {
       await handleReferralParam();
     }
@@ -321,47 +320,43 @@ async function initApp(){
     await checkDailyLogin();
 
     updateUI();
-    if (tg && isNewUser) tg.showAlert('Welcome to Aether! Share your link for referrals 🚀');
+    if (tg && isNewUser) tg.showAlert('Welcome to Aether! Share link for +500 coins each 🚀');
 
   } catch (error) {
     console.error('Init fail:', error);
-    if (tg) tg.showAlert('Init error. Retry /start.');
-    document.getElementById('userLine').innerText = (tgUser.first_name || 'Guest') + ' • ref_error';
+    if (tg) tg.showAlert('Error. Retry /start.');
+    document.getElementById('userLine').innerText = displayName + ' • ---';
     document.getElementById('points').innerText = '0';
   }
 }
 
-// FIXED: Real referral - adds to both, updates level, shows in admin
+// FIXED: Referral like BUGminer - mutual add + coins + level up
 async function handleReferralParam(){
   try {
-    const refCode = startParam.split('ref_')[1];
-    if (!refCode) return;
-    const refSnap = await db.collection('users').where('refCode', '==', 'ref_' + refCode).limit(1).get();
-    if (refSnap.empty) return;
-    const referrer = refSnap.docs[0];
-    const referrerData = referrer.data();
-    if (referrerData.refs?.includes(current.telegramId)) return; // Already referred
-    await db.runTransaction(async (transaction) => {
-      // Update referrer
-      transaction.update(referrer.ref, {
-        refs: firebase.firestore.FieldValue.arrayUnion(current.telegramId),
-        coins: firebase.firestore.FieldValue.increment(500)
-      });
-      // Update new user
-      transaction.update(userRef(), {
-        referredBy: referrer.id,
-        coins: firebase.firestore.FieldValue.increment(500)
-      });
-    });
-    // FIXED: Trigger level update for referrer
-    const newReferrerLevel = Math.min((referrerData.refs?.length + 1 + referrerData.totalAds / 10) / 10 + 1, LEVELS_MAX);
+    const referrerId = startParam.replace('ref_', '');
+    if (!referrerId) return;
+    const doc = await userRef().get();
+    if (doc.exists && doc.data().refs?.includes(referrerId)) return; // Already
+    const referrerDoc = await db.collection('users').doc(referrerId).get();
+    if (!referrerDoc.exists) return;
+    // FIXED: Mutual arrayUnion like BUGminer
+    await userRef().set({ refs: firebase.firestore.FieldValue.arrayUnion(referrerId) }, { merge: true });
+    await db.collection('users').doc(referrerId).update({ refs: firebase.firestore.FieldValue.arrayUnion(userDocId) });
+    // FIXED: +500 each
+    await userRef().update({ coins: firebase.firestore.FieldValue.increment(500) });
+    await db.collection('users').doc(referrerId).update({ coins: firebase.firestore.FieldValue.increment(500) });
+    // FIXED: Level up for referrer
+    const referrerData = referrerDoc.data();
+    const newReferrerLevel = Math.min(Math.floor(((referrerData.refs?.length || 0) + 1 + (referrerData.totalAds || 0) / 10) / 10) + 1, LEVELS_MAX);
     if (newReferrerLevel > referrerData.level) {
-      referrer.ref.update({ level: newReferrerLevel });
+      db.collection('users').doc(referrerId).update({ level: newReferrerLevel });
     }
+    // Update local
+    current.refs.push(referrerId);
     current.coins += 500;
-    current.refs = referrerData.refs || []; // Update local for UI
+    current.level = Math.min(Math.floor((current.refs.length + (current.totalAds || 0) / 10) / 10) + 1, LEVELS_MAX);
     updateUI();
-    if (tg) tg.showAlert('Referral success! +500 coins to both. Your level updated! 🎉');
+    if (tg) tg.showAlert('Referral success! +500 coins each. Level updated! 🎉');
   } catch(e){ 
     console.error('Referral fail:', e); 
     if (tg) tg.showAlert('Referral error. Try again.'); 
@@ -384,7 +379,7 @@ async function checkDailyLogin(){
     });
     current.coins += bonus;
     updateUI();
-    if (tg) tg.showAlert('Daily bonus: +' + bonus + ' coins! Keep the streak 🔥');
+    if (tg) tg.showAlert('Daily streak bonus: +' + bonus + ' coins! 🔥');
   } catch(e){ console.error('Login bonus fail:', e); }
 }
 
@@ -397,9 +392,9 @@ function updateUI(){
   const dailyLimit = DAILY_BASE + (Math.max(0,(current.level||1)-1) * 20);
   document.getElementById('adsLimit').innerText = dailyLimit;
   if (current.tonWallet) {
-    document.getElementById('walletStatus').innerText = `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`;
+    document.getElementById('walletStatus').innerText = `Aether - \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`;
   } else {
-    document.getElementById('walletStatus').innerText = 'Not Connected';
+    document.getElementById('walletStatus').innerText = 'Aether - Not Connected';
   }
   document.getElementById('userLine').innerText = current.username + ' • ' + (current.refCode ? current.refCode.split('_')[1] : '---');
 }
@@ -454,12 +449,6 @@ async function watchAdHandler(){
       await grantAdReward(adsTodayLocal);
     }
     btn.disabled=false; btn.innerText='Watch Rewarded Ad (+50)';
-    // FIXED: Trigger level update after ads
-    const newLevel = Math.min((current.refs.length + (current.totalAds + 1) / 10) / 10 + 1, LEVELS_MAX);
-    if (newLevel > current.level) {
-      current.level = newLevel;
-      userRef().update({ level: newLevel });
-    }
   } catch(e){ console.error('Ad handler fail:', e); }
 }
 
@@ -511,7 +500,7 @@ function renderLevelsChunk(max){
     const start = levelsRendered + 1;
     const end = Math.min(LEVELS_MAX, levelsRendered + max);
     for (let i = start; i <= end; i++) {
-      const refsNeeded = i * 2; // FIXED: Realistic condition
+      const refsNeeded = i * 2;
       const adsNeeded = 10 + (i * 5);
       const reward = 500 * i;
       const el = document.createElement('div');
@@ -546,7 +535,6 @@ async function updateLevelProgressUI(){
       claimBtn.disabled = claimed || !(refsCount >= refsNeeded && adsDone >= adsNeeded);
       claimBtn.innerText = claimed ? 'Claimed' : 'Claim';
     }
-    // FIXED: Auto level up on refs + ads
     const potentialLevel = Math.min(Math.floor((refsCount + adsDone / 10) / 10) + 1, LEVELS_MAX);
     if (potentialLevel > current.level) {
       current.level = potentialLevel;
@@ -554,9 +542,8 @@ async function updateLevelProgressUI(){
       updateUI();
     }
   } catch(e){ console.error('Level progress fail:', e); }
-}
-
-async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
+  }
+  async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   try {
     const snap = await userRef().get();
     const data = snap.exists ? snap.data() : {};
