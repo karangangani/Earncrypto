@@ -18,13 +18,13 @@
 
 <style>
 :root {
-  --bg: #000000;
-  --card: #0f0f12;
-  --accent: #00ff88;
-  --accent-dark: #00cc70;
+  --bg: #000814;
+  --card: #001d3d;
+  --accent: #00b4d8;
+  --accent-dark: #0096c7;
   --text: #ffffff;
-  --muted: #a0a0a0;
-  --border: rgba(0,255,136,0.2);
+  --muted: #90e0ef;
+  --border: rgba(0,180,216,0.3);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -33,26 +33,56 @@ body {
   color: var(--text);
   min-height: 100vh;
   padding: 16px;
+  position: relative;
+  overflow-x: hidden;
 }
 body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: radial-gradient(circle at 50% 50%, rgba(0,255,136,0.15) 0%, transparent 60%);
+  content: 'AETHER';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 200px;
+  font-weight: 900;
+  color: rgba(0,180,216,0.05);
   z-index: -1;
-  animation: pulse 10s ease-in-out infinite;
+  pointer-events: none;
+  letter-spacing: 20px;
 }
-@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-.wrap { max-width: 720px; margin: 0 auto; }
+body::after {
+  content: 'AETHER';
+  position: absolute;
+  top: 30%;
+  left: 20%;
+  transform: rotate(30deg);
+  font-size: 150px;
+  font-weight: 900;
+  color: rgba(0,180,216,0.03);
+  z-index: -1;
+  pointer-events: none;
+}
+body > div::before {
+  content: 'AETHER';
+  position: absolute;
+  top: 70%;
+  right: 10%;
+  transform: rotate(-15deg);
+  font-size: 180px;
+  font-weight: 900;
+  color: rgba(0,180,216,0.04);
+  z-index: -1;
+  pointer-events: none;
+}
+.wrap { max-width: 720px; margin: 0 auto; position: relative; z-index: 1; }
 .header {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 20px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,0,0,0.6));
+  background: linear-gradient(135deg, rgba(0,180,216,0.15), rgba(0,0,0,0.6));
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0,255,136,0.1);
+  box-shadow: 0 8px 32px rgba(0,180,216,0.1);
 }
 .logo {
   width: 72px; height: 72px;
@@ -64,10 +94,10 @@ body::before {
   font-size: 32px;
   font-weight: 900;
   color: #000;
-  box-shadow: 0 0 40px rgba(0,255,136,0.5);
+  box-shadow: 0 0 40px rgba(0,180,216,0.5);
   animation: glow 3s ease-in-out infinite alternate;
 }
-@keyframes glow { from { box-shadow: 0 0 30px rgba(0,255,136,0.4); } to { box-shadow: 0 0 50px rgba(0,255,136,0.7); } }
+@keyframes glow { from { box-shadow: 0 0 30px rgba(0,180,216,0.4); } to { box-shadow: 0 0 50px rgba(0,180,216,0.7); } }
 h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
 .sub { font-size: 14px; color: var(--muted); }
 .card {
@@ -85,7 +115,7 @@ h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
 }
 .stat {
   flex: 1;
-  background: rgba(0,255,136,0.1);
+  background: rgba(0,180,216,0.1);
   border-radius: 16px;
   padding: 16px;
   text-align: center;
@@ -107,7 +137,7 @@ h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
 }
 .tab.active {
   color: var(--accent);
-  background: rgba(0,255,136,0.2);
+  background: rgba(0,180,216,0.2);
   border-bottom: 3px solid var(--accent);
 }
 .section { padding: 20px; display: none; }
@@ -123,12 +153,12 @@ h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
   font-size: 16px;
   cursor: pointer;
   margin-top: 12px;
-  box-shadow: 0 8px 25px rgba(0,255,136,0.3);
+  box-shadow: 0 8px 25px rgba(0,180,216,0.3);
 }
 .btn:hover { transform: translateY(-3px); }
 .small { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
 .highlight-channel {
-  background: linear-gradient(135deg, rgba(0,255,136,0.25), rgba(0,200,100,0.25));
+  background: linear-gradient(135deg, rgba(0,180,216,0.25), rgba(0,150,199,0.25));
   border: 2px solid var(--accent);
   border-radius: 20px;
   padding: 20px;
@@ -142,7 +172,7 @@ h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
 }
 .levels { margin-top: 16px; }
 .level {
-  background: rgba(0,255,136,0.1);
+  background: rgba(0,180,216,0.1);
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
@@ -177,8 +207,7 @@ h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
       <div class="sub" id="userLine">Loading...</div>
     </div>
   </div>
-  
-  <div class="card">
+   <div class="card">
     <div class="stats">
       <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
       <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
@@ -224,7 +253,7 @@ h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +500 coins for both!</p>
-        <div style="background:rgba(0,255,136,0.1);padding:20px;border-radius:16px;border:1px solid var(--border)">
+        <div style="background:rgba(0,180,216,0.1);padding:20px;border-radius:16px;border:1px solid var(--border)">
           <div id="myRef" style="color:var(--accent);font-size:15px;word-break:break-all">Generating...</div>
           <button id="copyRef" class="btn" style="margin-top:16px">COPY LINK</button>
         </div>
@@ -260,7 +289,7 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const ADS_COOLDOWN_MINUTES = 30; // हर ad के बाद 30 min cooldown
+const ADS_COOLDOWN_MINUTES = 30;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -293,8 +322,6 @@ async function initApp() {
 
     let doc = await userRef().get();
     let isNewUser = !doc.exists;
-    let displayName = tgUser.username ? '@' + tgUser.username : (tgUser.first_name || 'Guest');
-    current.username = displayName;
 
     if (isNewUser) {
       current.refCode = 'ref_' + Math.floor(Math.random() * 9000000 + 1000000);
@@ -306,7 +333,7 @@ async function initApp() {
       Object.assign(current, data);
     }
 
-    document.getElementById('userLine').innerText = current.username + ' • ' + current.refCode.split('_')[1];
+    document.getElementById('userLine').innerText = (tgUser.username || tgUser.first_name || 'User') + ' • ' + current.refCode.split('_')[1];
 
     unsubscribeSnapshot = userRef().onSnapshot(docSnap => {
       if (docSnap.exists) {
@@ -378,12 +405,13 @@ function updateNotificationButton() {
     btn.disabled = false;
   }
 }
+
 async function handleReferralParam(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
   const snap = await userRef().get();
-  if (snap.data().refs?.includes(referrerId)) return;
+  if (snap.data().refs?.includes(referrerId)) return; // duplicate prevent
 
   const referrerDoc = await db.collection('users').doc(referrerId).get();
   if (!referrerDoc.exists) return;
@@ -443,7 +471,6 @@ function startPassiveMining() {
   }, 2000);
   tg.showAlert('Passive mining started!');
 }
-
 async function watchAdHandler() {
   const now = Date.now();
   const timeSinceLast = now - (current.lastAdTime || 0);
@@ -541,3 +568,4 @@ initApp();
 </script>
 </body>
 </html>
+  
