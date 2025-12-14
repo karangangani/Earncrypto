@@ -1,9 +1,10 @@
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Premium Earn & Airdrop</title>
+<title>AETHER — Premium TON Project</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -17,31 +18,31 @@
 
 <style>
 :root {
-  --bg: #0a0a0a;
-  --card: #111113;
-  --accent: #00ff9d;
-  --text: #e0e0e0;
-  --muted: #888;
-  --border: rgba(0,255,157,0.15);
+  --bg: #000000;
+  --card: #0f0f12;
+  --accent: #00ff88;
+  --accent-dark: #00cc70;
+  --text: #ffffff;
+  --muted: #a0a0a0;
+  --border: rgba(0,255,136,0.2);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Inter', -apple-system, sans-serif;
-  background: linear-gradient(135deg, #000000, #051028);
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   padding: 16px;
-  overflow-x: hidden;
 }
 body::before {
   content: '';
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: radial-gradient(circle at 30% 70%, rgba(0,255,157,0.12) 0%, transparent 50%);
+  background: radial-gradient(circle at 50% 50%, rgba(0,255,136,0.15) 0%, transparent 60%);
   z-index: -1;
-  animation: breathe 12s ease-in-out infinite;
+  animation: pulse 10s ease-in-out infinite;
 }
-@keyframes breathe { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 .wrap { max-width: 720px; margin: 0 auto; }
 .header {
   display: flex;
@@ -49,33 +50,33 @@ body::before {
   gap: 16px;
   padding: 20px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(0,255,157,0.1), rgba(0,0,0,0.4));
+  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,0,0,0.6));
   border: 1px solid var(--border);
-  box-shadow: 0 8px 32px rgba(0,255,157,0.1);
+  box-shadow: 0 8px 32px rgba(0,255,136,0.1);
 }
 .logo {
   width: 72px; height: 72px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #00ff9d, #00b36b);
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32px;
   font-weight: 900;
   color: #000;
-  box-shadow: 0 0 30px rgba(0,255,157,0.4);
-  animation: logoPulse 3s ease-in-out infinite;
+  box-shadow: 0 0 40px rgba(0,255,136,0.5);
+  animation: glow 3s ease-in-out infinite alternate;
 }
-@keyframes logoPulse { 0%,100% { box-shadow: 0 0 30px rgba(0,255,157,0.4); } 50% { box-shadow: 0 0 50px rgba(0,255,157,0.6); } }
-h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
-.sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
+@keyframes glow { from { box-shadow: 0 0 30px rgba(0,255,136,0.4); } to { box-shadow: 0 0 50px rgba(0,255,136,0.7); } }
+h1 { font-size: 24px; font-weight: 800; color: var(--accent); }
+.sub { font-size: 14px; color: var(--muted); }
 .card {
   background: var(--card);
   border-radius: 20px;
   margin-top: 16px;
   border: 1px solid var(--border);
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
 .stats {
   display: flex;
@@ -84,18 +85,17 @@ h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
 }
 .stat {
   flex: 1;
-  background: rgba(0,255,157,0.08);
+  background: rgba(0,255,136,0.1);
   border-radius: 16px;
   padding: 16px;
   text-align: center;
-  border: 1px solid rgba(0,255,157,0.2);
+  border: 1px solid var(--border);
 }
 .v { font-size: 28px; font-weight: 800; color: var(--accent); }
 .l { font-size: 13px; color: var(--muted); margin-top: 4px; }
 .tabs {
   display: flex;
-  background: rgba(0,0,0,0.3);
-  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.4);
 }
 .tab {
   flex: 1;
@@ -104,61 +104,54 @@ h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  transition: 0.3s;
 }
 .tab.active {
   color: var(--accent);
-  background: rgba(0,255,157,0.15);
+  background: rgba(0,255,136,0.2);
   border-bottom: 3px solid var(--accent);
 }
 .section { padding: 20px; display: none; }
-.section.active { display: block; animation: fadeIn 0.4s; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.section.active { display: block; }
 .btn {
   width: 100%;
   padding: 18px;
   border-radius: 16px;
   border: none;
-  background: linear-gradient(90deg, #00ff9d, #00b36b);
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
   color: #000;
   font-weight: 800;
   font-size: 16px;
   cursor: pointer;
   margin-top: 12px;
-  box-shadow: 0 8px 20px rgba(0,255,157,0.3);
-  transition: 0.3s;
+  box-shadow: 0 8px 25px rgba(0,255,136,0.3);
 }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,255,157,0.4); }
-.small { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; line-height: 1.5; }
+.btn:hover { transform: translateY(-3px); }
+.small { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
 .highlight-channel {
-  background: linear-gradient(135deg, rgba(0,255,157,0.2), rgba(0,176,107,0.2));
+  background: linear-gradient(135deg, rgba(0,255,136,0.25), rgba(0,200,100,0.25));
   border: 2px solid var(--accent);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 20px;
   margin: 20px 0;
   text-align: center;
-  box-shadow: 0 8px 25px rgba(0,255,157,0.2);
 }
 .highlight-channel h3 {
   color: var(--accent);
   font-size: 18px;
   margin-bottom: 10px;
-  font-weight: 800;
 }
 .levels { margin-top: 16px; }
 .level {
-  background: rgba(0,255,157,0.08);
+  background: rgba(0,255,136,0.1);
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 12px;
-  border: 1px solid rgba(0,255,157,0.2);
-  transition: 0.3s;
+  border: 1px solid var(--border);
 }
-.level:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,255,157,0.15); }
 .claimBtn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(90deg, #00ff9d, #00b36b);
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
   color: #000;
   border: none;
   border-radius: 14px;
@@ -168,7 +161,7 @@ h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
 }
 .footer {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 40px;
   color: var(--muted);
   font-size: 13px;
 }
@@ -178,13 +171,13 @@ h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
 
 <div class="wrap">
   <div class="header">
-    <div class="logo">Ae </div>
+    <div class="logo"> Ae </div>
     <div>
       <h1>AETHER</h1>
       <div class="sub" id="userLine">Loading...</div>
     </div>
   </div>
-
+  
   <div class="card">
     <div class="stats">
       <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
@@ -216,22 +209,22 @@ h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
 
     <!-- EARN -->
     <div id="tasks" class="section">
-      <button id="watchAd" class="btn">Watch Ad (+50 Coins)</button>
-      <p class="small">Daily: <span id="adsToday">0</span> / <span id="adsLimit">20</span> • Total: <span id="totalAds">0</span></p>
+      <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">50</span> Coins)</button>
+      <p class="small">Cooldown: 30 minutes between ads • Total ads: <span id="totalAds">0</span></p>
 
-      <div class="small" style="margin-top:20px;font-weight:600">Level Progress & Rewards</div>
+      <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Progress & Rewards</div>
       <div id="levelsList" class="levels"></div>
       <div style="text-align:center;margin-top:16px">
-        <button id="showAllLevels" class="btn" style="background:#333;color:#fff;box-shadow:none">Load More Levels</button>
+        <button id="showAllLevels" class="btn" style="background:#333;color:#fff">Load More Levels</button>
       </div>
     </div>
 
     <!-- INVITE -->
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
-        <h3 style="color:var(--accent);font-size:20px;margin-bottom:12px">Invite Friends & Earn More</h3>
-        <p style="margin-bottom:20px">Each successful referral = <strong>+500 coins for both</strong></p>
-        <div style="background:rgba(0,255,157,0.1);padding:20px;border-radius:16px;border:1px solid var(--border)">
+        <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
+        <p style="margin-bottom:20px">Each referral = +500 coins for both!</p>
+        <div style="background:rgba(0,255,136,0.1);padding:20px;border-radius:16px;border:1px solid var(--border)">
           <div id="myRef" style="color:var(--accent);font-size:15px;word-break:break-all">Generating...</div>
           <button id="copyRef" class="btn" style="margin-top:16px">COPY LINK</button>
         </div>
@@ -241,19 +234,19 @@ h1 { font-size: 22px; font-weight: 800; color: var(--accent); }
     <!-- AIRDROP -->
     <div id="airdrop" class="section">
       <div style="text-align:center;padding:20px">
-        <h3 style="color:var(--accent);font-size:22px;margin-bottom:16px">TON Airdrop Coming Soon</h3>
-        <p style="margin-bottom:20px;line-height:1.6">Stay active, invite friends, connect wallet<br>Higher activity = bigger share</p>
-        <div style="display:flex;gap:12px;align-items:center;justify-content:center">
+        <h3 style="color:var(--accent);font-size:22px">TON Airdrop Coming Soon</h3>
+        <p style="margin-bottom:20px">Stay active • Invite friends • Connect wallet<br>Higher activity = bigger share</p>
+        <div style="display:flex;gap:12px;justify-content:center">
           <button id="connectTon" class="btn">Connect TON Wallet</button>
-          <div id="tonBtnRoot" style="width:120px"></div>
+          <div id="tonBtnRoot"></div>
         </div>
         <p class="small" id="walletStatus" style="margin-top:16px">Not Connected</p>
-        <button id="showBalance" class="btn" style="margin-top:16px;background:#333;color:#fff">Show Address</button>
       </div>
     </div>
   </div>
-   <div class="footer">
-    © AETHER • Premium TON Project • Bot: @AetherMineXBot
+
+  <div class="footer">
+    © AETHER • Premium TON Project
   </div>
 </div>
 
@@ -267,10 +260,7 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const DAILY_BASE = 20;
-const ADS_COOLDOWN_MS = 5000;
-const LEVELS_MAX = 100;
-const LEVEL_RENDER_CHUNK = 20;
+const ADS_COOLDOWN_MINUTES = 30; // हर ad के बाद 30 min cooldown
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -284,10 +274,9 @@ tg.expand();
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
-  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', notificationsEnabled: false, refCode: ''
+  coins: 0, refs: [], level: 1, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, notificationsEnabled: false, refCode: ''
 };
 let tonUI = null;
-let adLastTime = 0;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
 
@@ -299,7 +288,7 @@ async function initApp() {
   try {
     await auth.signInAnonymously();
 
-    const tgId = tgUser.id ? tgUser.id.toString() : ('guest_' + Date.now()).toString();
+    const tgId = tgUser.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
     let doc = await userRef().get();
@@ -310,7 +299,7 @@ async function initApp() {
     if (isNewUser) {
       current.refCode = 'ref_' + Math.floor(Math.random() * 9000000 + 1000000);
       await userRef().set({
-        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', notificationsEnabled: false, refCode: current.refCode, telegramId: tgId
+        coins: 20, refs: [], level: 1, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, notificationsEnabled: false, refCode: current.refCode
       });
     } else {
       const data = doc.data();
@@ -319,45 +308,46 @@ async function initApp() {
 
     document.getElementById('userLine').innerText = current.username + ' • ' + current.refCode.split('_')[1];
 
-    if (unsubscribeSnapshot) unsubscribeSnapshot();
     unsubscribeSnapshot = userRef().onSnapshot(docSnap => {
       if (docSnap.exists) {
         Object.assign(current, docSnap.data());
         updateUI();
         updateLevelProgressUI();
         updateNotificationButton();
+        updateAdReward();
       }
     });
 
-    // Referral link with ?start= for bot
     const refLink = 'https://t.me/AetherMineXBot?start=' + current.refCode;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
-    // Auto open bot chat
     setTimeout(() => tg.openTelegramLink('https://t.me/AetherMineXBot'), 1500);
 
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
+    tonUI.onStatusChange(wallet => {
+      if (wallet?.account?.address) trySaveTonWallet(wallet.account.address);
+    });
 
     document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/AetherMineX');
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
-    document.getElementById('showBalance').onclick = () => tg.showAlert(current.tonWallet || 'Not connected');
     document.getElementById('enableNotifications').onclick = enableNotificationsHandler;
 
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferralParam(startParam);
     }
 
-    renderLevelsChunk(LEVEL_RENDER_CHUNK);
+    renderLevelsChunk(20);
     await checkDailyLogin();
     updateUI();
     updateNotificationButton();
+    updateAdReward();
 
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
+    console.error(e);
     tg.showAlert('Error. Retry.');
   }
 }
@@ -371,10 +361,10 @@ async function enableNotificationsHandler() {
       current.notificationsEnabled = true;
       updateUI();
       updateNotificationButton();
-      tg.showAlert('✅ Notifications enabled!\n+200 coins bonus!\n\nWarning: Do not delete bot chat!');
+      tg.showAlert('Notifications enabled! +200 coins bonus!');
     }
   } catch (e) {
-    tg.showAlert('Failed. Try again.');
+    tg.showAlert('Failed.');
   }
 }
 
@@ -388,13 +378,12 @@ function updateNotificationButton() {
     btn.disabled = false;
   }
 }
-
 async function handleReferralParam(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
-  const userSnap = await userRef().get();
-  if (userSnap.data().refs?.includes(referrerId)) return;
+  const snap = await userRef().get();
+  if (snap.data().refs?.includes(referrerId)) return;
 
   const referrerDoc = await db.collection('users').doc(referrerId).get();
   if (!referrerDoc.exists) return;
@@ -407,7 +396,7 @@ async function handleReferralParam(param) {
   current.refs.push(referrerId);
   current.coins += 500;
   updateUI();
-  tg.showAlert('Referral success! +500 coins each 🎉');
+  tg.showAlert('Referral success! +500 coins each');
 }
 
 async function checkDailyLogin() {
@@ -425,11 +414,13 @@ function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('adsToday').innerText = current.adsToday || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
-  const dailyLimit = DAILY_BASE + Math.max(0, (current.level || 1) - 1) * 20;
-  document.getElementById('adsLimit').innerText = dailyLimit;
   document.getElementById('walletStatus').innerText = current.tonWallet ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}` : 'Not Connected';
+}
+
+function updateAdReward() {
+  const reward = 50 + (current.level - 1) * 10;
+  document.getElementById('adReward').innerText = reward;
 }
 
 function openTab(tab) {
@@ -452,12 +443,14 @@ function startPassiveMining() {
   }, 2000);
   tg.showAlert('Passive mining started!');
 }
-  async function watchAdHandler() {
+
+async function watchAdHandler() {
   const now = Date.now();
-  const dailyLimit = DAILY_BASE + Math.max(0, (current.level || 1) - 1) * 20;
-  if (current.adsToday >= dailyLimit) return tg.showAlert('Daily limit reached');
-  if (now - adLastTime < ADS_COOLDOWN_MS) return tg.showAlert('Wait 5s');
-  adLastTime = now;
+  const timeSinceLast = now - (current.lastAdTime || 0);
+  if (timeSinceLast < ADS_COOLDOWN_MINUTES * 60 * 1000) {
+    const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
+    return tg.showAlert(`Wait ${minutesLeft} minutes before next ad`);
+  }
 
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
@@ -467,34 +460,35 @@ function startPassiveMining() {
     if (typeof window[AD_FN] === 'function') await window[AD_FN]('pop');
     else await new Promise(r => setTimeout(r, 1500));
 
+    const reward = 50 + (current.level - 1) * 10;
     await userRef().update({
-      coins: firebase.firestore.FieldValue.increment(50),
-      adsToday: firebase.firestore.FieldValue.increment(1),
-      totalAds: firebase.firestore.FieldValue.increment(1)
+      coins: firebase.firestore.FieldValue.increment(reward),
+      totalAds: firebase.firestore.FieldValue.increment(1),
+      lastAdTime: now
     });
-    current.coins += 50;
-    current.adsToday += 1;
+    current.coins += reward;
     current.totalAds += 1;
+    current.lastAdTime = now;
     updateUI();
-    tg.showAlert('+50 coins!');
+    tg.showAlert(`+${reward} coins!`);
   } catch (e) {
     tg.showAlert('Ad not completed');
   }
   btn.disabled = false;
-  btn.innerText = 'Watch Ad (+50 Coins)';
+  btn.innerText = 'Watch Ad (+' + (50 + (current.level - 1) * 10) + ' Coins)';
 }
 
 async function trySaveTonWallet(addr) {
   await userRef().update({ tonWallet: addr });
   current.tonWallet = addr;
   updateUI();
-  tg.showAlert('Wallet connected!');
+  tg.showAlert('Wallet updated!');
 }
 
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
-  const end = Math.min(LEVELS_MAX, levelsRendered + max);
+  const end = Math.min(100, levelsRendered + max);
   for (let i = start; i <= end; i++) {
     const refsNeeded = i;
     const adsNeeded = i;
@@ -544,7 +538,6 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
 }
 
 initApp();
-setInterval(updateLevelProgressUI, 3000);
 </script>
 </body>
 </html>
