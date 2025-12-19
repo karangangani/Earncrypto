@@ -17,38 +17,45 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-:root{ --bg:#000; --card:#0b0d0f; --accent:#00d38a; --text:#fff; --muted:#9aa0a6; --border:rgba(0,211,138,0.2); }
+:root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Inter, sans-serif; background: linear-gradient(180deg, var(--bg), #070707); color: var(--muted); min-height: 100vh; padding: 14px; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--muted); min-height: 100vh; padding: 14px; overflow-x: hidden; }
 .wrap { max-width: 720px; margin: 12px auto; }
-.header { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border: 1px solid rgba(255,255,255,0.03); }
-.logo { width: 64px; height: 64px; border-radius: 12px; background: linear-gradient(135deg, #111, #222); display: flex; align-items: center; justify-content: center; color: var(--text); font-weight: 900; position: relative; }
-.logo::after { content: 'Ae'; font-size: 24px; font-weight: 900; color: var(--accent); text-shadow: 0 0 10px var(--accent); animation: glow 2s ease-in-out infinite alternate; }
-.user-dp { width: 32px; height: 32px; border-radius: 50%; margin-left: 8px; }
-@keyframes glow { from { text-shadow: 0 0 5px var(--accent); } to { text-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent); } }
-h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
+.header { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(0,211,138,0.1), rgba(0,211,138,0.05)); border: 1px solid var(--border); box-shadow: var(--glow); }
+.logo { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #1a1a2e, #16213e); display: flex; align-items: center; justify-content: center; color: var(--text); font-weight: 900; position: relative; box-shadow: var(--glow); }
+.logo::after { content: 'Ae'; font-size: 24px; font-weight: 900; color: var(--accent); text-shadow: var(--glow); animation: glow 2s ease-in-out infinite alternate; }
+.user-dp { width: 32px; height: 32px; border-radius: 50%; margin-left: 8px; border: 2px solid var(--accent); }
+@keyframes glow { from { filter: drop-shadow(0 0 5px var(--accent)); } to { filter: drop-shadow(0 0 20px var(--accent)); } }
+h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; }
 .sub { color: var(--muted); font-size: 13px; }
-.card { background: var(--card); padding: 14px; border-radius: 12px; margin-top: 12px; border: 1px solid rgba(255,255,255,0.02); }
+.card { background: var(--card); padding: 18px; border-radius: 16px; margin-top: 12px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 .stats { display: flex; gap: 10px; }
-.stat { flex: 1; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; text-align: center; }
-.v { font-weight: 800; color: var(--text); font-size: 18px; }
+.stat { flex: 1; padding: 14px; background: rgba(0,211,138,0.1); border-radius: 12px; text-align: center; transition: all 0.3s; }
+.stat:hover { transform: translateY(-2px); box-shadow: var(--glow); }
+.v { font-weight: 900; color: var(--text); font-size: 20px; }
+.l { font-size: 11px; color: var(--muted); }
 .tabs { display: flex; gap: 8px; margin-top: 12px; }
-.tab { flex: 1; padding: 10px; border-radius: 10px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.02); cursor: pointer; color: var(--muted); }
-.tab.active { background: rgba(255,255,255,0.02); color: var(--text); }
+.tab { flex: 1; padding: 12px; border-radius: 12px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; color: var(--muted); transition: all 0.3s; font-weight: 600; }
+.tab.active { background: rgba(0,211,138,0.2); color: var(--text); border-color: var(--accent); box-shadow: var(--glow); }
 .section { display: none; padding-top: 12px; }
 .section.active { display: block; animation: fadeIn 0.5s; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #001; font-weight: 800; cursor: pointer; margin-top:8px; }
-.btn.secondary { background: #333; color: #fff; }
+.btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--accent), #00a877); color: #001; font-weight: 800; cursor: pointer; margin-top:8px; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,211,138,0.3); }
+.btn:hover { transform: translateY(-1px); box-shadow: var(--glow); }
+.btn.secondary { background: linear-gradient(135deg, #333, #555); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .small { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
-.ref-box { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.01); }
-.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 12px; }
-.level { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.01); border: 1px solid var(--border); }
-.claimBtn { background: var(--accent); color: #001; padding: 8px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; width: 100%; margin-top: 10px; }
+.ref-box { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: rgba(0,211,138,0.1); border: 1px solid var(--border); }
+.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
+.level { padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); transition: all 0.3s; }
+.level:hover { box-shadow: var(--glow); }
+.claimBtn { background: linear-gradient(135deg, var(--accent), #00a877); color: #001; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; width: 100%; margin-top: 10px; transition: all 0.3s; }
+.claimBtn:hover:not(:disabled) { box-shadow: var(--glow); }
 .claimBtn:disabled { background: #333; color: #666; }
-.footer { margin-top: 18px; text-align: center; color: var(--muted); font-size: 12px; }
-.welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: #fff; padding: 20px; border-radius: 10px; text-align: center; z-index: 1000; animation: popupFade 1s; }
-@keyframes popupFade { from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+.footer { margin-top: 20px; text-align: center; color: var(--muted); font-size: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 12px; }
+.welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); }
+@keyframes popupFade { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+#myRef { word-break: break-all; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px; }
 </style>
 </head>
 <body>
@@ -94,7 +101,7 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
     <!-- EARN -->
     <div id="tasks" class="section">
       <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">50</span> Coins)</button>
-      <p class="small">Daily ads: <span id="adsToday">0</span> / 5 • After 5 ads: 30 min cooldown • Total: <span id="totalAds">0</span></p>
+      <p class="small">Daily ads: <span id="adsToday">0</span> / 5 • After 5 ads: 30 min cooldown for next batch • Total: <span id="totalAds">0</span></p>
 
       <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
       <div id="levelsList" class="levels"></div>
@@ -109,7 +116,7 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +500 coins for both!</p>
         <div class="ref-box">
-          <div id="myRef" style="color:var(--accent);word-break:break-all">Generating...</div>
+          <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
       </div>
@@ -131,7 +138,7 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
   </div>
 
   <div class="footer">
-    © AETHER • Premium TON Project
+    © AETHER • Premium TON Project 2025
   </div>
 </div>
 
@@ -166,7 +173,7 @@ tg.expand();
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
-  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false
+  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, username: ''
 };
 let tonUI = null;
 let levelsRendered = 0;
@@ -186,9 +193,12 @@ async function initApp() {
     let doc = await userRef().get();
     let isNewUser = !doc.exists;
 
+    const username = tgUser.username || tgUser.first_name || 'User';
+    current.username = username;
+
     if (isNewUser) {
       await userRef().set({
-        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false
+        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, username: username
       });
     } else {
       const data = doc.data();
@@ -202,7 +212,7 @@ async function initApp() {
       document.getElementById('user-dp').style.display = 'block';
     }
 
-    document.getElementById('userLine').innerText = (tgUser.username || tgUser.first_name || 'User') + ' • ID: ' + userDocId;
+    document.getElementById('userLine').innerText = current.username + ' • ID: ' + userDocId;
 
     unsubscribeSnapshot = userRef().onSnapshot(docSnap => {
       if (docSnap.exists) {
@@ -271,6 +281,8 @@ function computeLevel() {
   const refsCount = current.refs?.length || 0;
   const adsCount = current.totalAds || 0;
   current.level = Math.min(refsCount, adsCount) + 1;
+  // Save level to DB for consistency
+  userRef().update({ level: current.level });
 }
 
 function updateWalletButtons() {
@@ -390,10 +402,18 @@ async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
   const now = Date.now();
+
+  // Check cooldown and reset if needed
   if (current.adsToday >= DAILY_AD_LIMIT) {
     const timeSinceLast = now - (current.lastAdTime || 0);
-    const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
-    if (minutesLeft > 0) return tg.showAlert(`Wait ${minutesLeft} minutes after 5 ads`);
+    if (timeSinceLast >= ADS_COOLDOWN_MINUTES * 60 * 1000) {
+      // Reset adsToday after cooldown
+      await userRef().update({ adsToday: 0 });
+      current.adsToday = 0;
+    } else {
+      const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
+      return tg.showAlert(`Wait ${minutesLeft} minutes after 5 ads to watch next batch`);
+    }
   }
 
   const btn = document.getElementById('watchAd');
@@ -405,15 +425,16 @@ async function watchAdHandler() {
     else await new Promise(r => setTimeout(r, 1500));
 
     const reward = 50 + (current.level - 1) * 10;
+    const newAdsToday = current.adsToday + 1;
     await userRef().update({
       coins: firebase.firestore.FieldValue.increment(reward),
       totalAds: firebase.firestore.FieldValue.increment(1),
-      adsToday: current.adsToday < DAILY_AD_LIMIT ? firebase.firestore.FieldValue.increment(1) : current.adsToday,
+      adsToday: newAdsToday,
       lastAdTime: now
     });
     current.coins += reward;
     current.totalAds += 1;
-    if (current.adsToday < DAILY_AD_LIMIT) current.adsToday += 1;
+    current.adsToday = newAdsToday;
     current.lastAdTime = now;
     computeLevel();
     updateUI();
@@ -466,7 +487,7 @@ async function updateLevelProgressUI() {
     const adsNeeded = i;
     const claimed = current.claimedLevels?.includes(i);
     btn.disabled = claimed || !(refsCount >= refsNeeded && adsDone >= adsNeeded);
-    btn.innerText = claimed ? 'Claimed' : 'Claim';
+    btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
   }
 }
 
