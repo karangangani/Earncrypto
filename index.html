@@ -181,12 +181,12 @@ async function initApp() {
 
     const tgId = tgUser.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
+    current.refCode = 'ref_' + userDocId;  // Fixed: Use userDocId for refCode to match doc IDs
 
     let doc = await userRef().get();
     let isNewUser = !doc.exists;
 
     if (isNewUser) {
-      current.refCode = 'ref_' + Math.floor(Math.random() * 9000000 + 1000000);
       await userRef().set({
         coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, refCode: current.refCode
       });
@@ -195,17 +195,21 @@ async function initApp() {
       Object.assign(current, data);
     }
 
+    // Compute level based on min(refs, totalAds) + 1
+    computeLevel();
+
     // User DP show
     if (tgUser.photo_url) {
       document.getElementById('user-dp').src = tgUser.photo_url;
       document.getElementById('user-dp').style.display = 'block';
     }
 
-    document.getElementById('userLine').innerText = (tgUser.username || tgUser.first_name || 'User') + ' • ' + current.refCode.split('_')[1];
+    document.getElementById('userLine').innerText = (tgUser.username || tgUser.first_name || 'User') + ' • ID: ' + userDocId;
 
     unsubscribeSnapshot = userRef().onSnapshot(docSnap => {
       if (docSnap.exists) {
         Object.assign(current, docSnap.data());
+        computeLevel();  // Recompute level on updates
         updateUI();
         updateLevelProgressUI();
         updateNotificationButton();
@@ -213,11 +217,11 @@ async function initApp() {
       }
     });
 
-    const refLink = 'https://t.me/AetherMineXBot?start=' + current.refCode;
+    const refLink = 'https://t.me/AetherMineXBot?start=' + current.refCode;  // Bot link for sharing
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
-    setTimeout(() => tg.openTelegramLink('https://t.me/AetherMineXBot'), 1500);
+    // Auto-open bot for new users? Removed as per referral flow
 
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(wallet => {
@@ -251,6 +255,12 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
+  function computeLevel() {
+  const refsCount = current.refs?.length || 0;
+  const adsCount = current.totalAds || 0;
+  current.level = Math.min(refsCount, adsCount) + 1;
+  // Optionally save to DB if you want persistence, but computing on load is fine
+}
 
 function closeWelcome() {
   document.getElementById('welcome-popup').style.display = 'none';
@@ -262,6 +272,7 @@ async function resetDailyAdsIfNeeded() {
     await userRef().update({ adsToday: 0, lastResetDate: today });
     current.adsToday = 0;
     current.lastResetDate = today;
+    computeLevel();  // Recompute after reset
   }
 }
 
@@ -303,16 +314,20 @@ async function handleReferralParam(param) {
   if (!referrerDoc.exists) return;
 
   await userRef().update({ refs: firebase.firestore.FieldValue.arrayUnion(referrerId) });
-  await db.collection('users').doc(referrerId).update({ refs: firebase.firestore.FieldValue.arrayUnion(userDocId) });
+  await db.collection('users').doc(referrerId).update({ 
+    refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
+    coins: firebase.firestore.FieldValue.increment(500)
+  });
   await userRef().update({ coins: firebase.firestore.FieldValue.increment(500) });
-  await db.collection('users').doc(referrerId).update({ coins: firebase.firestore.FieldValue.increment(500) });
 
   current.refs.push(referrerId);
   current.coins += 500;
+  computeLevel();
   updateUI();
   tg.showAlert('Referral success! +500 coins each');
 }
-  function updateUI() {
+
+function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
@@ -350,8 +365,8 @@ function startPassiveMining() {
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
+  const now = Date.now();  // Fixed: Define now here
   if (current.adsToday >= DAILY_AD_LIMIT) {
-    const now = Date.now();
     const timeSinceLast = now - (current.lastAdTime || 0);
     const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
     if (minutesLeft > 0) return tg.showAlert(`Wait ${minutesLeft} minutes after 5 ads`);
@@ -376,6 +391,7 @@ async function watchAdHandler() {
     current.totalAds += 1;
     if (current.adsToday < DAILY_AD_LIMIT) current.adsToday += 1;
     current.lastAdTime = now;
+    computeLevel();  // Recompute level after ad
     updateUI();
     tg.showAlert(`+${reward} coins!`);
   } catch (e) {
@@ -448,3 +464,4 @@ initApp();
 </script>
 </body>
 </html>
+  
