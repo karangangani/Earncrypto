@@ -38,10 +38,10 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
 .section { display: none; padding-top: 12px; }
 .section.active { display: block; animation: fadeIn 0.5s; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(90deg, #fff, #dfeaf6); color: #071018; font-weight: 800; cursor: pointer; }
-.btn.enabled { background: var(--accent); color: #001; }
+.btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: var(--accent); color: #001; font-weight: 800; cursor: pointer; margin-top:8px; }
+.btn.secondary { background: #333; color: #fff; }
 .small { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
-.ref-box { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.01); word-break: break-word; }
+.ref-box { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.01); }
 .levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 12px; }
 .level { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.01); border: 1px solid var(--border); }
 .claimBtn { background: var(--accent); color: #001; padding: 8px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; width: 100%; margin-top: 10px; }
@@ -84,7 +84,7 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
 
       <div class="ref-box">
         <h3 style="color:var(--accent)">⭐ Official Channel</h3>
-        <button id="openChannel" class="btn">Join @AetherMineX</button>
+        <button id="openChannel" class="btn secondary">Join @AetherMineX</button>
       </div>
 
       <button id="enableNotifications" class="btn">Enable Notifications & Get +200 Coins Bonus</button>
@@ -99,7 +99,7 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
       <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
       <div id="levelsList" class="levels"></div>
       <div style="text-align:center;margin-top:16px">
-        <button id="showAllLevels" class="btn" style="background:#333;color:#fff">Load More Levels</button>
+        <button id="showAllLevels" class="btn secondary">Load More Levels</button>
       </div>
     </div>
 
@@ -109,7 +109,7 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +500 coins for both!</p>
         <div class="ref-box">
-          <div id="myRef" style="color:var(--accent);word-break:break-word">Generating...</div>
+          <div id="myRef" style="color:var(--accent);word-break:break-all">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
       </div>
@@ -120,8 +120,9 @@ h1 { color: var(--text); font-size: 18px; margin-bottom: 2px; }
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:22px">TON Airdrop Coming Soon</h3>
         <p class="small" style="margin-bottom:20px">Stay active • Invite friends • Connect wallet</p>
-        <div style="display:flex;gap:12px;justify-content:center">
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           <button id="connectTon" class="btn">Connect TON Wallet</button>
+          <button id="disconnectTon" class="btn secondary" style="display:none">Disconnect Wallet</button>
           <div id="tonBtnRoot"></div>
         </div>
         <p class="small" id="walletStatus" style="margin-top:16px">Not Connected</p>
@@ -165,13 +166,13 @@ tg.expand();
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
-  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, refCode: ''
+  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false
 };
 let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
 
-const startParam = tg.initDataUnsafe.start_param || tg.initDataUnsafe.startapp || '';
+const startParam = tg.initDataUnsafe.start_param || '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
 
@@ -181,24 +182,21 @@ async function initApp() {
 
     const tgId = tgUser.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
-    current.refCode = 'ref_' + userDocId;  // Fixed: Use userDocId for refCode to match doc IDs
 
     let doc = await userRef().get();
     let isNewUser = !doc.exists;
 
     if (isNewUser) {
       await userRef().set({
-        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, refCode: current.refCode
+        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false
       });
     } else {
       const data = doc.data();
       Object.assign(current, data);
     }
 
-    // Compute level based on min(refs, totalAds) + 1
     computeLevel();
 
-    // User DP show
     if (tgUser.photo_url) {
       document.getElementById('user-dp').src = tgUser.photo_url;
       document.getElementById('user-dp').style.display = 'block';
@@ -209,33 +207,47 @@ async function initApp() {
     unsubscribeSnapshot = userRef().onSnapshot(docSnap => {
       if (docSnap.exists) {
         Object.assign(current, docSnap.data());
-        computeLevel();  // Recompute level on updates
+        computeLevel();
         updateUI();
         updateLevelProgressUI();
         updateNotificationButton();
         updateAdReward();
+        updateWalletButtons();
       }
     });
 
-    const refLink = 'https://t.me/AetherMineXBot?start=' + current.refCode;  // Bot link for sharing
+    const refLink = 'https://t.me/AetherMineXBot?start=' + userDocId;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
-    // Auto-open bot for new users? Removed as per referral flow
-
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
-    tonUI.onStatusChange(wallet => {
-      if (wallet?.account?.address) trySaveTonWallet(wallet.account.address);
+    tonUI.onStatusChange(async (wallet) => {
+      if (wallet && wallet.account && wallet.account.address) {
+        await trySaveTonWallet(wallet.account.address);
+      } else {
+        await userRef().update({ tonWallet: '' });
+        current.tonWallet = '';
+        updateUI();
+        updateWalletButtons();
+      }
     });
 
     document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
+    document.getElementById('disconnectTon').onclick = async () => {
+      await tonUI.disconnect();
+      await userRef().update({ tonWallet: '' });
+      current.tonWallet = '';
+      updateUI();
+      updateWalletButtons();
+      tg.showAlert('Wallet disconnected!');
+    };
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/AetherMineX');
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
     document.getElementById('enableNotifications').onclick = enableNotificationsHandler;
 
-    if (startParam && startParam.startsWith('ref_')) {
+    if (startParam) {
       await handleReferralParam(startParam);
     }
 
@@ -244,8 +256,8 @@ async function initApp() {
     updateUI();
     updateNotificationButton();
     updateAdReward();
+    updateWalletButtons();
 
-    // Welcome animation
     setTimeout(() => {
       document.getElementById('welcome-popup').style.display = 'block';
     }, 500);
@@ -255,11 +267,19 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-  function computeLevel() {
+function computeLevel() {
   const refsCount = current.refs?.length || 0;
   const adsCount = current.totalAds || 0;
   current.level = Math.min(refsCount, adsCount) + 1;
-  // Optionally save to DB if you want persistence, but computing on load is fine
+}
+
+function updateWalletButtons() {
+  const connected = !!current.tonWallet;
+  document.getElementById('connectTon').style.display = connected ? 'none' : 'block';
+  document.getElementById('disconnectTon').style.display = connected ? 'block' : 'none';
+  document.getElementById('walletStatus').innerText = connected 
+    ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`
+    : 'Not Connected';
 }
 
 function closeWelcome() {
@@ -272,7 +292,7 @@ async function resetDailyAdsIfNeeded() {
     await userRef().update({ adsToday: 0, lastResetDate: today });
     current.adsToday = 0;
     current.lastResetDate = today;
-    computeLevel();  // Recompute after reset
+    computeLevel();
   }
 }
 
@@ -304,27 +324,31 @@ function updateNotificationButton() {
 }
 
 async function handleReferralParam(param) {
-  const referrerId = param.replace('ref_', '');
-  if (!referrerId || referrerId === userDocId) return;
+  if (!param || param === userDocId) return;
+
+  const referrerId = param;
 
   const snap = await userRef().get();
-  if (snap.data().refs?.includes(referrerId)) return;
+  if (snap.exists && snap.data().refs?.includes(referrerId)) return;
 
   const referrerDoc = await db.collection('users').doc(referrerId).get();
   if (!referrerDoc.exists) return;
 
-  await userRef().update({ refs: firebase.firestore.FieldValue.arrayUnion(referrerId) });
-  await db.collection('users').doc(referrerId).update({ 
+  await db.collection('users').doc(referrerId).update({
     refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
     coins: firebase.firestore.FieldValue.increment(500)
   });
-  await userRef().update({ coins: firebase.firestore.FieldValue.increment(500) });
+
+  await userRef().update({
+    refs: firebase.firestore.FieldValue.arrayUnion(referrerId),
+    coins: firebase.firestore.FieldValue.increment(500)
+  });
 
   current.refs.push(referrerId);
   current.coins += 500;
   computeLevel();
   updateUI();
-  tg.showAlert('Referral success! +500 coins each');
+  tg.showAlert('Referral success! +500 coins for both!');
 }
 
 function updateUI() {
@@ -333,7 +357,7 @@ function updateUI() {
   document.getElementById('level').innerText = current.level || 1;
   document.getElementById('adsToday').innerText = current.adsToday || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
-  document.getElementById('walletStatus').innerText = current.tonWallet ? `Connected: ${current.tonWallet}` : 'Not Connected';
+  updateWalletButtons();
 }
 
 function updateAdReward() {
@@ -365,7 +389,7 @@ function startPassiveMining() {
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
-  const now = Date.now();  // Fixed: Define now here
+  const now = Date.now();
   if (current.adsToday >= DAILY_AD_LIMIT) {
     const timeSinceLast = now - (current.lastAdTime || 0);
     const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
@@ -391,7 +415,7 @@ async function watchAdHandler() {
     current.totalAds += 1;
     if (current.adsToday < DAILY_AD_LIMIT) current.adsToday += 1;
     current.lastAdTime = now;
-    computeLevel();  // Recompute level after ad
+    computeLevel();
     updateUI();
     tg.showAlert(`+${reward} coins!`);
   } catch (e) {
@@ -405,7 +429,8 @@ async function trySaveTonWallet(addr) {
   await userRef().update({ tonWallet: addr });
   current.tonWallet = addr;
   updateUI();
-  tg.showAlert('Wallet updated!');
+  updateWalletButtons();
+  tg.showAlert('Wallet connected!');
 }
 
 function renderLevelsChunk(max) {
@@ -464,4 +489,3 @@ initApp();
 </script>
 </body>
 </html>
-  
