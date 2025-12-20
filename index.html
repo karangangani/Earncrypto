@@ -179,8 +179,6 @@ let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
 
-const startParam = tg.initDataUnsafe.start_param || '';
-
 function userRef() { return db.collection('users').doc(userDocId); }
 
 async function initApp() {
@@ -226,7 +224,8 @@ async function initApp() {
       }
     });
 
-    const refLink = 'https://t.me/AetherMineXBot?start=' + userDocId;
+    // Referral link with prefix - bot will handle
+    const refLink = 'https://t.me/AetherMineXBot?start=ref_' + userDocId;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
@@ -241,7 +240,6 @@ async function initApp() {
         updateWalletButtons();
       }
     });
-
     document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
     document.getElementById('disconnectTon').onclick = async () => {
       await tonUI.disconnect();
@@ -256,10 +254,6 @@ async function initApp() {
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
     document.getElementById('enableNotifications').onclick = enableNotificationsHandler;
-
-    if (startParam) {
-      await handleReferralParam(startParam);
-    }
 
     renderLevelsChunk(20);
     await resetDailyAdsIfNeeded();
@@ -277,12 +271,12 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
+
 function computeLevel() {
   const refsCount = current.refs?.length || 0;
   const adsCount = current.totalAds || 0;
   current.level = Math.min(refsCount, adsCount) + 1;
-  // Save level to DB for consistency
-  userRef().update({ level: current.level });
+  // No DB update - computed on fly
 }
 
 function updateWalletButtons() {
@@ -335,34 +329,6 @@ function updateNotificationButton() {
   }
 }
 
-async function handleReferralParam(param) {
-  if (!param || param === userDocId) return;
-
-  const referrerId = param;
-
-  const snap = await userRef().get();
-  if (snap.exists && snap.data().refs?.includes(referrerId)) return;
-
-  const referrerDoc = await db.collection('users').doc(referrerId).get();
-  if (!referrerDoc.exists) return;
-
-  await db.collection('users').doc(referrerId).update({
-    refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-    coins: firebase.firestore.FieldValue.increment(500)
-  });
-
-  await userRef().update({
-    refs: firebase.firestore.FieldValue.arrayUnion(referrerId),
-    coins: firebase.firestore.FieldValue.increment(500)
-  });
-
-  current.refs.push(referrerId);
-  current.coins += 500;
-  computeLevel();
-  updateUI();
-  tg.showAlert('Referral success! +500 coins for both!');
-}
-
 function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
@@ -403,16 +369,15 @@ async function watchAdHandler() {
 
   const now = Date.now();
 
-  // Check cooldown and reset if needed
   if (current.adsToday >= DAILY_AD_LIMIT) {
     const timeSinceLast = now - (current.lastAdTime || 0);
-    if (timeSinceLast >= ADS_COOLDOWN_MINUTES * 60 * 1000) {
-      // Reset adsToday after cooldown
-      await userRef().update({ adsToday: 0 });
-      current.adsToday = 0;
-    } else {
+    if (timeSinceLast < ADS_COOLDOWN_MINUTES * 60 * 1000) {
       const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
       return tg.showAlert(`Wait ${minutesLeft} minutes after 5 ads to watch next batch`);
+    } else {
+      // Reset after cooldown
+      await userRef().update({ adsToday: 0 });
+      current.adsToday = 0;
     }
   }
 
@@ -459,6 +424,7 @@ function renderLevelsChunk(max) {
   const start = levelsRendered + 1;
   const end = Math.min(100, levelsRendered + max);
   for (let i = start; i <= end; i++) {
+    // Fix: For level 1, requires 1 ref & 1 ad (initial level 1 no auto-claim)
     const refsNeeded = i;
     const adsNeeded = i;
     const reward = 500 * i;
