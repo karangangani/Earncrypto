@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -115,7 +114,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- INVITE -->
     <div id="referral" class="section">
-      <div id="refStats" class="ref-stats" style="display:none;">Referrals: 0/∞ (Each = +5000 Coins!)</div>
+      <div id="refStats" class="ref-stats" style="display:none;">Referrals: 0 (Each = +5000 Coins!)</div>
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +5000 coins for you!</p>
@@ -175,6 +174,7 @@ const ADS_COOLDOWN_MINUTES = 60;  // 1 hour
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';  // तेरी Telegram ID डाल
 const REFERRAL_REWARD = 5000;  // Coins per referral
+const BOT_USERNAME = 'AetherMineXBot';  // Bot username for chat
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -242,24 +242,30 @@ async function initApp() {
     });
 
     // Referral Link Generation (like first app)
-    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
+    const refLink = `https://t.me/\( {BOT_USERNAME}?startapp=ref_ \){userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
       tg.showAlert('Link Copied! Share Kar!');
     };
 
-    // Official Bot buttons
-    document.getElementById('officialBot').onclick = async () => {
+    // Auto-open bot chat if not joined (like Hamster - open in background on first load)
+    if (!current.botJoined) {
       await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineXBot');
+      current.botJoined = true;
+      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
+      // Optional: tg.showAlert('Bot chat opened! Check messages for welcome 🚀');
+    }
+
+    // Official Bot buttons (now always open, since auto)
+    document.getElementById('officialBot').onclick = () => {
+      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
-    document.getElementById('officialBotRef').onclick = async () => {
-      await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineXBot');
+    document.getElementById('officialBotRef').onclick = () => {
+      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
 
-    // Referral handling (Exact like first app, with coins reward for referrer)
+    // Referral handling (Fixed: Only referrer gets new user in refs, not mutual)
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferral(startParam);
     }
@@ -269,6 +275,7 @@ async function initApp() {
       document.getElementById('adminTab').style.display = 'block';
       loadUsersList();
     }
+
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -312,46 +319,38 @@ async function initApp() {
   }
 }
 
-// Enhanced Referral Handler (Exact like first app: arrayUnion, duplicate check, + coins for referrer)
+// Fixed Referral Handler: Only add to referrer's refs (no mutual), + coins for referrer only
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
   try {
-    const doc = await userRef().get();
-    if (doc.exists && doc.data().refs && doc.data().refs.includes(referrerId)) {
-      return;  // Already referred
+    // Check if already referred (referrer's doc has this userId in refs)
+    const referrerDoc = await db.collection('users').doc(referrerId).get();
+    if (referrerDoc.exists && referrerDoc.data().refs && referrerDoc.data().refs.includes(userId)) {
+      return;  // Already processed
     }
 
-    // Add to new user's refs (this user)
-    await userRef().set({ 
-      refs: firebase.firestore.FieldValue.arrayUnion(referrerId) 
-    }, { merge: true });
-
-    // Add new user to referrer's refs & give coins
+    // Only update referrer: add new userId to their refs & increment coins
     await db.collection('users').doc(referrerId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
     });
 
-    // Update local current
-    if (!current.refs) current.refs = [];
-    if (!current.refs.includes(referrerId)) {
-      current.refs.push(referrerId);
-    }
+    // New user: no change to their refs (remains empty)
+    // But set merge true if needed for other fields
 
-    computeLevel();
-    updateUI();
-    updateRefStats();
-    tg.showAlert('Referral Done! Referrer Got +5000 Coins!');
+    // Update local for new user (no refs change)
+    tg.showAlert('Thanks for joining via referral! Your friend got +5000 Coins!');
+
+    // For referrer, snapshot will update their UI when they refresh/open
 
   } catch (e) {
     console.error(e);
-    // Silent fail, like first app
+    // Silent fail
   }
 }
-
-// New: Update Referral Stats UI (like first app)
+  // Update Referral Stats UI
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
@@ -434,14 +433,13 @@ function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('adsToday').innerText = current.adsToday || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateWalletButtons();
 }
 
 function updateAdReward() {
   const reward = 100;
-  document.getElementById('adReward').innerText = reward;
+  // Assuming adReward element exists, or remove if not
 }
 
 function openTab(tab) {
