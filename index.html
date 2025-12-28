@@ -56,6 +56,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); }
 @keyframes popupFade { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 #myRef { word-break: break-all; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px; }
+.ref-stats { color: var(--accent); font-weight: bold; margin: 10px 0; font-size: 1.2rem; text-align: center; }
 </style>
 </head>
 <body>
@@ -114,12 +115,15 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- INVITE -->
     <div id="referral" class="section">
+      <div id="refStats" class="ref-stats" style="display:none;">Referrals: 0/∞ (Each = +5000 Coins!)</div>
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +5000 coins for you!</p>
         <div class="ref-box">
+          <div>Your Unique Referral Link:</div>
           <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
+          <div style="margin-top:8px;">Share → Friends Join → You Get +5000 Coins!</div>
         </div>
         <button id="officialBotRef" class="btn secondary" style="margin-top:10px">Official Bot Chat</button>
       </div>
@@ -170,6 +174,7 @@ const AD_FN = 'show_10192178';
 const ADS_COOLDOWN_MINUTES = 60;  // 1 hour
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';  // तेरी Telegram ID डाल
+const REFERRAL_REWARD = 5000;  // Coins per referral
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -232,12 +237,17 @@ async function initApp() {
         updateNotificationButton();
         updateAdReward();
         updateWalletButtons();
+        updateRefStats();  // Added for referral stats
       }
     });
 
-    const refLink = 'https://t.me/AetherMineXBot?start=ref_' + userDocId;
+    // Referral Link Generation (like first app)
+    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
-    document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
+    document.getElementById('copyRef').onclick = () => {
+      navigator.clipboard.writeText(refLink);
+      tg.showAlert('Link Copied! Share Kar!');
+    };
 
     // Official Bot buttons
     document.getElementById('officialBot').onclick = async () => {
@@ -249,9 +259,9 @@ async function initApp() {
       tg.openTelegramLink('https://t.me/AetherMineXBot');
     };
 
-    // Referral handling (BugMiner style)
-    if (startParam) {
-      await handleReferralParam(startParam);
+    // Referral handling (Exact like first app, with coins reward for referrer)
+    if (startParam && startParam.startsWith('ref_')) {
+      await handleReferral(startParam);
     }
 
     // Admin tab
@@ -259,7 +269,6 @@ async function initApp() {
       document.getElementById('adminTab').style.display = 'block';
       loadUsersList();
     }
-
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -271,8 +280,6 @@ async function initApp() {
         updateWalletButtons();
       }
     });
-
-    document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
     document.getElementById('disconnectTon').onclick = async () => {
       await tonUI.disconnect();
       await userRef().update({ tonWallet: '' });
@@ -293,6 +300,7 @@ async function initApp() {
     updateNotificationButton();
     updateAdReward();
     updateWalletButtons();
+    updateRefStats();  // Show referral stats
 
     setTimeout(() => {
       document.getElementById('welcome-popup').style.display = 'block';
@@ -303,31 +311,52 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-  async function handleReferralParam(param) {
-  if (!param || param === userDocId) return;
 
+// Enhanced Referral Handler (Exact like first app: arrayUnion, duplicate check, + coins for referrer)
+async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
+  if (!referrerId || referrerId === userDocId) return;
 
-  const snap = await userRef().get();
-  if (snap.exists && snap.data().refs?.includes(referrerId)) return;
+  try {
+    const doc = await userRef().get();
+    if (doc.exists && doc.data().refs && doc.data().refs.includes(referrerId)) {
+      return;  // Already referred
+    }
 
-  const referrerDoc = await db.collection('users').doc(referrerId).get();
-  if (!referrerDoc.exists) return;
+    // Add to new user's refs (this user)
+    await userRef().set({ 
+      refs: firebase.firestore.FieldValue.arrayUnion(referrerId) 
+    }, { merge: true });
 
-  // Only referrer gets 5000 coins (BugMiner style)
-  await db.collection('users').doc(referrerId).update({
-    refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-    coins: firebase.firestore.FieldValue.increment(5000)
-  });
+    // Add new user to referrer's refs & give coins
+    await db.collection('users').doc(referrerId).update({
+      refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
+      coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
+    });
 
-  await userRef().update({
-    refs: firebase.firestore.FieldValue.arrayUnion(referrerId)
-  });
+    // Update local current
+    if (!current.refs) current.refs = [];
+    if (!current.refs.includes(referrerId)) {
+      current.refs.push(referrerId);
+    }
 
-  current.refs.push(referrerId);
-  computeLevel();
-  updateUI();
-  tg.showAlert('Referral success! +5000 coins to referrer!');
+    computeLevel();
+    updateUI();
+    updateRefStats();
+    tg.showAlert('Referral Done! Referrer Got +5000 Coins!');
+
+  } catch (e) {
+    console.error(e);
+    // Silent fail, like first app
+  }
+}
+
+// New: Update Referral Stats UI (like first app)
+function updateRefStats() {
+  const refCount = current.refs ? current.refs.length : 0;
+  const statsEl = document.getElementById('refStats');
+  statsEl.style.display = 'block';
+  statsEl.innerText = `Referrals: \( {refCount} (Each = + \){REFERRAL_REWARD} Coins!)`;
 }
 
 async function loadUsersList() {
