@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -242,7 +241,7 @@ async function initApp() {
       }
     });
 
-    // Referral Link Generation (like first app)
+    // Referral Link Generation (like first app - startapp for mini app)
     const refLink = `https://t.me/\( {BOT_USERNAME}?startapp=ref_ \){userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
@@ -250,15 +249,15 @@ async function initApp() {
       tg.showAlert('Link Copied! Share Kar!');
     };
 
-    // Auto-open bot chat if not joined (like Hamster - open in background on first load)
+    // Auto-open bot chat if not joined (like Hamster - open in background on first load, triggers Telegram permission message)
     if (!current.botJoined) {
       await userRef().update({ botJoined: true });
       current.botJoined = true;
       tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
-      // Optional: tg.showAlert('Bot chat opened! Check messages for welcome 🚀');
+      // Telegram will auto-show: "You allowed this bot to message you when you logged in on 'AETHER — Earn & Airdrop' app."
     }
 
-    // Official Bot buttons (now always open, since auto)
+    // Official Bot buttons
     document.getElementById('officialBot').onclick = () => {
       tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
@@ -266,7 +265,7 @@ async function initApp() {
       tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
 
-    // Referral handling (Fixed: Only referrer gets new user in refs, not mutual)
+    // Referral handling (One-way like first app but no mutual add to new user's refs)
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferral(startParam);
     }
@@ -319,39 +318,38 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-  // Fixed Referral Handler: Only add to referrer's refs (no mutual), + coins for referrer only
+
+// Fixed Referral Handler: One-way (only add to referrer's refs, +coins to referrer, no add to new user)
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
   try {
-    // Check if already referred (referrer's doc has this userId in refs)
-    const referrerDoc = await db.collection('users').doc(referrerId).get();
+    const referrerRef = db.collection('users').doc(referrerId);
+    const referrerDoc = await referrerRef.get();
+
+    // Check duplicate: if referrer exists and refs includes this userId
     if (referrerDoc.exists && referrerDoc.data().refs && referrerDoc.data().refs.includes(userDocId)) {
-      return;  // Already processed
+      return;  // Already referred
     }
 
-    // Only update referrer: add new userId to their refs & increment coins
-    await db.collection('users').doc(referrerId).update({
+    // Update referrer: add this userId to refs, increment coins (use set merge to handle new referrer)
+    await referrerRef.set({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
-    });
+    }, { merge: true });
 
-    // New user: no change to their refs (remains empty)
-    // But set merge true if needed for other fields
-
-    // Update local for new user (no refs change)
-    tg.showAlert('Thanks for joining via referral! Your friend got +5000 Coins!');
-
-    // For referrer, snapshot will update their UI when they refresh/open
+    // New user: NO change to their refs (stays empty, count 0)
+    // Alert for new user
+    tg.showAlert('Referral Success! Your friend earned +5000 Coins!');
 
   } catch (e) {
     console.error(e);
-    // Silent fail
+    // Silent fail, like first app
   }
 }
 
-// Update Referral Stats UI (Fixed interpolation)
+// Update Referral Stats UI
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
@@ -402,8 +400,7 @@ async function resetDailyAdsIfNeeded() {
     computeLevel();
   }
 }
-
-async function enableNotificationsHandler() {
+  async function enableNotificationsHandler() {
   try {
     const granted = await tg.requestWriteAccess();
     if (granted) {
