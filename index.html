@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -55,8 +56,6 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); }
 @keyframes popupFade { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 #myRef { word-break: break-all; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px; }
-.user-list { max-height: 300px; overflow-y: scroll; }
-.user-item { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-bottom: 5px; }
 </style>
 </head>
 <body>
@@ -94,6 +93,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
       <div class="ref-box">
         <h3 style="color:var(--accent)">⭐ Official Channel</h3>
         <button id="openChannel" class="btn secondary">Join @AetherMineX</button>
+        <button id="officialBot" class="btn secondary" style="margin-top:5px">Official Bot Chat</button>
       </div>
 
       <button id="enableNotifications" class="btn">Enable Notifications & Get +200 Coins Bonus</button>
@@ -121,7 +121,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
           <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
-        <button id="officialBot" class="btn secondary" style="margin-top:10px">Official Bot Chat</button>
+        <button id="officialBotRef" class="btn secondary" style="margin-top:10px">Official Bot Chat</button>
       </div>
     </div>
 
@@ -169,7 +169,7 @@ const FIREBASE_CONFIG = {
 const AD_FN = 'show_10192178';
 const ADS_COOLDOWN_MINUTES = 60;  // 1 hour
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
-const ADMIN_ID = 'तुम्हारा_Telegram_ID_यहाँ_डाल';  // e.g., '123456789'
+const ADMIN_ID = '5973954829';  // तेरी Telegram ID डाल
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -182,7 +182,7 @@ tg.expand();
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
-  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, username: ''
+  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, username: '', botJoined: false
 };
 let tonUI = null;
 let levelsRendered = 0;
@@ -207,7 +207,7 @@ async function initApp() {
 
     if (isNewUser) {
       await userRef().set({
-        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, username: username
+        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, username: username, botJoined: false
       });
     } else {
       const data = doc.data();
@@ -239,14 +239,22 @@ async function initApp() {
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
-    document.getElementById('officialBot').onclick = () => tg.openTelegramLink('https://t.me/AetherMineXBot');
+    // Official Bot buttons
+    document.getElementById('officialBot').onclick = async () => {
+      await userRef().update({ botJoined: true });
+      tg.openTelegramLink('https://t.me/AetherMineXBot');
+    };
+    document.getElementById('officialBotRef').onclick = async () => {
+      await userRef().update({ botJoined: true });
+      tg.openTelegramLink('https://t.me/AetherMineXBot');
+    };
 
-    // Referral handling
+    // Referral handling (BugMiner style)
     if (startParam) {
       await handleReferralParam(startParam);
     }
 
-    // Admin tab show if admin
+    // Admin tab
     if (userDocId === ADMIN_ID) {
       document.getElementById('adminTab').style.display = 'block';
       loadUsersList();
@@ -295,8 +303,7 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-
-async function handleReferralParam(param) {
+  async function handleReferralParam(param) {
   if (!param || param === userDocId) return;
 
   const referrerId = param.replace('ref_', '');
@@ -307,11 +314,12 @@ async function handleReferralParam(param) {
   const referrerDoc = await db.collection('users').doc(referrerId).get();
   if (!referrerDoc.exists) return;
 
-  // Only referrer gets 5000 coins
+  // Only referrer gets 5000 coins (BugMiner style)
   await db.collection('users').doc(referrerId).update({
     refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
     coins: firebase.firestore.FieldValue.increment(5000)
   });
+
   await userRef().update({
     refs: firebase.firestore.FieldValue.arrayUnion(referrerId)
   });
@@ -319,7 +327,7 @@ async function handleReferralParam(param) {
   current.refs.push(referrerId);
   computeLevel();
   updateUI();
-  tg.showAlert('Referral success! +5000 coins to your referrer!');
+  tg.showAlert('Referral success! +5000 coins to referrer!');
 }
 
 async function loadUsersList() {
@@ -331,7 +339,7 @@ async function loadUsersList() {
     const data = doc.data();
     html += `<div class="user-item">
       <strong>${data.username}</strong> (ID: ${doc.id})<br>
-      Coins: ${data.coins || 0} | Refs: ${data.refs?.length || 0}
+      Coins: ${data.coins || 0} | Refs: ${data.refs?.length || 0} | Bot Joined: ${data.botJoined ? 'Yes' : 'No'}
     </div>`;
   });
   usersList.innerHTML = html || 'No users yet.';
@@ -403,7 +411,7 @@ function updateUI() {
 }
 
 function updateAdReward() {
-  const reward = 100;  // Fixed 100 coins per ad
+  const reward = 100;
   document.getElementById('adReward').innerText = reward;
 }
 
