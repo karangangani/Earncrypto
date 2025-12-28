@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -56,6 +55,8 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); }
 @keyframes popupFade { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 #myRef { word-break: break-all; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px; }
+.user-list { max-height: 300px; overflow-y: scroll; }
+.user-item { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-bottom: 5px; }
 </style>
 </head>
 <body>
@@ -82,6 +83,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
       <div class="tab" onclick="openTab('tasks')">Earn</div>
       <div class="tab" onclick="openTab('referral')">Invite</div>
       <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
+      <div class="tab" id="adminTab" onclick="openTab('admin')" style="display:none">Admin</div>
     </div>
 
     <!-- HOME -->
@@ -100,8 +102,8 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- EARN -->
     <div id="tasks" class="section">
-      <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">50</span> Coins)</button>
-      <p class="small">Daily ads: <span id="adsToday">0</span> / 5 • After 5 ads: 30 min cooldown for next batch • Total: <span id="totalAds">0</span></p>
+      <button id="watchAd" class="btn">Watch Ad (+100 Coins)</button>
+      <p class="small">1 ad per hour • Total: <span id="totalAds">0</span></p>
 
       <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
       <div id="levelsList" class="levels"></div>
@@ -114,11 +116,12 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
-        <p style="margin-bottom:20px">Each referral = +500 coins for both!</p>
+        <p style="margin-bottom:20px">Each referral = +5000 coins for you!</p>
         <div class="ref-box">
           <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
+        <button id="officialBot" class="btn secondary" style="margin-top:10px">Official Bot Chat</button>
       </div>
     </div>
 
@@ -134,6 +137,12 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
         </div>
         <p class="small" id="walletStatus" style="margin-top:16px">Not Connected</p>
       </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="admin" class="section">
+      <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Users List</div>
+      <div id="usersList" class="user-list"></div>
     </div>
   </div>
 
@@ -158,9 +167,9 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const DAILY_AD_LIMIT = 5;
-const ADS_COOLDOWN_MINUTES = 30;
+const ADS_COOLDOWN_MINUTES = 60;  // 1 hour
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
+const ADMIN_ID = 'तुम्हारा_Telegram_ID_यहाँ_डाल';  // e.g., '123456789'
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -230,9 +239,17 @@ async function initApp() {
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
-    // Client-side referral handling (no bot needed)
+    document.getElementById('officialBot').onclick = () => tg.openTelegramLink('https://t.me/AetherMineXBot');
+
+    // Referral handling
     if (startParam) {
       await handleReferralParam(startParam);
+    }
+
+    // Admin tab show if admin
+    if (userDocId === ADMIN_ID) {
+      document.getElementById('adminTab').style.display = 'block';
+      loadUsersList();
     }
 
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
@@ -278,7 +295,49 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-  function computeLevel() {
+
+async function handleReferralParam(param) {
+  if (!param || param === userDocId) return;
+
+  const referrerId = param.replace('ref_', '');
+
+  const snap = await userRef().get();
+  if (snap.exists && snap.data().refs?.includes(referrerId)) return;
+
+  const referrerDoc = await db.collection('users').doc(referrerId).get();
+  if (!referrerDoc.exists) return;
+
+  // Only referrer gets 5000 coins
+  await db.collection('users').doc(referrerId).update({
+    refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
+    coins: firebase.firestore.FieldValue.increment(5000)
+  });
+  await userRef().update({
+    refs: firebase.firestore.FieldValue.arrayUnion(referrerId)
+  });
+
+  current.refs.push(referrerId);
+  computeLevel();
+  updateUI();
+  tg.showAlert('Referral success! +5000 coins to your referrer!');
+}
+
+async function loadUsersList() {
+  const usersList = document.getElementById('usersList');
+  usersList.innerHTML = 'Loading...';
+  const snapshot = await db.collection('users').get();
+  let html = '';
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    html += `<div class="user-item">
+      <strong>${data.username}</strong> (ID: ${doc.id})<br>
+      Coins: ${data.coins || 0} | Refs: ${data.refs?.length || 0}
+    </div>`;
+  });
+  usersList.innerHTML = html || 'No users yet.';
+}
+
+function computeLevel() {
   const refsCount = current.refs?.length || 0;
   const adsCount = current.totalAds || 0;
   current.level = Math.min(refsCount, adsCount) + 1;
@@ -334,34 +393,6 @@ function updateNotificationButton() {
   }
 }
 
-async function handleReferralParam(param) {
-  if (!param || param === userDocId) return;
-
-  const referrerId = param.replace('ref_', '');
-
-  const snap = await userRef().get();
-  if (snap.exists && snap.data().refs?.includes(referrerId)) return;
-
-  const referrerDoc = await db.collection('users').doc(referrerId).get();
-  if (!referrerDoc.exists) return;
-
-  await db.collection('users').doc(referrerId).update({
-    refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-    coins: firebase.firestore.FieldValue.increment(500)
-  });
-
-  await userRef().update({
-    refs: firebase.firestore.FieldValue.arrayUnion(referrerId),
-    coins: firebase.firestore.FieldValue.increment(500)
-  });
-
-  current.refs.push(referrerId);
-  current.coins += 500;
-  computeLevel();
-  updateUI();
-  tg.showAlert('Referral success! +500 coins for both!');
-}
-
 function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
@@ -372,7 +403,7 @@ function updateUI() {
 }
 
 function updateAdReward() {
-  const reward = 50 + (current.level - 1) * 10;
+  const reward = 100;  // Fixed 100 coins per ad
   document.getElementById('adReward').innerText = reward;
 }
 
@@ -402,15 +433,10 @@ async function watchAdHandler() {
 
   const now = Date.now();
 
-  if (current.adsToday >= DAILY_AD_LIMIT) {
-    const timeSinceLast = now - (current.lastAdTime || 0);
-    if (timeSinceLast < ADS_COOLDOWN_MINUTES * 60 * 1000) {
-      const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
-      return tg.showAlert(`Wait ${minutesLeft} minutes after 5 ads to watch next batch`);
-    } else {
-      await userRef().update({ adsToday: 0 });
-      current.adsToday = 0;
-    }
+  // 1 ad per hour cooldown
+  if (current.lastAdTime && (now - current.lastAdTime < ADS_COOLDOWN_MINUTES * 60 * 1000)) {
+    const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - (now - current.lastAdTime)) / 60000);
+    return tg.showAlert(`Wait ${minutesLeft} minutes for next ad`);
   }
 
   const btn = document.getElementById('watchAd');
@@ -421,17 +447,14 @@ async function watchAdHandler() {
     if (typeof window[AD_FN] === 'function') await window[AD_FN]('pop');
     else await new Promise(r => setTimeout(r, 1500));
 
-    const reward = 50 + (current.level - 1) * 10;
-    const newAdsToday = current.adsToday + 1;
+    const reward = 100;
     await userRef().update({
       coins: firebase.firestore.FieldValue.increment(reward),
       totalAds: firebase.firestore.FieldValue.increment(1),
-      adsToday: newAdsToday,
       lastAdTime: now
     });
     current.coins += reward;
     current.totalAds += 1;
-    current.adsToday = newAdsToday;
     current.lastAdTime = now;
     computeLevel();
     updateUI();
@@ -440,7 +463,7 @@ async function watchAdHandler() {
     tg.showAlert('Ad not completed');
   }
   btn.disabled = false;
-  btn.innerText = 'Watch Ad (+' + (50 + (current.level - 1) * 10) + ' Coins)';
+  btn.innerText = 'Watch Ad (+100 Coins)';
 }
 
 async function trySaveTonWallet(addr) {
