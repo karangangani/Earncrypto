@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -114,7 +115,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- INVITE -->
     <div id="referral" class="section">
-      <div id="refStats" class="ref-stats" style="display:none;">Referrals: 0 (Each = +5000 Coins!)</div>
+      <div id="refStats" class="ref-stats" style="display:none;"></div>
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +5000 coins for you!</p>
@@ -318,8 +319,7 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-
-// Fixed Referral Handler: Only add to referrer's refs (no mutual), + coins for referrer only
+  // Fixed Referral Handler: Only add to referrer's refs (no mutual), + coins for referrer only
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
@@ -327,7 +327,7 @@ async function handleReferral(param) {
   try {
     // Check if already referred (referrer's doc has this userId in refs)
     const referrerDoc = await db.collection('users').doc(referrerId).get();
-    if (referrerDoc.exists && referrerDoc.data().refs && referrerDoc.data().refs.includes(userId)) {
+    if (referrerDoc.exists && referrerDoc.data().refs && referrerDoc.data().refs.includes(userDocId)) {
       return;  // Already processed
     }
 
@@ -350,12 +350,13 @@ async function handleReferral(param) {
     // Silent fail
   }
 }
-  // Update Referral Stats UI
+
+// Update Referral Stats UI (Fixed interpolation)
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
   statsEl.style.display = 'block';
-  statsEl.innerText = `Referrals: \( {refCount} (Each = + \){REFERRAL_REWARD} Coins!)`;
+  statsEl.innerText = 'Referrals: ' + refCount + ' (Each = +' + REFERRAL_REWARD + ' Coins!)';
 }
 
 async function loadUsersList() {
