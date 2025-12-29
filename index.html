@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -174,7 +175,6 @@ const ADS_COOLDOWN_MINUTES = 60;  // 1 hour
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';  // तेरी Telegram ID डाल
 const REFERRAL_REWARD = 5000;  // Coins per referral
-const BOT_USERNAME = 'AetherMineXBot';  // Bot username for chat
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -218,6 +218,7 @@ async function initApp() {
       const data = doc.data();
       Object.assign(current, data);
     }
+
     computeLevel();
 
     if (tgUser.photo_url) {
@@ -236,31 +237,26 @@ async function initApp() {
         updateNotificationButton();
         updateAdReward();
         updateWalletButtons();
-        updateRefStats();
+        updateRefStats();  // Added for referral stats
       }
     });
 
     // Referral Link Generation (like first app)
-    const refLink = `https://t.me/\( {BOT_USERNAME}?startapp=ref_ \){userDocId}`;
+    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
       tg.showAlert('Link Copied! Share Kar!');
     };
 
-    // Auto-open bot chat if not joined (like Hamster - background open on login/first load)
-    if (!current.botJoined) {
-      await userRef().update({ botJoined: true });
-      current.botJoined = true;
-      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
-    }
-
     // Official Bot buttons
-    document.getElementById('officialBot').onclick = () => {
-      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
+    document.getElementById('officialBot').onclick = async () => {
+      await userRef().update({ botJoined: true });
+      tg.openTelegramLink('https://t.me/AetherMineXBot');
     };
-    document.getElementById('officialBotRef').onclick = () => {
-      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
+    document.getElementById('officialBotRef').onclick = async () => {
+      await userRef().update({ botJoined: true });
+      tg.openTelegramLink('https://t.me/AetherMineXBot');
     };
 
     // Referral handling (Exact like first app, with coins reward for referrer)
@@ -305,7 +301,7 @@ async function initApp() {
     updateNotificationButton();
     updateAdReward();
     updateWalletButtons();
-    updateRefStats();
+    updateRefStats();  // Show referral stats
 
     setTimeout(() => {
       document.getElementById('welcome-popup').style.display = 'block';
@@ -313,10 +309,9 @@ async function initApp() {
 
   } catch (e) {
     console.error(e);
-    // Soft error, no alert spam
+    tg.showAlert('Error. Retry.');
   }
 }
-
 // Enhanced Referral Handler (Exact like first app: arrayUnion, duplicate check, + coins for referrer)
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
@@ -328,7 +323,7 @@ async function handleReferral(param) {
       return;  // Already referred
     }
 
-    // Add to new user's refs (this user) - like first app
+    // Add to new user's refs (this user)
     await userRef().set({ 
       refs: firebase.firestore.FieldValue.arrayUnion(referrerId) 
     }, { merge: true });
@@ -338,8 +333,7 @@ async function handleReferral(param) {
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
     });
-
-    // Update local current
+  // Update local current
     if (!current.refs) current.refs = [];
     if (!current.refs.includes(referrerId)) {
       current.refs.push(referrerId);
@@ -356,12 +350,12 @@ async function handleReferral(param) {
   }
 }
 
-// Update Referral Stats UI (like first app - fixed concatenation)
+// New: Update Referral Stats UI (like first app)
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
   statsEl.style.display = 'block';
-  statsEl.innerText = 'Referrals: ' + refCount + '/∞ (Each = +' + REFERRAL_REWARD + ' Coins!)';
+  statsEl.innerText = `Referrals: \( {refCount} (Each = + \){REFERRAL_REWARD} Coins!)`;
 }
 
 async function loadUsersList() {
@@ -390,7 +384,7 @@ function updateWalletButtons() {
   document.getElementById('connectTon').style.display = connected ? 'none' : 'block';
   document.getElementById('disconnectTon').style.display = connected ? 'block' : 'none';
   document.getElementById('walletStatus').innerText = connected 
-    ? 'Connected: ' + current.tonWallet.slice(0,6) + '...' + current.tonWallet.slice(-4)
+    ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`
     : 'Not Connected';
 }
 
@@ -446,7 +440,7 @@ function updateUI() {
 
 function updateAdReward() {
   const reward = 100;
-  // Skip if no element
+  document.getElementById('adReward').innerText = reward;
 }
 
 function openTab(tab) {
@@ -478,7 +472,7 @@ async function watchAdHandler() {
   // 1 ad per hour cooldown
   if (current.lastAdTime && (now - current.lastAdTime < ADS_COOLDOWN_MINUTES * 60 * 1000)) {
     const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - (now - current.lastAdTime)) / 60000);
-    return tg.showAlert('Wait ' + minutesLeft + ' minutes for next ad');
+    return tg.showAlert(`Wait ${minutesLeft} minutes for next ad`);
   }
 
   const btn = document.getElementById('watchAd');
@@ -500,7 +494,7 @@ async function watchAdHandler() {
     current.lastAdTime = now;
     computeLevel();
     updateUI();
-    tg.showAlert('+' + reward + ' coins!');
+    tg.showAlert(`+${reward} coins!`);
   } catch (e) {
     tg.showAlert('Ad not completed');
   }
@@ -526,15 +520,14 @@ function renderLevelsChunk(max) {
     const reward = 500 * i;
     const el = document.createElement('div');
     el.className = 'level';
-    const requiresText = 'Requires: ' + refsNeeded + ' referral' + (refsNeeded > 1 ? 's' : '') + ' & ' + adsNeeded + ' ad' + (adsNeeded > 1 ? 's' : '');
     el.innerHTML = `
       <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
-      <div class="small">${requiresText}</div>
+      <div class="small">Requires: \( {refsNeeded} referral \){refsNeeded > 1 ? 's' : ''} & \( {adsNeeded} ad \){adsNeeded > 1 ? 's' : ''}</div>
       <div class="small">Reward: ${reward} coins</div>
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
     `;
     container.appendChild(el);
-    document.getElementById('claim_' + i).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
+    document.getElementById(`claim_${i}`).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
   }
   levelsRendered = end;
   updateLevelProgressUI();
@@ -544,7 +537,7 @@ async function updateLevelProgressUI() {
   const refsCount = current.refs?.length || 0;
   const adsDone = current.totalAds || 0;
   for (let i = 1; i <= levelsRendered; i++) {
-    const btn = document.getElementById('claim_' + i);
+    const btn = document.getElementById(`claim_${i}`);
     if (!btn) continue;
     const refsNeeded = i;
     const adsNeeded = i;
@@ -566,7 +559,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   current.coins += reward;
   current.claimedLevels.push(levelNo);
   updateUI();
-  tg.showAlert('Level ' + levelNo + ' claimed! +' + reward + ' coins!');
+  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} coins!`);
 }
 
 initApp();
