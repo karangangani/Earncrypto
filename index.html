@@ -114,7 +114,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- INVITE -->
     <div id="referral" class="section">
-      <div id="refStats" class="ref-stats" style="display:none;"></div>
+      <div id="refStats" class="ref-stats" style="display:none;">Referrals: 0/∞ (Each = +5000 Coins!)</div>
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +5000 coins for you!</p>
@@ -218,7 +218,6 @@ async function initApp() {
       const data = doc.data();
       Object.assign(current, data);
     }
-
     computeLevel();
 
     if (tgUser.photo_url) {
@@ -241,7 +240,7 @@ async function initApp() {
       }
     });
 
-    // Referral Link Generation
+    // Referral Link Generation (like first app)
     const refLink = `https://t.me/\( {BOT_USERNAME}?startapp=ref_ \){userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
@@ -249,7 +248,7 @@ async function initApp() {
       tg.showAlert('Link Copied! Share Kar!');
     };
 
-    // Auto-open bot chat on first load (Hamster style - background open, triggers permission)
+    // Auto-open bot chat if not joined (like Hamster - background open on login/first load)
     if (!current.botJoined) {
       await userRef().update({ botJoined: true });
       current.botJoined = true;
@@ -264,7 +263,7 @@ async function initApp() {
       tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
 
-    // Referral handling (One-way: only referrer gets +1 refs & coins, new user gets 0)
+    // Referral handling (Exact like first app, with coins reward for referrer)
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferral(startParam);
     }
@@ -314,44 +313,55 @@ async function initApp() {
 
   } catch (e) {
     console.error(e);
-    // Better error handling: Don't show alert every time, log only
-    tg.showAlert('App loaded with issues. Refresh if needed.');
+    // Soft error, no alert spam
   }
 }
 
-// Fixed One-Way Referral Handler (only referrer gets refs + coins, new user unchanged)
+// Enhanced Referral Handler (Exact like first app: arrayUnion, duplicate check, + coins for referrer)
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
   try {
-    const referrerRef = db.collection('users').doc(referrerId);
-    const referrerDoc = await referrerRef.get();
-
-    // Duplicate check: referrer's refs includes this userId?
-    if (referrerDoc.exists && referrerDoc.data().refs && referrerDoc.data().refs.includes(userDocId)) {
-      return;
+    const doc = await userRef().get();
+    if (doc.exists && doc.data().refs && doc.data().refs.includes(referrerId)) {
+      return;  // Already referred
     }
 
-    // Update referrer only: add userId to refs, +coins (merge for new doc)
-    await referrerRef.set({
-      refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-      coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
+    // Add to new user's refs (this user) - like first app
+    await userRef().set({ 
+      refs: firebase.firestore.FieldValue.arrayUnion(referrerId) 
     }, { merge: true });
 
-    tg.showAlert('Referral Success! Your friend got +5000 Coins!');
+    // Add new user to referrer's refs & give coins
+    await db.collection('users').doc(referrerId).update({
+      refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
+      coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
+    });
+
+    // Update local current
+    if (!current.refs) current.refs = [];
+    if (!current.refs.includes(referrerId)) {
+      current.refs.push(referrerId);
+    }
+
+    computeLevel();
+    updateUI();
+    updateRefStats();
+    tg.showAlert('Referral Done! Referrer Got +5000 Coins!');
 
   } catch (e) {
     console.error(e);
+    // Silent fail, like first app
   }
 }
 
-// Fixed Referral Stats UI
+// Update Referral Stats UI (like first app - fixed concatenation)
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
   statsEl.style.display = 'block';
-  statsEl.innerText = 'Referrals: ' + refCount + ' (Each = +' + REFERRAL_REWARD + ' Coins!)';
+  statsEl.innerText = 'Referrals: ' + refCount + '/∞ (Each = +' + REFERRAL_REWARD + ' Coins!)';
 }
 
 async function loadUsersList() {
@@ -397,7 +407,8 @@ async function resetDailyAdsIfNeeded() {
     computeLevel();
   }
 }
-           async function enableNotificationsHandler() {
+
+async function enableNotificationsHandler() {
   try {
     const granted = await tg.requestWriteAccess();
     if (granted) {
@@ -428,13 +439,14 @@ function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
+  document.getElementById('adsToday').innerText = current.adsToday || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateWalletButtons();
 }
 
 function updateAdReward() {
   const reward = 100;
-  // No adReward element, so skip or add if needed
+  // Skip if no element
 }
 
 function openTab(tab) {
@@ -560,4 +572,4 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
 initApp();
 </script>
 </body>
-</html>                                                          
+</html>
