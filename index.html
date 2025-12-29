@@ -191,10 +191,10 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const ADS_COOLDOWN_MINUTES = 15;  // Changed to 15 min
+const ADS_COOLDOWN_MINUTES = 15;  // 15 min
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
-const ADMIN_ID = '5973954829';  // तेरी Telegram ID डाल
-const REFERRAL_REWARD = 5000;  // Coins per referral
+const ADMIN_ID = '5973954829';
+const REFERRAL_REWARD = 5000;
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -212,7 +212,7 @@ let current = {
 let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
-let appLocked = false;  // For new users
+let appLocked = false;
 
 const startParam = tg.initDataUnsafe.start_param || '';
 
@@ -235,12 +235,12 @@ async function initApp() {
       await userRef().set({
         coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, username: username, botJoined: false
       });
-      appLocked = true;  // Lock app for new users
+      appLocked = true;
       lockApp();
     } else {
       const data = doc.data();
       Object.assign(current, data);
-      if (!data.botJoined) appLocked = true;  // Lock if not joined bot yet
+      if (!data.botJoined) appLocked = true;
       if (appLocked) lockApp();
     }
 
@@ -268,6 +268,7 @@ async function initApp() {
         }
       }
     });
+
     // Referral Link Generation
     const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
@@ -324,11 +325,10 @@ async function initApp() {
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
 
-    // NEW: Popup logic based on isNewUser
+    // Popup logic
     setTimeout(() => {
       if (isNewUser || !current.botJoined) {
         document.getElementById('firstTime-popup').style.display = 'block';
-        // Set up first-time button
         document.getElementById('chatWithBotBtn').onclick = async () => {
           await userRef().update({ botJoined: true });
           tg.openTelegramLink('https://t.me/AetherMineXBot');
@@ -338,7 +338,7 @@ async function initApp() {
           unlockApp();
         };
       } else {
-        document.getElementById('welcome-popup').style.display = 'block';  // Original for returning users
+        document.getElementById('welcome-popup').style.display = 'block';
       }
     }, 500);
 
@@ -354,13 +354,11 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-
-// NEW: Lock/Unlock functions
-function lockApp() {
+  function lockApp() {
   document.getElementById('lock-overlay').style.display = 'flex';
   document.querySelectorAll('.tab').forEach(tab => tab.classList.add('disabled'));
   document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
-  document.getElementById('home').classList.add('active');  // Stay on home
+  document.getElementById('home').classList.add('active');
 }
 
 function unlockApp() {
@@ -369,12 +367,10 @@ function unlockApp() {
   document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
 }
 
-// NEW: Close first-time popup
 function closeFirstTime() {
   document.getElementById('firstTime-popup').style.display = 'none';
 }
 
-// Referral Handler
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
@@ -382,21 +378,18 @@ async function handleReferral(param) {
   try {
     const doc = await userRef().get();
     if (doc.exists && doc.data().refs && doc.data().refs.includes(referrerId)) {
-      return;  // Already referred
+      return;
     }
 
-    // Add to new user's refs (this user)
     await userRef().set({ 
       refs: firebase.firestore.FieldValue.arrayUnion(referrerId) 
     }, { merge: true });
 
-    // Add new user to referrer's refs & give coins
     await db.collection('users').doc(referrerId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
     });
 
-    // Update local current
     if (!current.refs) current.refs = [];
     if (!current.refs.includes(referrerId)) {
       current.refs.push(referrerId);
@@ -410,8 +403,8 @@ async function handleReferral(param) {
   } catch (e) {
     console.error(e);
   }
-  }
-  // Update Referral Stats UI
+}
+
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
@@ -449,7 +442,6 @@ function updateWalletButtons() {
     : 'Not Connected';
 }
 
-// NEW: Airdrop Eligibility
 function updateAirdropEligibility() {
   const msgEl = document.getElementById('eligibilityMsg');
   if (current.level >= 3) {
@@ -482,7 +474,7 @@ function updateUI() {
 }
 
 function openTab(tab) {
-  if (appLocked) return;  // Prevent tab switch if locked
+  if (appLocked) return;
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -510,7 +502,6 @@ async function watchAdHandler() {
 
   const now = Date.now();
 
-  // 1 ad per 15 min cooldown
   if (current.lastAdTime && (now - current.lastAdTime < ADS_COOLDOWN_MINUTES * 60 * 1000)) {
     const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - (now - current.lastAdTime)) / 60000);
     return tg.showAlert(`Wait ${minutesLeft} minutes for next ad`);
@@ -524,7 +515,7 @@ async function watchAdHandler() {
     if (typeof window[AD_FN] === 'function') await window[AD_FN]('pop');
     else await new Promise(r => setTimeout(r, 1500));
 
-    const reward = 500;  // Changed to 500
+    const reward = 500;
     await userRef().update({
       coins: firebase.firestore.FieldValue.increment(reward),
       totalAds: firebase.firestore.FieldValue.increment(1),
@@ -562,14 +553,12 @@ function renderLevelsChunk(max) {
     const reward = 500 * i;
     const el = document.createElement('div');
     el.className = 'level';
-    el.innerHTML = `
-      <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
-      <div class="small">Requires: \( {refsNeeded} referral \){refsNeeded > 1 ? 's' : ''} & \( {adsNeeded} ad \){adsNeeded > 1 ? 's' : ''}</div>
-      <div class="small">Reward: ${reward} coins</div>
-      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
-    `;
+    el.innerHTML = '<div style="font-weight:800;color:var(--accent)">Level ' + i + '</div>' +
+                   '<div class="small">Requires: ' + refsNeeded + ' referral' + (refsNeeded > 1 ? 's' : '') + ' & ' + adsNeeded + ' ad' + (adsNeeded > 1 ? 's' : '') + '</div>' +
+                   '<div class="small">Reward: ' + reward + ' coins</div>' +
+                   '<div style="margin-top:10px"><button id="claim_' + i + '" class="claimBtn" disabled>Claim</button></div>';
     container.appendChild(el);
-    document.getElementById(`claim_${i}`).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
+    document.getElementById('claim_' + i).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
   }
   levelsRendered = end;
   updateLevelProgressUI();
@@ -579,7 +568,7 @@ async function updateLevelProgressUI() {
   const refsCount = current.refs?.length || 0;
   const adsDone = current.totalAds || 0;
   for (let i = 1; i <= levelsRendered; i++) {
-    const btn = document.getElementById(`claim_${i}`);
+    const btn = document.getElementById('claim_' + i);
     if (!btn) continue;
     const refsNeeded = i;
     const adsNeeded = i;
@@ -602,11 +591,10 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   current.coins += reward;
   current.claimedLevels.push(levelNo);
   updateUI();
-  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} coins!`);
+  tg.showAlert('Level ' + levelNo + ' claimed! +' + reward + ' coins!');
 }
 
 initApp();
 </script>
 </body>
 </html>
-    
