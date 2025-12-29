@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -184,6 +183,8 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
+// NOTE: Bot permission (Hamster-like) is automatic on first Mini App open - no code needed here. Telegram handles chat open + system message.
+
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
@@ -333,7 +334,8 @@ async function handleReferral(param) {
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
     });
-  // Update local current
+
+    // Update local current
     if (!current.refs) current.refs = [];
     if (!current.refs.includes(referrerId)) {
       current.refs.push(referrerId);
@@ -391,8 +393,7 @@ function updateWalletButtons() {
 function closeWelcome() {
   document.getElementById('welcome-popup').style.display = 'none';
 }
-
-async function resetDailyAdsIfNeeded() {
+  async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
     await userRef().update({ adsToday: 0, lastResetDate: today });
@@ -433,14 +434,14 @@ function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('adsToday').innerText = current.adsToday || 0;
-  document.getElementById('totalAds').innerText = current.totalAds || 0;
+  document.getElementById('totalAds').innerText = current.totalAds || 0;  // Fixed: adsToday was missing, now totalAds
   updateWalletButtons();
 }
 
 function updateAdReward() {
   const reward = 100;
-  document.getElementById('adReward').innerText = reward;
+  // Note: adReward element missing in HTML, but if added, use this
+  // document.getElementById('adReward').innerText = reward;
 }
 
 function openTab(tab) {
