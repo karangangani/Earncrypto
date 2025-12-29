@@ -114,7 +114,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- INVITE -->
     <div id="referral" class="section">
-      <div id="refStats" class="ref-stats" style="display:none;">Referrals: 0/∞ (Each = +5000 Coins!)</div>
+      <div id="refStats" class="ref-stats" style="display:none;"></div>
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
         <p style="margin-bottom:20px">Each referral = +5000 coins for you!</p>
@@ -174,6 +174,7 @@ const ADS_COOLDOWN_MINUTES = 60;  // 1 hour
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';  // तेरी Telegram ID डाल
 const REFERRAL_REWARD = 5000;  // Coins per referral
+const BOT_USERNAME = 'AetherMineXBot';  // Bot username for chat
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -236,29 +237,34 @@ async function initApp() {
         updateNotificationButton();
         updateAdReward();
         updateWalletButtons();
-        updateRefStats();  // Added for referral stats
+        updateRefStats();
       }
     });
 
-    // Referral Link Generation (like first app)
-    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
+    // Referral Link Generation
+    const refLink = `https://t.me/\( {BOT_USERNAME}?startapp=ref_ \){userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
       tg.showAlert('Link Copied! Share Kar!');
     };
 
+    // Auto-open bot chat on first load (Hamster style - background open, triggers permission)
+    if (!current.botJoined) {
+      await userRef().update({ botJoined: true });
+      current.botJoined = true;
+      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
+    }
+
     // Official Bot buttons
-    document.getElementById('officialBot').onclick = async () => {
-      await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineXBot');
+    document.getElementById('officialBot').onclick = () => {
+      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
-    document.getElementById('officialBotRef').onclick = async () => {
-      await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineXBot');
+    document.getElementById('officialBotRef').onclick = () => {
+      tg.openTelegramLink(`https://t.me/${BOT_USERNAME}`);
     };
 
-    // Referral handling (Exact like first app, with coins reward for referrer)
+    // Referral handling (One-way: only referrer gets +1 refs & coins, new user gets 0)
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferral(startParam);
     }
@@ -300,7 +306,7 @@ async function initApp() {
     updateNotificationButton();
     updateAdReward();
     updateWalletButtons();
-    updateRefStats();  // Show referral stats
+    updateRefStats();
 
     setTimeout(() => {
       document.getElementById('welcome-popup').style.display = 'block';
@@ -308,54 +314,44 @@ async function initApp() {
 
   } catch (e) {
     console.error(e);
-    tg.showAlert('Error. Retry.');
+    // Better error handling: Don't show alert every time, log only
+    tg.showAlert('App loaded with issues. Refresh if needed.');
   }
 }
-// Enhanced Referral Handler (Exact like first app: arrayUnion, duplicate check, + coins for referrer)
+
+// Fixed One-Way Referral Handler (only referrer gets refs + coins, new user unchanged)
 async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
   try {
-    const doc = await userRef().get();
-    if (doc.exists && doc.data().refs && doc.data().refs.includes(referrerId)) {
-      return;  // Already referred
+    const referrerRef = db.collection('users').doc(referrerId);
+    const referrerDoc = await referrerRef.get();
+
+    // Duplicate check: referrer's refs includes this userId?
+    if (referrerDoc.exists && referrerDoc.data().refs && referrerDoc.data().refs.includes(userDocId)) {
+      return;
     }
 
-    // Add to new user's refs (this user)
-    await userRef().set({ 
-      refs: firebase.firestore.FieldValue.arrayUnion(referrerId) 
-    }, { merge: true });
-
-    // Add new user to referrer's refs & give coins
-    await db.collection('users').doc(referrerId).update({
+    // Update referrer only: add userId to refs, +coins (merge for new doc)
+    await referrerRef.set({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       coins: firebase.firestore.FieldValue.increment(REFERRAL_REWARD)
-    });
+    }, { merge: true });
 
-    // Update local current
-    if (!current.refs) current.refs = [];
-    if (!current.refs.includes(referrerId)) {
-      current.refs.push(referrerId);
-    }
-
-    computeLevel();
-    updateUI();
-    updateRefStats();
-    tg.showAlert('Referral Done! Referrer Got +5000 Coins!');
+    tg.showAlert('Referral Success! Your friend got +5000 Coins!');
 
   } catch (e) {
     console.error(e);
-    // Silent fail, like first app
   }
 }
 
-// New: Update Referral Stats UI (like first app)
+// Fixed Referral Stats UI
 function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
   statsEl.style.display = 'block';
-  statsEl.innerText = `Referrals: \( {refCount} (Each = + \){REFERRAL_REWARD} Coins!)`;
+  statsEl.innerText = 'Referrals: ' + refCount + ' (Each = +' + REFERRAL_REWARD + ' Coins!)';
 }
 
 async function loadUsersList() {
@@ -384,7 +380,7 @@ function updateWalletButtons() {
   document.getElementById('connectTon').style.display = connected ? 'none' : 'block';
   document.getElementById('disconnectTon').style.display = connected ? 'block' : 'none';
   document.getElementById('walletStatus').innerText = connected 
-    ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`
+    ? 'Connected: ' + current.tonWallet.slice(0,6) + '...' + current.tonWallet.slice(-4)
     : 'Not Connected';
 }
 
@@ -401,8 +397,7 @@ async function resetDailyAdsIfNeeded() {
     computeLevel();
   }
 }
-
-async function enableNotificationsHandler() {
+           async function enableNotificationsHandler() {
   try {
     const granted = await tg.requestWriteAccess();
     if (granted) {
@@ -433,14 +428,13 @@ function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.coins || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('adsToday').innerText = current.adsToday || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateWalletButtons();
 }
 
 function updateAdReward() {
   const reward = 100;
-  document.getElementById('adReward').innerText = reward;
+  // No adReward element, so skip or add if needed
 }
 
 function openTab(tab) {
@@ -454,7 +448,7 @@ let mining = false;
 function startPassiveMining() {
   if (mining) return tg.showAlert('Already mining!');
   mining = true;
-    document.getElementById('startMining').innerText = 'Mining Active...';
+  document.getElementById('startMining').innerText = 'Mining Active...';
   setInterval(async () => {
     if (!mining) return;
     await userRef().update({ coins: firebase.firestore.FieldValue.increment(1) });
@@ -472,7 +466,7 @@ async function watchAdHandler() {
   // 1 ad per hour cooldown
   if (current.lastAdTime && (now - current.lastAdTime < ADS_COOLDOWN_MINUTES * 60 * 1000)) {
     const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - (now - current.lastAdTime)) / 60000);
-    return tg.showAlert(`Wait ${minutesLeft} minutes for next ad`);
+    return tg.showAlert('Wait ' + minutesLeft + ' minutes for next ad');
   }
 
   const btn = document.getElementById('watchAd');
@@ -494,7 +488,7 @@ async function watchAdHandler() {
     current.lastAdTime = now;
     computeLevel();
     updateUI();
-    tg.showAlert(`+${reward} coins!`);
+    tg.showAlert('+' + reward + ' coins!');
   } catch (e) {
     tg.showAlert('Ad not completed');
   }
@@ -520,14 +514,15 @@ function renderLevelsChunk(max) {
     const reward = 500 * i;
     const el = document.createElement('div');
     el.className = 'level';
+    const requiresText = 'Requires: ' + refsNeeded + ' referral' + (refsNeeded > 1 ? 's' : '') + ' & ' + adsNeeded + ' ad' + (adsNeeded > 1 ? 's' : '');
     el.innerHTML = `
       <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
-      <div class="small">Requires: \( {refsNeeded} referral \){refsNeeded > 1 ? 's' : ''} & \( {adsNeeded} ad \){adsNeeded > 1 ? 's' : ''}</div>
+      <div class="small">${requiresText}</div>
       <div class="small">Reward: ${reward} coins</div>
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
     `;
     container.appendChild(el);
-    document.getElementById(`claim_${i}`).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
+    document.getElementById('claim_' + i).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
   }
   levelsRendered = end;
   updateLevelProgressUI();
@@ -537,7 +532,7 @@ async function updateLevelProgressUI() {
   const refsCount = current.refs?.length || 0;
   const adsDone = current.totalAds || 0;
   for (let i = 1; i <= levelsRendered; i++) {
-    const btn = document.getElementById(`claim_${i}`);
+    const btn = document.getElementById('claim_' + i);
     if (!btn) continue;
     const refsNeeded = i;
     const adsNeeded = i;
@@ -559,10 +554,10 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   current.coins += reward;
   current.claimedLevels.push(levelNo);
   updateUI();
-  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} coins!`);
+  tg.showAlert('Level ' + levelNo + ' claimed! +' + reward + ' coins!');
 }
 
 initApp();
-</script>"
+</script>
 </body>
-</html>
+</html>                                                          
