@@ -195,6 +195,7 @@ const ADS_COOLDOWN_MINUTES = 15;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';
 const REFERRAL_REWARD = 5000;
+const BOT_LINK = 'https://t.me/AetherMineXBot';  // Correct bot link
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -267,13 +268,12 @@ async function initApp() {
         if (current.botJoined && appLocked) {
           appLocked = false;
           unlockApp();
-          showWelcomePopup();  // Show original welcome after unlock
+          showWelcomePopup();
         }
       }
     });
-
     // Referral Link Generation
-    const refLink = `https://t.me/AetherMineBot?startapp=ref_${userDocId}`;
+    const refLink = BOT_LINK + '?startapp=ref_' + userDocId;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
@@ -284,18 +284,25 @@ async function initApp() {
     document.getElementById('officialBot').onclick = async () => {
       if (appLocked) return;
       await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineBot');
+      tg.openTelegramLink(BOT_LINK);
     };
     document.getElementById('officialBotRef').onclick = async () => {
       if (appLocked) return;
       await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineBot');
+      tg.openTelegramLink(BOT_LINK);
     };
 
     // Referral handling
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferral(startParam);
     }
+
+    // Admin tab
+    if (userDocId === ADMIN_ID) {
+      document.getElementById('adminTab').style.display = 'block';
+      loadUsersList();
+    }
+
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -327,7 +334,7 @@ async function initApp() {
         document.getElementById('firstTime-popup').style.display = 'block';
         document.getElementById('chatWithBotBtn').onclick = async () => {
           await userRef().update({ botJoined: true });
-          tg.openTelegramLink('https://t.me/AetherMineBot');  // Direct bot chat redirect
+          tg.openTelegramLink(BOT_LINK);  // Direct redirect to bot chat
           closeFirstTime();
           appLocked = false;
           unlockApp();
@@ -351,7 +358,7 @@ async function initApp() {
   }
 }
 
-// NEW: Show original welcome popup
+// Show original welcome popup
 function showWelcomePopup() {
   document.getElementById('welcome-popup').style.display = 'block';
 }
@@ -540,8 +547,9 @@ async function trySaveTonWallet(addr) {
   updateUI();
   updateWalletButtons();
   tg.showAlert('Wallet connected!');
-  }
-  function renderLevelsChunk(max) {
+}
+
+function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
   const end = Math.min(100, levelsRendered + max);
@@ -596,4 +604,4 @@ initApp();
 </script>
 </body>
 </html>
-  
+    
