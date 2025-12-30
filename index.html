@@ -159,18 +159,18 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
   </div>
 </div>
 
-<!-- Original Welcome Popup (for returning users) -->
-<div id="welcome-popup" class="welcome-popup" style="display:none">
-  <h2 style="color:var(--accent)">Welcome Back to Aether!</h2>
-  <p>Earn coins, invite friends & get ready for TON airdrop 🚀</p>
-  <button onclick="closeWelcome()" class="btn">Start Earning</button>
-</div>
-
-<!-- New First-Time Popup (No Skip) -->
+<!-- First-Time Popup (Only for new users) -->
 <div id="firstTime-popup" class="firstTime-popup" style="display:none">
   <h2 style="color:var(--accent)">Welcome to Aether!</h2>
   <p>Let's get started! Chat with our bot for quick help & bonuses.</p>
   <button id="chatWithBotBtn" class="btn">Chat with Bot</button>
+</div>
+
+<!-- Original Welcome Popup (for all users after bot chat or returning) -->
+<div id="welcome-popup" class="welcome-popup" style="display:none">
+  <h2 style="color:var(--accent)">Welcome to Aether!</h2>
+  <p>Earn coins, invite friends & get ready for TON airdrop 🚀</p>
+  <button onclick="closeWelcome()" class="btn">Start Earning</button>
 </div>
 
 <!-- Lock Overlay (for new users until bot chat) -->
@@ -191,7 +191,7 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const ADS_COOLDOWN_MINUTES = 15;  // 15 min
+const ADS_COOLDOWN_MINUTES = 15;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';
 const REFERRAL_REWARD = 5000;
@@ -240,8 +240,10 @@ async function initApp() {
     } else {
       const data = doc.data();
       Object.assign(current, data);
-      if (!data.botJoined) appLocked = true;
-      if (appLocked) lockApp();
+      if (!data.botJoined) {
+        appLocked = true;
+        lockApp();
+      }
     }
 
     computeLevel();
@@ -265,12 +267,13 @@ async function initApp() {
         if (current.botJoined && appLocked) {
           appLocked = false;
           unlockApp();
+          showWelcomePopup();  // Show original welcome after unlock
         }
       }
     });
 
     // Referral Link Generation
-    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
+    const refLink = `https://t.me/AetherMineBot?startapp=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
@@ -281,25 +284,18 @@ async function initApp() {
     document.getElementById('officialBot').onclick = async () => {
       if (appLocked) return;
       await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineXBot');
+      tg.openTelegramLink('https://t.me/AetherMineBot');
     };
     document.getElementById('officialBotRef').onclick = async () => {
       if (appLocked) return;
       await userRef().update({ botJoined: true });
-      tg.openTelegramLink('https://t.me/AetherMineXBot');
+      tg.openTelegramLink('https://t.me/AetherMineBot');
     };
 
     // Referral handling
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferral(startParam);
     }
-
-    // Admin tab
-    if (userDocId === ADMIN_ID) {
-      document.getElementById('adminTab').style.display = 'block';
-      loadUsersList();
-    }
-
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -325,20 +321,20 @@ async function initApp() {
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
 
-    // Popup logic
+    // Popup logic: First-time only for new users
     setTimeout(() => {
-      if (isNewUser || !current.botJoined) {
+      if (isNewUser || (!current.botJoined && appLocked)) {
         document.getElementById('firstTime-popup').style.display = 'block';
         document.getElementById('chatWithBotBtn').onclick = async () => {
           await userRef().update({ botJoined: true });
-          tg.openTelegramLink('https://t.me/AetherMineXBot');
+          tg.openTelegramLink('https://t.me/AetherMineBot');  // Direct bot chat redirect
           closeFirstTime();
-          tg.showAlert('Chat opened! App unlocked 🚀');
           appLocked = false;
           unlockApp();
+          setTimeout(() => showWelcomePopup(), 1000);  // Show original welcome after redirect
         };
       } else {
-        document.getElementById('welcome-popup').style.display = 'block';
+        showWelcomePopup();  // For returning users
       }
     }, 500);
 
@@ -354,7 +350,13 @@ async function initApp() {
     tg.showAlert('Error. Retry.');
   }
 }
-  function lockApp() {
+
+// NEW: Show original welcome popup
+function showWelcomePopup() {
+  document.getElementById('welcome-popup').style.display = 'block';
+}
+
+function lockApp() {
   document.getElementById('lock-overlay').style.display = 'flex';
   document.querySelectorAll('.tab').forEach(tab => tab.classList.add('disabled'));
   document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
@@ -409,7 +411,7 @@ function updateRefStats() {
   const refCount = current.refs ? current.refs.length : 0;
   const statsEl = document.getElementById('refStats');
   statsEl.style.display = 'block';
-  statsEl.innerText = `Referrals: \( {refCount} (Each = + \){REFERRAL_REWARD} Coins!)`;
+  statsEl.innerText = 'Referrals: ' + refCount + ' (Each = +' + REFERRAL_REWARD + ' Coins!)';
 }
 
 async function loadUsersList() {
@@ -419,10 +421,7 @@ async function loadUsersList() {
   let html = '';
   snapshot.docs.forEach(doc => {
     const data = doc.data();
-    html += `<div class="user-item">
-      <strong>${data.username}</strong> (ID: ${doc.id})<br>
-      Coins: ${data.coins || 0} | Refs: ${data.refs?.length || 0} | Bot Joined: ${data.botJoined ? 'Yes' : 'No'}
-    </div>`;
+    html += '<div class="user-item"><strong>' + data.username + '</strong> (ID: ' + doc.id + ')<br>Coins: ' + (data.coins || 0) + ' | Refs: ' + (data.refs?.length || 0) + ' | Bot Joined: ' + (data.botJoined ? 'Yes' : 'No') + '</div>';
   });
   usersList.innerHTML = html || 'No users yet.';
 }
@@ -438,7 +437,7 @@ function updateWalletButtons() {
   document.getElementById('connectTon').style.display = connected ? 'none' : 'block';
   document.getElementById('disconnectTon').style.display = connected ? 'block' : 'none';
   document.getElementById('walletStatus').innerText = connected 
-    ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`
+    ? 'Connected: ' + current.tonWallet.slice(0,6) + '...' + current.tonWallet.slice(-4)
     : 'Not Connected';
 }
 
@@ -504,7 +503,7 @@ async function watchAdHandler() {
 
   if (current.lastAdTime && (now - current.lastAdTime < ADS_COOLDOWN_MINUTES * 60 * 1000)) {
     const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - (now - current.lastAdTime)) / 60000);
-    return tg.showAlert(`Wait ${minutesLeft} minutes for next ad`);
+    return tg.showAlert('Wait ' + minutesLeft + ' minutes for next ad');
   }
 
   const btn = document.getElementById('watchAd');
@@ -526,7 +525,7 @@ async function watchAdHandler() {
     current.lastAdTime = now;
     computeLevel();
     updateUI();
-    tg.showAlert(`+${reward} coins!`);
+    tg.showAlert('+' + reward + ' coins!');
   } catch (e) {
     tg.showAlert('Ad not completed');
   }
@@ -541,9 +540,8 @@ async function trySaveTonWallet(addr) {
   updateUI();
   updateWalletButtons();
   tg.showAlert('Wallet connected!');
-}
-
-function renderLevelsChunk(max) {
+  }
+  function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
   const end = Math.min(100, levelsRendered + max);
@@ -598,3 +596,4 @@ initApp();
 </script>
 </body>
 </html>
+  
