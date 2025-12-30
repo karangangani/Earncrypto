@@ -36,7 +36,6 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .tabs { display: flex; gap: 8px; margin-top: 12px; }
 .tab { flex: 1; padding: 12px; border-radius: 12px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; color: var(--muted); transition: all 0.3s; font-weight: 600; }
 .tab.active { background: rgba(0,211,138,0.2); color: var(--text); border-color: var(--accent); box-shadow: var(--glow); }
-.tab.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .section { display: none; padding-top: 12px; }
 .section.active { display: block; animation: fadeIn 0.5s; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -45,7 +44,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .btn.secondary { background: linear-gradient(135deg, #333, #555); color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 .btn.attractive { padding: 16px; font-size: 16px; border-radius: 20px; box-shadow: var(--glow); margin-top: 12px; background: linear-gradient(135deg, var(--accent), #00d38a); }
 .btn.attractive:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,211,138,0.6); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; pointer-events: none; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .small { font-size: 13px; color: var(--muted); margin-top: 8px; text-align: center; }
 .ref-box { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: rgba(0,211,138,0.1); border: 1px solid var(--border); }
 .levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; }
@@ -55,12 +54,10 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .claimBtn:hover:not(:disabled) { box-shadow: var(--glow); }
 .claimBtn:disabled { background: #333; color: #666; }
 .footer { margin-top: 20px; text-align: center; color: var(--muted); font-size: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 12px; }
-.welcome-popup, .firstTime-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); }
+.welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); }
 @keyframes popupFade { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 #myRef { word-break: break-all; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px; }
 .ref-stats { color: var(--accent); font-weight: bold; margin: 10px 0; font-size: 1.2rem; text-align: center; }
-.lock-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; display: flex; align-items: center; justify-content: center; color: var(--text); text-align: center; padding: 20px; }
-.lock-overlay h2 { color: var(--accent); margin-bottom: 10px; }
 .airdrop-eligible { color: var(--accent); font-weight: bold; }
 .airdrop-ineligible { color: #ff6b6b; font-weight: bold; }
 </style>
@@ -85,10 +82,10 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
     </div>
 
     <div class="tabs">
-      <div class="tab active" id="homeTab" onclick="openTab('home')">Home</div>
-      <div class="tab" id="earnTab" onclick="openTab('tasks')">Earn</div>
-      <div class="tab" id="inviteTab" onclick="openTab('referral')">Invite</div>
-      <div class="tab" id="airdropTab" onclick="openTab('airdrop')">Airdrop</div>
+      <div class="tab active" onclick="openTab('home')">Home</div>
+      <div class="tab" onclick="openTab('tasks')">Earn</div>
+      <div class="tab" onclick="openTab('referral')">Invite</div>
+      <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
       <div class="tab" id="adminTab" onclick="openTab('admin')" style="display:none">Admin</div>
     </div>
 
@@ -159,14 +156,14 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
   </div>
 </div>
 
-
-<!-- Original Welcome Popup (for all users after bot chat or returning) -->
+<!-- Original Welcome Popup (with Chat with Bot option) -->
 <div id="welcome-popup" class="welcome-popup" style="display:none">
   <h2 style="color:var(--accent)">Welcome to Aether!</h2>
   <p>Earn coins, invite friends & get ready for TON airdrop 🚀</p>
+  <p class="small">For more info, chat with our bot</p>
+  <button class="btn secondary" onclick="tg.openTelegramLink('https://t.me/AetherMineXBot')" style="margin-bottom:10px">Chat with Bot</button>
   <button onclick="closeWelcome()" class="btn">Start Earning</button>
 </div>
-
 
 <script>
 const FIREBASE_CONFIG = {
@@ -182,7 +179,6 @@ const ADS_COOLDOWN_MINUTES = 15;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 const ADMIN_ID = '5973954829';
 const REFERRAL_REWARD = 5000;
-const BOT_LINK = 'https://t.me/AetherMineXBot';  // Correct bot link
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -200,7 +196,6 @@ let current = {
 let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
-let appLocked = false;
 
 const startParam = tg.initDataUnsafe.start_param || '';
 
@@ -221,17 +216,11 @@ async function initApp() {
 
     if (isNewUser) {
       await userRef().set({
-        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, username: username, botJoined: false
+        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, username: username
       });
-      appLocked = true;
-      lockApp();
     } else {
       const data = doc.data();
       Object.assign(current, data);
-      if (!data.botJoined) {
-        appLocked = true;
-        lockApp();
-      }
     }
 
     computeLevel();
@@ -252,15 +241,11 @@ async function initApp() {
         updateRefStats();
         updateAirdropEligibility();
         updateWalletButtons();
-        if (current.botJoined && appLocked) {
-          appLocked = false;
-          unlockApp();
-          showWelcomePopup();
-        }
       }
     });
+
     // Referral Link Generation
-    const refLink = BOT_LINK + '?startapp=ref_' + userDocId;
+    const refLink = `https://t.me/AetherMineXBot?startapp=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => {
       navigator.clipboard.writeText(refLink);
@@ -268,16 +253,8 @@ async function initApp() {
     };
 
     // Official Bot buttons
-    document.getElementById('officialBot').onclick = async () => {
-      if (appLocked) return;
-      await userRef().update({ botJoined: true });
-      tg.openTelegramLink(https://t.me/AetherMineXBot);
-    };
-    document.getElementById('officialBotRef').onclick = async () => {
-      if (appLocked) return;
-      await userRef().update({ botJoined: true });
-      tg.openTelegramLink( https://t.me/AetherMineXBot );
-    };
+    document.getElementById('officialBot').onclick = () => tg.openTelegramLink('https://t.me/AetherMineXBot');
+    document.getElementById('officialBotRef').onclick = () => tg.openTelegramLink('https://t.me/AetherMineXBot');
 
     // Referral handling
     if (startParam && startParam.startsWith('ref_')) {
@@ -302,7 +279,6 @@ async function initApp() {
       }
     });
     document.getElementById('disconnectTon').onclick = async () => {
-      if (appLocked) return;
       await tonUI.disconnect();
       await userRef().update({ tonWallet: '' });
       current.tonWallet = '';
@@ -315,23 +291,6 @@ async function initApp() {
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
 
-    // Popup logic: First-time only for new users
-    setTimeout(() => {
-      if (isNewUser || (!current.botJoined && appLocked)) {
-        document.getElementById('firstTime-popup').style.display = 'block';
-        document.getElementById('chatWithBotBtn').onclick = async () => {
-          await userRef().update({ botJoined: true });
-          tg.openTelegramLink(BOT_LINK);  // Direct redirect to bot chat
-          closeFirstTime();
-          appLocked = false;
-          unlockApp();
-          setTimeout(() => showWelcomePopup(), 1000);  // Show original welcome after redirect
-        };
-      } else {
-        showWelcomePopup();  // For returning users
-      }
-    }, 500);
-
     renderLevelsChunk(20);
     await resetDailyAdsIfNeeded();
     updateUI();
@@ -339,35 +298,17 @@ async function initApp() {
     updateAirdropEligibility();
     updateWalletButtons();
 
+    // Show welcome popup for all users
+    setTimeout(() => {
+      document.getElementById('welcome-popup').style.display = 'block';
+    }, 500);
+
   } catch (e) {
     console.error(e);
     tg.showAlert('Error. Retry.');
   }
 }
-
-// Show original welcome popup
-function showWelcomePopup() {
-  document.getElementById('welcome-popup').style.display = 'block';
-}
-
-function lockApp() {
-  document.getElementById('lock-overlay').style.display = 'flex';
-  document.querySelectorAll('.tab').forEach(tab => tab.classList.add('disabled'));
-  document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
-  document.getElementById('home').classList.add('active');
-}
-
-function unlockApp() {
-  document.getElementById('lock-overlay').style.display = 'none';
-  document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('disabled'));
-  document.querySelectorAll('.btn').forEach(btn => btn.disabled = false);
-}
-
-function closeFirstTime() {
-  document.getElementById('firstTime-popup').style.display = 'none';
-}
-
-async function handleReferral(param) {
+  async function handleReferral(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
@@ -415,7 +356,7 @@ async function loadUsersList() {
   let html = '';
   snapshot.docs.forEach(doc => {
     const data = doc.data();
-    html += '<div class="user-item"><strong>' + data.username + '</strong> (ID: ' + doc.id + ')<br>Coins: ' + (data.coins || 0) + ' | Refs: ' + (data.refs?.length || 0) + ' | Bot Joined: ' + (data.botJoined ? 'Yes' : 'No') + '</div>';
+    html += '<div class="user-item"><strong>' + data.username + '</strong> (ID: ' + doc.id + ')<br>Coins: ' + (data.coins || 0) + ' | Refs: ' + (data.refs?.length || 0) + '</div>';
   });
   usersList.innerHTML = html || 'No users yet.';
 }
@@ -467,7 +408,6 @@ function updateUI() {
 }
 
 function openTab(tab) {
-  if (appLocked) return;
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -476,7 +416,6 @@ function openTab(tab) {
 
 let mining = false;
 function startPassiveMining() {
-  if (appLocked) return;
   if (mining) return tg.showAlert('Already mining!');
   mining = true;
   document.getElementById('startMining').innerText = 'Mining Active...';
@@ -490,7 +429,6 @@ function startPassiveMining() {
 }
 
 async function watchAdHandler() {
-  if (appLocked) return;
   await resetDailyAdsIfNeeded();
 
   const now = Date.now();
@@ -528,7 +466,6 @@ async function watchAdHandler() {
 }
 
 async function trySaveTonWallet(addr) {
-  if (appLocked) return;
   await userRef().update({ tonWallet: addr });
   current.tonWallet = addr;
   updateUI();
@@ -566,13 +503,12 @@ async function updateLevelProgressUI() {
     const refsNeeded = i;
     const adsNeeded = i;
     const claimed = current.claimedLevels?.includes(i);
-    btn.disabled = claimed || !(refsCount >= refsNeeded && adsDone >= adsNeeded) || appLocked;
+    btn.disabled = claimed || !(refsCount >= refsNeeded && adsDone >= adsNeeded);
     btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
   }
 }
 
 async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
-  if (appLocked) return;
   const refsCount = current.refs?.length || 0;
   const adsDone = current.totalAds || 0;
   if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert('Requirements not met');
@@ -591,4 +527,3 @@ initApp();
 </script>
 </body>
 </html>
-    
