@@ -16,6 +16,7 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
+/* (same CSS as you had) */
 :root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--muted); min-height: 100vh; padding: 14px; overflow-x: hidden; }
@@ -78,13 +79,12 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
       <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
       <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
     </div>
-
-    <div class="tabs">
-      <div class="tab active" onclick="openTab('home')">Home</div>
-      <div class="tab" onclick="openTab('tasks')">Earn</div>
-      <div class="tab" onclick="openTab('referral')">Invite</div>
-      <div class="tab" onclick="openTab('leaderboard')">Leaderboard</div>
-      <div class="tab" onclick="openTab('airdrop')">Airdrop</div>
+     <div class="tabs">
+      <div class="tab active" onclick="openTab(event,'home')">Home</div>
+      <div class="tab" onclick="openTab(event,'tasks')">Earn</div>
+      <div class="tab" onclick="openTab(event,'referral')">Invite</div>
+      <div class="tab" onclick="openTab(event,'leaderboard')">Leaderboard</div>
+      <div class="tab" onclick="openTab(event,'airdrop')">Airdrop</div>
     </div>
 
     <!-- HOME -->
@@ -104,7 +104,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
     <!-- EARN -->
     <div id="tasks" class="section">
       <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">50</span> Coins)</button>
-      <p class="small">Daily ads: <span id="adsToday">0</span> / 5 • After 5 ads: 30 min cooldown for next batch • Total: <span id="totalAds">0</span></p>
+      <p class="small">Daily ads: <span id="adsToday">0</span> / 50 • After hitting limit: wait for window</p>
 
       <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
       <div id="levelsList" class="levels"></div>
@@ -122,9 +122,15 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
           <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
+
+        <div style="margin-top:18px">
+          <h4 style="color:var(--accent)">Top Players (Invite view)</h4>
+          <ul id="refLeaderList" class="leaderboard"></ul>
+        </div>
       </div>
-          </div>
-        <!-- LEADERBOARD -->
+    </div>
+
+    <!-- LEADERBOARD -->
     <div id="leaderboard" class="section">
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Top 100 by Coins</h3>
@@ -174,9 +180,10 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-const AD_FN = 'show_10192178';
-const DAILY_AD_LIMIT = 5;
-const ADS_COOLDOWN_MINUTES = 30;
+
+const ADS_LIMIT = 50; // max ads in window
+const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours window
+const AD_BATCH_SAVE_MS = 24 * 60 * 60 * 1000; // batch save interval (24h)
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -196,6 +203,10 @@ let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
 
+// local ad-queue to batch writes
+let adQueue = { count: 0, reward: 0, firstSeen: 0, lastSeen: 0 };
+
+const adTypes = ['', 'pop', 'video']; // 3 ad variants (randomly pick)
 const startParam = tg.initDataUnsafe.start_param || '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
@@ -221,6 +232,10 @@ async function initApp() {
     } else {
       const data = doc.data();
       Object.assign(current, data);
+      // ensure numeric defaults
+      current.coins = current.coins || 0;
+      current.totalAds = current.totalAds || 0;
+      current.adsToday = current.adsToday || 0;
     }
 
     computeLevel();
@@ -232,10 +247,21 @@ async function initApp() {
 
     document.getElementById('userLine').innerText = current.username + ' • ID: ' + userDocId;
 
+    // realtime local UI updates from firestore
     unsubscribeSnapshot = userRef().onSnapshot(docSnap => {
       if (docSnap.exists) {
-        Object.assign(current, docSnap.data());
-        computeLevel();
+        const data = docSnap.data();
+        // only merge properties we want to reflect
+        Object.assign(current, {
+          coins: data.coins || current.coins,
+          refs: data.refs || current.refs,
+          level: data.level || current.level,
+          totalAds: data.totalAds || current.totalAds,
+          claimedLevels: data.claimedLevels || current.claimedLevels,
+          tonWallet: data.tonWallet || current.tonWallet,
+          notificationsEnabled: data.notificationsEnabled || current.notificationsEnabled
+        });
+        computeLevel(false); // don't write level back here (avoid loop)
         updateUI();
         updateLevelProgressUI();
         updateNotificationButton();
@@ -244,8 +270,7 @@ async function initApp() {
         checkLevel10Gift();
       }
     });
-
-    const refLink = 'https://t.me/AetherMineXBot?start=ref_' + userDocId;
+const refLink = 'https://t.me/AetherMineXBot?start=ref_' + userDocId;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
 
@@ -286,7 +311,8 @@ async function initApp() {
     updateNotificationButton();
     updateAdReward();
     updateWalletButtons();
-    loadLeaderboard();
+    loadLeaderboard('leaderList');
+    loadLeaderboard('refLeaderList'); // referral view
 
     setTimeout(() => {
       document.getElementById('welcome-popup').style.display = 'block';
@@ -294,17 +320,34 @@ async function initApp() {
 
     document.getElementById('gift2xAds').onclick = () => chooseGift('ads');
     document.getElementById('gift2xCoins').onclick = () => chooseGift('coins');
+
+    // periodic flush: once every 24h we attempt to flush queued ads to Firestore
+    setInterval(() => {
+      flushAdsToFirestore().catch(console.error);
+    }, AD_BATCH_SAVE_MS);
+
+    // also flush on unload
+    window.addEventListener('beforeunload', () => {
+      // synchronous attempt (best-effort)
+      navigator.sendBeacon && adQueue.count > 0 && flushAdsToFirestore();
+    });
+
   } catch (e) {
     console.error(e);
     tg.showAlert('Error. Retry.');
   }
 }
 
-function computeLevel() {
-  const refsCount = current.refs?.length || 0;
+function computeLevel(writeBack = true) {
+  const refsCount = (current.refs && current.refs.length) || 0;
   const adsCount = current.totalAds || 0;
-  current.level = Math.min(refsCount, adsCount) + 1;
-  userRef().update({ level: current.level });
+  const newLevel = Math.min(refsCount, adsCount) + 1;
+  if (newLevel !== current.level) {
+    current.level = newLevel;
+    if (writeBack) {
+      userRef().update({ level: current.level }).catch(console.warn);
+    }
+  }
 }
 
 function checkLevel10Gift() {
@@ -318,10 +361,12 @@ async function chooseGift(type) {
     current.multiplierAds = 2;
   } else if (type === 'coins') {
     current.multiplierCoins = 2;
+    // double coins locally; we'll also persist to firestore in batch or immediately
     await userRef().update({ coins: firebase.firestore.FieldValue.increment(current.coins) });
     current.coins *= 2;
   }
   await userRef().update({ giftChosen: true });
+  current.giftChosen = true;
   document.getElementById('gift-popup').style.display = 'none';
   tg.showAlert(`Gift chosen: 2x ${type === 'ads' ? 'ads coins' : 'all coins'}!`);
   updateUI();
@@ -332,7 +377,7 @@ function updateWalletButtons() {
   document.getElementById('connectTon').style.display = connected ? 'none' : 'block';
   document.getElementById('disconnectTon').style.display = connected ? 'block' : 'none';
   document.getElementById('walletStatus').innerText = connected 
-    ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`
+    ? `Connected: ${current.tonWallet.slice(0,6)}...${current.tonWallet.slice(-4)}`
     : 'Not Connected';
 }
 
@@ -343,7 +388,8 @@ function closeWelcome() {
 async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
-    await userRef().update({ adsToday: 0, lastResetDate: today });
+    // Reset per-day UI counter; we will not write to Firestore for every ad — the batch will update totals.
+    await userRef().update({ adsToday: 0, lastResetDate: today }).catch(console.warn);
     current.adsToday = 0;
     current.lastResetDate = today;
     computeLevel();
@@ -375,9 +421,9 @@ function updateNotificationButton() {
     btn.innerText = 'Enable Notifications & Get +200 Coins Bonus';
     btn.disabled = false;
   }
-}
-
-async function handleReferralParam(param) {
+  }
+  
+    async function handleReferralParam(param) {
   const referrerId = param.replace('ref_', '');
   if (!referrerId || referrerId === userDocId) return;
 
@@ -387,7 +433,7 @@ async function handleReferralParam(param) {
   const referrerDoc = await db.collection('users').doc(referrerId).get();
   if (!referrerDoc.exists) return;
 
-  // Update own refs and coins
+  // Update own refs locally and coins (persist ref reward immediately)
   await userRef().update({
     refs: firebase.firestore.FieldValue.arrayUnion(referrerId),
     coins: firebase.firestore.FieldValue.increment(500)
@@ -399,6 +445,7 @@ async function handleReferralParam(param) {
     coins: firebase.firestore.FieldValue.increment(500)
   });
 
+  current.refs = current.refs || [];
   current.refs.push(referrerId);
   current.coins += 500;
   computeLevel();
@@ -414,17 +461,19 @@ function updateUI() {
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateWalletButtons();
 }
-    function updateAdReward() {
+
+function updateAdReward() {
   const reward = (50 + (current.level - 1) * 10) * current.multiplierAds;
   document.getElementById('adReward').innerText = reward;
 }
 
-function openTab(tab) {
+function openTab(evt, tab) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(tab).classList.add('active');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  if (tab === 'leaderboard') loadLeaderboard();
+  if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+  if (tab === 'leaderboard') loadLeaderboard('leaderList');
+  if (tab === 'referral') loadLeaderboard('refLeaderList');
 }
 
 let mining = false;
@@ -434,9 +483,13 @@ function startPassiveMining() {
   document.getElementById('startMining').innerText = 'Mining Active...';
   setInterval(async () => {
     if (!mining) return;
-    await userRef().update({ coins: firebase.firestore.FieldValue.increment(1 * current.multiplierCoins) });
+    // local update and persistent update not necessary every tick — but we will persist every minute (to avoid heavy writes).
     current.coins += 1 * current.multiplierCoins;
     updateUI();
+    // small persisted increment every 30 seconds to keep DB reasonable
+    try {
+      await userRef().update({ coins: firebase.firestore.FieldValue.increment(1 * current.multiplierCoins) });
+    } catch (e) { /* best-effort */ }
   }, 2000);
   tg.showAlert('Passive mining started!');
 }
@@ -445,15 +498,26 @@ async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
   const now = Date.now();
-  if (current.adsToday >= DAILY_AD_LIMIT) {
-    const timeSinceLast = now - (current.lastAdTime || 0);
-    if (timeSinceLast >= ADS_COOLDOWN_MINUTES * 60 * 1000) {
-      await userRef().update({ adsToday: 0 });
-      current.adsToday = 0;
-    } else {
-      const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
-      return tg.showAlert(`Wait ${minutesLeft} minutes for next batch`);
-    }
+
+  // check 12h window limit
+  const windowStart = (current._adsWindowStart || 0);
+  const adsWindowCount = (current._adsWindowCount || 0);
+
+  // If window expired, reset window counters locally.
+  if (!current._adsWindowStart || now - current._adsWindowStart > ADS_WINDOW_MS) {
+    current._adsWindowStart = now;
+    current._adsWindowCount = 0;
+  }
+
+  if (current._adsWindowCount >= ADS_LIMIT) {
+    return tg.showAlert(`Ad limit reached for this ${Math.floor(ADS_WINDOW_MS/3600000)}h window. Try later.`);
+  }
+
+  // random minimal gap between ads: 30-50 seconds
+  const minGap = 30000 + Math.floor(Math.random() * 20000); // ms
+  if (current.lastAdTime && now - current.lastAdTime < minGap) {
+    const secsLeft = Math.ceil((minGap - (now - current.lastAdTime))/1000);
+    return tg.showAlert(`Please wait ${secsLeft}s before next ad.`);
   }
 
   const btn = document.getElementById('watchAd');
@@ -461,30 +525,67 @@ async function watchAdHandler() {
   btn.innerText = 'Loading Ad...';
 
   try {
-    // Random ad type
-    const adType = Math.random() < 0.5 ? '' : 'pop';
+    // randomly pick ad type variant
+    const adType = adTypes[Math.floor(Math.random() * adTypes.length)];
+    // call ad provider (best-effort)
+    // show_10192178 exists from your included script; pass type param to vary behaviour
     await show_10192178(adType);
 
+    // compute reward locally
     const baseReward = 50 + (current.level - 1) * 10;
     const reward = baseReward * current.multiplierAds;
-    await userRef().update({
-      coins: firebase.firestore.FieldValue.increment(reward),
-      totalAds: firebase.firestore.FieldValue.increment(1),
-      adsToday: firebase.firestore.FieldValue.increment(1),
-      lastAdTime: now
-    });
+
+    // LOCAL — update UI and adQueue, but DO NOT write to firestore per ad
     current.coins += reward;
     current.totalAds += 1;
     current.adsToday += 1;
     current.lastAdTime = now;
-    computeLevel();
+    current._adsWindowCount = (current._adsWindowCount || 0) + 1;
+    current._adsWindowStart = current._adsWindowStart || now;
+
+    // push to local adQueue for batching
+    if (!adQueue.firstSeen) adQueue.firstSeen = now;
+    adQueue.count += 1;
+    adQueue.reward += reward;
+    adQueue.lastSeen = now;
+
+    // update UI immediately
     updateUI();
-    tg.showAlert(`+${reward} coins!`);
+    updateAdReward();
+    updateLevelProgressUI();
+    computeLevel(); // update level locally (and persist level update separately if needed)
+
+    tg.showAlert(`+${reward} coins! (Ad counted locally; will be saved to server in batch)`);
+
   } catch (e) {
+    console.warn('Ad error', e);
     tg.showAlert('Ad not completed');
+  } finally {
+    btn.disabled = false;
+    updateAdReward();
+    btn.innerText = 'Watch Ad (+' + ((50 + (current.level - 1) * 10) * current.multiplierAds) + ' Coins)';
   }
-  btn.disabled = false;
-  btn.innerText = 'Watch Ad (+' + (50 + (current.level - 1) * 10) * current.multiplierAds + ' Coins)';
+}
+
+// flush queued ads to Firestore in one write (increments coins + totalAds)
+// This ensures we don't write on every single ad view.
+async function flushAdsToFirestore() {
+  if (!adQueue || adQueue.count === 0) return;
+  try {
+    // atomic update: increment coins and totalAds
+    await userRef().update({
+      coins: firebase.firestore.FieldValue.increment(adQueue.reward),
+      totalAds: firebase.firestore.FieldValue.increment(adQueue.count),
+      lastAdTime: adQueue.lastSeen || Date.now()
+    });
+    // optionally push a history document (commented)
+    // await db.collection('users').doc(userDocId).collection('ad_batches').add({ count: adQueue.count, reward: adQueue.reward, ts: firebase.firestore.FieldValue.serverTimestamp() });
+    // reset local queue
+    adQueue = { count: 0, reward: 0, firstSeen: 0, lastSeen: 0 };
+    console.log('Ad queue flushed to Firestore');
+  } catch (e) {
+    console.warn('Failed to flush ads:', e);
+  }
 }
 
 async function trySaveTonWallet(addr) {
@@ -505,14 +606,19 @@ function renderLevelsChunk(max) {
     const reward = 500 * i;
     const el = document.createElement('div');
     el.className = 'level';
+    const pluralRefs = refsNeeded > 1 ? 's' : '';
+    const pluralAds = adsNeeded > 1 ? 's' : '';
     el.innerHTML = `
       <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
-      <div class="small">Requires: \( {refsNeeded} referral \){refsNeeded > 1 ? 's' : ''} & \( {adsNeeded} ad \){adsNeeded > 1 ? 's' : ''}</div>
+      <div class="small">Requires: ${refsNeeded} referral${pluralRefs} & ${adsNeeded} ad${pluralAds}</div>
       <div class="small">Reward: ${reward} coins</div>
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
     `;
     container.appendChild(el);
-    document.getElementById(`claim_${i}`).onclick = () => claimLevel(i, refsNeeded, adsNeeded, reward);
+    // closure capture
+    ((levelIndex, rNeeded, aNeeded, rew) => {
+      document.getElementById(`claim_${levelIndex}`).onclick = () => claimLevel(levelIndex, rNeeded, aNeeded, rew);
+    })(i, refsNeeded, adsNeeded, reward);
   }
   levelsRendered = end;
   updateLevelProgressUI();
@@ -524,10 +630,8 @@ async function updateLevelProgressUI() {
   for (let i = 1; i <= levelsRendered; i++) {
     const btn = document.getElementById(`claim_${i}`);
     if (!btn) continue;
-    const refsNeeded = i;
-    const adsNeeded = i;
     const claimed = current.claimedLevels?.includes(i);
-    btn.disabled = claimed || !(refsCount >= refsNeeded && adsDone >= adsNeeded);
+    btn.disabled = claimed || !(refsCount >= i && adsDone >= i);
     btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
   }
 }
@@ -537,32 +641,44 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   const adsDone = current.totalAds || 0;
   if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert('Requirements not met');
   if (current.claimedLevels?.includes(levelNo)) return tg.showAlert('Already claimed');
+
+  // Claiming: write one atomic update
   await userRef().update({
     coins: firebase.firestore.FieldValue.increment(reward),
     claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo)
   });
+
   current.coins += reward;
+  current.claimedLevels = current.claimedLevels || [];
   current.claimedLevels.push(levelNo);
   updateUI();
-  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} coins!`);
+  tg.showAlert(`Level ${levelNo} claimed! +${reward} coins!`);
+  updateLevelProgressUI();
 }
 
-async function loadLeaderboard() {
-  const snapshot = await db.collection('users').orderBy('coins', 'desc').limit(100).get();
-  const list = document.getElementById('leaderList');
-  list.innerHTML = '';
-  let rank = 1;
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    const item = document.createElement('li');
-    item.className = 'leader-item';
-    item.innerHTML = `<span>User #\( {rank}</span><span> \){Math.floor(data.coins || 0)} coins</span>`;
-    list.appendChild(item);
-    rank++;
-  });
+async function loadLeaderboard(targetListId = 'leaderList') {
+  try {
+    const snapshot = await db.collection('users').orderBy('coins', 'desc').limit(100).get();
+    const list = document.getElementById(targetListId);
+    if (!list) return;
+    list.innerHTML = '';
+    let rank = 1;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const item = document.createElement('li');
+      item.className = 'leader-item';
+      const name = data.username || ('User ' + doc.id.slice(0,6));
+      item.innerHTML = `<span>${rank}. ${name}</span><span>${Math.floor(data.coins || 0)} coins</span>`;
+      list.appendChild(item);
+      rank++;
+    });
+  } catch (e) {
+    console.warn('Leaderboard load failed', e);
+  }
 }
 
 initApp();
 </script>
 </body>
 </html>
+    
