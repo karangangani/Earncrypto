@@ -3,157 +3,146 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>AETHER — Earn & Airdrop</title>
+<title>AETHER — Premium Mining</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-/* Updated Emerald Theme (60-30-10) */
 :root { 
-  --bg: #0a0b14; 
-  --card: #161b2c; 
-  --accent: #10b981; /* Emerald Green */
+  --bg: #05070a; 
+  --card: #0d1117; 
+  --accent: #10b981; /* Emerald */
   --text: #ffffff; 
-  --muted: #94a3b8; 
-  --border: rgba(16, 185, 129, 0.2); 
-  --glow: 0 0 20px rgba(16, 185, 129, 0.3); 
+  --muted: #8b949e; 
+  --border: rgba(16, 185, 129, 0.2);
+  --glow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-body { background: var(--bg); color: var(--muted); min-height: 100vh; padding: 14px; overflow-x: hidden; }
-.wrap { max-width: 720px; margin: 12px auto; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 15px; }
 
-/* Header & Logo styling from Original */
-.header { display: flex; gap: 12px; align-items: center; padding: 18px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); box-shadow: var(--glow); }
-.logo { width: 60px; height: 60px; border-radius: 15px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #000; font-weight: 900; font-size: 24px; box-shadow: var(--glow); }
-.user-dp { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--accent); }
+/* Header Styling */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: var(--card); border-radius: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: var(--glow); }
+.logo-box { display: flex; align-items: center; gap: 10px; }
+.logo-circle { width: 45px; height: 45px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #000; box-shadow: var(--glow); }
+.user-info h2 { font-size: 16px; margin: 0; }
+.user-info p { font-size: 11px; color: var(--muted); }
 
-h1 { color: var(--text); font-size: 20px; font-weight: 700; }
-.card { background: var(--card); padding: 20px; border-radius: 20px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); }
+/* Main Stats */
+.main-balance { text-align: center; padding: 30px 10px; }
+.main-balance h1 { font-size: 48px; font-weight: 800; color: var(--accent); text-shadow: var(--glow); }
+.main-balance p { color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
 
-/* Stats Grid */
-.stats { display: flex; gap: 10px; }
-.stat { flex: 1; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 15px; text-align: center; border: 1px solid var(--border); }
-.v { font-weight: 900; color: var(--text); font-size: 18px; }
-.l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-item { background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid var(--border); text-align: center; }
+.stat-item span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+.stat-item b { font-size: 18px; color: var(--text); }
 
-/* Tabs */
-.tabs { display: flex; gap: 8px; margin-top: 15px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 15px; }
-.tab { flex: 1; padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; color: var(--muted); font-weight: 600; font-size: 13px; transition: 0.3s; }
-.tab.active { background: var(--accent); color: #000; box-shadow: var(--glow); }
+/* Tabs Navigation */
+.nav-bar { display: flex; background: var(--card); padding: 5px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+.nav-item { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-radius: 12px; transition: 0.3s; }
+.nav-item.active { background: var(--accent); color: #000; box-shadow: var(--glow); }
 
-.section { display: none; padding-top: 15px; }
-.section.active { display: block; animation: fadeIn 0.5s; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.page { display: none; animation: slideUp 0.4s ease-out; }
+.page.active { display: block; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Buttons */
-.btn { width: 100%; padding: 16px; border-radius: 15px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-.btn.secondary { background: #2d3748; color: #fff; box-shadow: none; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--accent); color: #000; font-weight: 800; cursor: pointer; margin-top: 10px; font-size: 15px; transition: 0.3s; }
+.btn:active { transform: scale(0.98); }
+.btn.mining-on { background: #1f2937; color: var(--accent); border: 1px solid var(--accent); }
 
-/* Referral Box */
-.ref-box { padding: 20px; border-radius: 15px; background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--accent); text-align: center; }
-#myRef { word-break: break-all; padding: 12px; background: #000; border-radius: 10px; font-size: 12px; color: var(--accent); margin: 10px 0; }
+/* Mining Animation */
+.mining-circle { width: 120px; height: 120px; margin: 20px auto; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+.mining-active { animation: spin 2s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Levels Styling */
-.levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; }
-.level { padding: 15px; border-radius: 15px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); }
-.claimBtn { background: var(--accent); color: #000; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; width: 100%; margin-top: 10px; }
-.claimBtn:disabled { background: #333; color: #666; }
-
-.footer { margin-top: 30px; text-align: center; color: var(--muted); font-size: 11px; padding: 15px; }
-.welcome-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); padding: 30px; border-radius: 25px; text-align: center; z-index: 1000; border: 1px solid var(--accent); box-shadow: var(--glow); width: 85%; max-width: 400px; }
+/* Alerts/Notifications */
+#toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; display: none; z-index: 9999; }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <div class="header">
-    <div class="logo">AE</div>
-    <div>
-      <h1 id="userName">Aether User</h1>
-      <div id="userLine" style="font-size: 12px;">Connecting to AetherBot...</div>
-    </div>
-    <img id="user-dp" class="user-dp" src="" style="display:none; margin-left: auto;">
-  </div>
+<div id="toast">Message</div>
 
-  <div class="card">
-    <div class="stats">
-      <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
-      <div class="stat"><div class="v" id="refs">0</div><div class="l">Refs</div></div>
-      <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" onclick="openTab('home', this)">Home</div>
-      <div class="tab" onclick="openTab('tasks', this)">Earn</div>
-      <div class="tab" onclick="openTab('referral', this)">Invite</div>
-      <div class="tab" onclick="openTab('airdrop', this)">Airdrop</div>
-    </div>
-
-    <div id="home" class="section active">
-      <button id="startMining" class="btn">START MINING</button>
-      <p style="text-align:center; font-size: 12px; margin-top: 10px;">+1 coin every 2 seconds • Auto-sync</p>
-
-      <div class="ref-box" style="margin-top:20px;">
-        <h3 style="color:var(--accent); margin-bottom:10px;">Official Channel</h3>
-        <button class="btn" onclick="tg.openTelegramLink('https://t.me/kxearnig')">Join @kxearnig</button>
-        <button class="btn secondary" onclick="tg.openTelegramLink('https://t.me/AetherMineXBot')">Support Bot</button>
-      </div>
-    </div>
-
-    <div id="tasks" class="section">
-      <button id="watchAd" class="btn">Watch Ad (+500 Coins)</button>
-      <p style="text-align:center; font-size: 11px; margin-top: 8px;">1 ad per 15 min • Total Ads: <span id="totalAds">0</span></p>
-
-      <div style="margin-top:25px; font-weight:700; color:var(--accent); text-align:center;">LEVEL REWARDS</div>
-      <div id="levelsList" class="levels"></div>
-      <button id="showAllLevels" class="btn secondary" style="margin-top:15px;">Load More Levels</button>
-    </div>
-
-    <div id="referral" class="section">
-      <div class="ref-box">
-        <h3 style="color:var(--accent); font-size: 22px;">Invite Friends</h3>
-        <p style="margin-bottom:15px; font-size: 14px;">Each referral = +5000 coins!</p>
-        <div>Your Referral Link:</div>
-        <div id="myRef">Generating...</div>
-        <button id="copyRef" class="btn">COPY LINK</button>
-        <p style="font-size: 11px; margin-top: 10px; color: var(--muted);">Link automatically tracks via AetherBot</p>
-      </div>
-    </div>
-
-    <div id="airdrop" class="section">
-      <div style="text-align:center; padding:10px;">
-        <h3 style="color:var(--accent); font-size: 22px;">TON Airdrop</h3>
-        <p style="font-size: 13px; margin: 10px 0 20px;">Connect wallet and reach Level 3 to qualify.</p>
-        <div id="eligibilityMsg" style="margin-bottom:20px; font-weight: 700;"></div>
-        <div id="tonBtnRoot"></div>
-        <button id="disconnectTon" class="btn secondary" style="display:none; margin-top:15px;">Disconnect Wallet</button>
-        <p id="walletStatus" style="font-size: 12px; margin-top: 15px;">Not Connected</p>
-      </div>
+<div class="header">
+  <div class="logo-box">
+    <div class="logo-circle">AE</div>
+    <div class="user-info">
+      <h2 id="u-name">Loading...</h2>
+      <p id="u-id">Syncing with AetherBot...</p>
     </div>
   </div>
+  <div id="ton-btn"></div>
+</div>
 
-  <div class="footer">
-    © 2025 AETHER PREMIUM • TON BLOCKCHAIN PROJECT
+<div class="nav-bar">
+  <div class="nav-item active" onclick="showPage('home', this)">Mining</div>
+  <div class="nav-item" onclick="showPage('earn', this)">Earn</div>
+  <div class="nav-item" onclick="showPage('invite', this)">Invite</div>
+  <div class="nav-item" onclick="showPage('airdrop', this)">Airdrop</div>
+</div>
+
+<div id="home" class="page active">
+  <div class="main-balance">
+    <p>Available Balance</p>
+    <h1 id="b-coins">0.00</h1>
+  </div>
+
+  <div class="mining-circle" id="m-spinner">
+    <span style="font-weight: 900; color: var(--accent)">AETHER</span>
+  </div>
+
+  <button id="mine-btn" class="btn" onclick="toggleMining()">START MINING</button>
+  <p style="text-align: center; font-size: 12px; margin-top: 15px; color: var(--muted);">Earns 0.5 coins/sec • Auto-Sync</p>
+</div>
+
+<div id="earn" class="page">
+  <div class="stat-item" style="margin-bottom:15px;">
+    <span>Level Status</span>
+    <b id="u-level">Level 1</b>
+  </div>
+  
+  <button class="btn" id="ad-btn" onclick="playAd()">WATCH AD (+500 Coins)</button>
+  <p style="text-align: center; font-size: 11px; margin-top: 10px;">Cooldown: 15 mins | Total Ads: <span id="u-ads">0</span></p>
+
+  <h3 style="margin: 25px 0 15px; color: var(--accent);">Level Up Rewards</h3>
+  <div id="levels-list" style="display: flex; flex-direction: column; gap: 10px;">
+    </div>
+</div>
+
+<div id="invite" class="page">
+  <div class="stat-item" style="margin-bottom:20px;">
+    <span>Total Referrals</span>
+    <b id="u-refs">0 Friends</b>
+  </div>
+
+  <div style="background:var(--card); padding:20px; border-radius:15px; border:1px dashed var(--accent); text-align:center;">
+    <h3 style="color:var(--accent)">Invite & Earn</h3>
+    <p style="font-size:12px; margin: 10px 0;">+5000 Coins per valid referral</p>
+    <div id="ref-link" style="background:#000; padding:10px; border-radius:8px; font-size:11px; color:var(--accent); margin:15px 0; word-break:break-all;">Generating link...</div>
+    <button class="btn" onclick="copyRef()">COPY REFERRAL LINK</button>
   </div>
 </div>
 
-<div id="welcome-popup" class="welcome-popup" style="display:none">
-  <h2 style="color:var(--accent)">Welcome, Miner!</h2>
-  <p style="margin: 15px 0; font-size: 14px;">Start earning Aether coins today and get ready for the TON airdrop launch. 🚀</p>
-  <button onclick="closeWelcome()" class="btn">START EARNING</button>
+<div id="airdrop" class="page">
+  <div style="text-align:center; padding: 40px 10px;">
+    <div id="eligibility-icon" style="font-size: 50px; margin-bottom: 20px;">🔒</div>
+    <h2 id="air-status">Not Eligible</h2>
+    <p id="air-desc" style="color:var(--muted); font-size: 13px; margin: 10px 0 20px;">You must reach Level 3 and connect your TON wallet to be eligible for the upcoming AETHER token launch.</p>
+    
+    <div id="wallet-info" style="margin-top:20px; font-size:12px;"></div>
+  </div>
 </div>
 
 <script>
-/* Original Configuration & Logic */
-const FIREBASE_CONFIG = {
+// Firebase Config
+const firebaseConfig = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
   projectId: "earncryptomp",
@@ -161,177 +150,173 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-const AD_FN = 'show_10192178';
-const ADS_COOLDOWN = 15;
-const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
-const REFERRAL_REWARD = 5000;
 
-firebase.initializeApp(FIREBASE_CONFIG);
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const tgUser = tg.initDataUnsafe.user || {};
-const userId = tgUser.id ? tgUser.id.toString() : 'guest_' + Date.now();
-let current = { coins: 0, refs: [], level: 1, totalAds: 0, claimedLevels: [], tonWallet: '' };
-let levelsRendered = 0;
+// User Data State
+const tgUser = tg.initDataUnsafe.user || { id: 12345, first_name: "Developer" };
+const uid = tgUser.id.toString();
+let data = { coins: 0, totalAds: 0, refs: [], lastMiningTime: Date.now(), isMining: false, level: 1, claimedLevels: [], tonWallet: '' };
 
-function userRef() { return db.collection('users').doc(userId); }
+// Initialize App
+async function init() {
+  document.getElementById('u-name').innerText = tgUser.first_name;
+  document.getElementById('u-id').innerText = "ID: " + uid;
+  document.getElementById('ref-link').innerText = "https://t.me/AetherMineXBot?start=ref_" + uid;
 
-async function initApp() {
-  try {
-    await firebase.auth().signInAnonymously();
-    
-    // User Sync
-    userRef().onSnapshot(docSnap => {
-      if (docSnap.exists) {
-        current = { ...current, ...docSnap.data() };
-        computeLevel();
-        updateUI();
-        updateLevelProgressUI();
-        updateAirdropEligibility();
-      }
-    });
-
-    // Profile Data
-    if (tgUser.photo_url) {
-      document.getElementById('user-dp').src = tgUser.photo_url;
-      document.getElementById('user-dp').style.display = 'block';
-    }
-    document.getElementById('userName').innerText = tgUser.username || tgUser.first_name || 'Miner';
-    document.getElementById('userLine').innerText = 'ID: ' + userId;
-
-    // Bot Link Generation
-    const botUser = "AetherMineXBot";
-    const refLink = `https://t.me/${botUser}?start=ref_${userId}`;
-    document.getElementById('myRef').innerText = refLink;
-    document.getElementById('copyRef').onclick = () => {
-      navigator.clipboard.writeText(refLink);
-      tg.showAlert('Referral Link Copied!');
-    };
-
-    // TON Connect
-    const tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
-    tonUI.onStatusChange(async (wallet) => {
-      const addr = wallet?.account?.address || '';
-      await userRef().update({ tonWallet: addr });
-      current.tonWallet = addr;
+  // Real-time Database Sync
+  db.collection("users").doc(uid).onSnapshot((doc) => {
+    if (doc.exists) {
+      data = { ...data, ...doc.data() };
+      calculateOfflineEarnings();
       updateUI();
-    });
+    } else {
+      // Create new user if not exists
+      db.collection("users").doc(uid).set(data);
+    }
+  });
 
-    document.getElementById('disconnectTon').onclick = () => tonUI.disconnect();
-    document.getElementById('watchAd').onclick = watchAdHandler;
-    document.getElementById('startMining').onclick = startPassiveMining;
-    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(30);
+  // TON Connect Init
+  const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json',
+    buttonRootId: 'ton-btn'
+  });
 
-    renderLevelsChunk(10);
-    setTimeout(() => document.getElementById('welcome-popup').style.display = 'block', 800);
+  tonConnectUI.onStatusChange(wallet => {
+    const addr = wallet ? wallet.account.address : '';
+    db.collection("users").doc(uid).update({ tonWallet: addr });
+  });
 
-  } catch (e) { console.error(e); }
-}
-
-/* Original Helper Functions */
-function computeLevel() {
-  const refs = current.refs?.length || 0;
-  const ads = current.totalAds || 0;
-  current.level = Math.min(refs, ads) + 1;
+  renderLevels();
 }
 
 function updateUI() {
-  document.getElementById('points').innerText = Math.floor(current.coins).toLocaleString();
-  document.getElementById('refs').innerText = current.refs?.length || 0;
-  document.getElementById('level').innerText = current.level;
-  document.getElementById('totalAds').innerText = current.totalAds;
+  document.getElementById('b-coins').innerText = data.coins.toFixed(2);
+  document.getElementById('u-ads').innerText = data.totalAds;
+  document.getElementById('u-refs').innerText = (data.refs?.length || 0) + " Friends";
   
-  const connected = !!current.tonWallet;
-  document.getElementById('disconnectTon').style.display = connected ? 'block' : 'none';
-  document.getElementById('walletStatus').innerText = connected ? 'Connected: ' + current.tonWallet.slice(0,6) + '...' : 'Not Connected';
+  // Level Calculation
+  const calculatedLevel = Math.min((data.refs?.length || 0), data.totalAds) + 1;
+  document.getElementById('u-level').innerText = "Level " + calculatedLevel;
+  
+  // Mining Button State
+  const mBtn = document.getElementById('mine-btn');
+  const spinner = document.getElementById('m-spinner');
+  if (data.isMining) {
+    mBtn.innerText = "MINING ACTIVE...";
+    mBtn.classList.add('mining-on');
+    spinner.classList.add('mining-active');
+  } else {
+    mBtn.innerText = "START MINING";
+    mBtn.classList.remove('mining-on');
+    spinner.classList.remove('mining-active');
+  }
+
+  // Airdrop Logic
+  const airStatus = document.getElementById('air-status');
+  const airIcon = document.getElementById('eligibility-icon');
+  if (calculatedLevel >= 3 && data.tonWallet) {
+    airStatus.innerText = "Eligible ✅";
+    airStatus.style.color = "var(--accent)";
+    airIcon.innerText = "🚀";
+  }
 }
 
-function openTab(tabId, el) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
+// Mining Logic
+function toggleMining() {
+  const newState = !data.isMining;
+  db.collection("users").doc(uid).update({ 
+    isMining: newState,
+    lastMiningTime: Date.now()
+  });
+  showToast(newState ? "Mining Started!" : "Mining Stopped!");
+}
+
+function calculateOfflineEarnings() {
+  if (data.isMining) {
+    const now = Date.now();
+    const diff = (now - data.lastMiningTime) / 1000; // seconds
+    if (diff > 5) {
+      const earned = diff * 0.5; // 0.5 coins per second
+      db.collection("users").doc(uid).update({
+        coins: firebase.firestore.FieldValue.increment(earned),
+        lastMiningTime: now
+      });
+    }
+  }
+}
+
+// Ads Logic
+function playAd() {
+  const btn = document.getElementById('ad-btn');
+  btn.disabled = true;
+  
+  if (typeof show_10192178 === 'function') {
+    show_10192178().then(() => {
+      db.collection("users").doc(uid).update({
+        coins: firebase.firestore.FieldValue.increment(500),
+        totalAds: firebase.firestore.FieldValue.increment(1)
+      });
+      showToast("Reward Received! +500 Coins");
+    }).catch(err => {
+      showToast("Ad failed to load. Try again.");
+    }).finally(() => {
+      setTimeout(() => { btn.disabled = false; }, 2000);
+    });
+  } else {
+    showToast("Ad SDK not ready.");
+    btn.disabled = false;
+  }
+}
+
+// UI Helpers
+function showPage(pageId, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
   el.classList.add('active');
 }
 
-function startPassiveMining() {
-  const btn = document.getElementById('startMining');
-  if (btn.disabled) return;
-  btn.disabled = true;
-  btn.innerText = 'MINING ACTIVE...';
-  setInterval(async () => {
-    await userRef().update({ coins: firebase.firestore.FieldValue.increment(0.5) });
-  }, 1000);
-  tg.showAlert('Mining started! Coins sync automatically.');
-}
-
-async function watchAdHandler() {
-  const btn = document.getElementById('watchAd');
-  btn.disabled = true;
-  try {
-    if (typeof window[AD_FN] === 'function') await window[AD_FN]('pop');
-    await userRef().update({
-      coins: firebase.firestore.FieldValue.increment(500),
-      totalAds: firebase.firestore.FieldValue.increment(1),
-      lastAdTime: Date.now()
-    });
-    tg.showAlert('Success! +500 Coins added.');
-  } catch (e) { tg.showAlert('Ad failed to load.'); }
-  setTimeout(() => btn.disabled = false, 2000);
-}
-
-function renderLevelsChunk(max) {
-  const container = document.getElementById('levelsList');
-  const start = levelsRendered + 1;
-  const end = Math.min(100, levelsRendered + max);
-  for (let i = start; i <= end; i++) {
-    const el = document.createElement('div');
-    el.className = 'level';
-    el.innerHTML = `<div style="color:var(--accent); font-weight:800;">Level ${i}</div>
-                    <div style="font-size:11px; margin:5px 0;">Req: ${i} Refs & ${i} Ads</div>
-                    <div style="font-size:11px; color:var(--text);">Reward: ${500 * i} Coins</div>
-                    <button id="claim_${i}" class="claimBtn" disabled>Claim</button>`;
-    container.appendChild(el);
-    document.getElementById('claim_'+i).onclick = () => claimLevel(i, 500 * i);
-  }
-  levelsRendered = end;
-  updateLevelProgressUI();
-}
-
-function updateLevelProgressUI() {
-  const refs = current.refs?.length || 0;
-  const ads = current.totalAds || 0;
-  for (let i = 1; i <= levelsRendered; i++) {
-    const btn = document.getElementById('claim_' + i);
-    if (!btn) continue;
-    const claimed = current.claimedLevels?.includes(i);
-    btn.disabled = claimed || !(refs >= i && ads >= i);
-    btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
+function renderLevels() {
+  const container = document.getElementById('levels-list');
+  for (let i = 1; i <= 10; i++) {
+    const div = document.createElement('div');
+    div.className = 'stat-item';
+    div.style.textAlign = 'left';
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <b>Level ${i} Reward</b>
+          <span style="font-size:10px;">Req: ${i} Refs & ${i} Ads</span>
+        </div>
+        <button class="btn" style="width:80px; padding:8px; font-size:12px;" onclick="claimLevel(${i})">Claim</button>
+      </div>
+    `;
+    container.appendChild(div);
   }
 }
 
-async function claimLevel(id, reward) {
-  await userRef().update({
-    coins: firebase.firestore.FieldValue.increment(reward),
-    claimedLevels: firebase.firestore.FieldValue.arrayUnion(id)
-  });
-  tg.showAlert(`Level ${id} Reward Claimed!`);
+function copyRef() {
+  const link = document.getElementById('ref-link').innerText;
+  navigator.clipboard.writeText(link);
+  showToast("Link Copied!");
 }
 
-function updateAirdropEligibility() {
-  const msg = document.getElementById('eligibilityMsg');
-  if (current.level >= 3) {
-    msg.innerHTML = '<span style="color:var(--accent)">✓ ELIGIBLE FOR AIRDROP</span>';
-  } else {
-    msg.innerHTML = '<span style="color:#ff6b6b">NOT ELIGIBLE (Need Level 3)</span>';
-  }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
 
-function closeWelcome() { document.getElementById('welcome-popup').style.display = 'none'; }
+// Background sync loop
+setInterval(calculateOfflineEarnings, 5000);
 
-initApp();
+init();
 </script>
 </body>
-  </html>
+    </html>
