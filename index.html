@@ -16,7 +16,18 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-:root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
+:root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a;async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
+  const refsCount = current.refs?.length || 0;
+  const adsDone = current.totalAds || 0;
+  if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert('Requirements not met');
+  if (current.claimedLevels?.includes(levelNo)) return tg.showAlert('Already claimed');
+  current.ae += reward;
+  current.claimedLevels.push(levelNo);
+  updateUI();
+  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} Ae!`);
+  await saveDataToDb();
+}
+ --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--muted); min-height: 100vh; padding: 14px; overflow-x: hidden; }
 .wrap { max-width: 720px; margin: 12px auto; }
