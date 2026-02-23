@@ -114,7 +114,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
         <button id="showAllLevels" class="btn secondary">Load More Levels</button>
       </div>
     </div>
-
+    
     <!-- INVITE -->
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
@@ -149,8 +149,9 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
       </div>
     </div>
   </div>
-   <div class="footer">
-    © AETHER • project 2026
+
+  <div class="footer">
+    © AETHER • Premium TON Project 2025
   </div>
 </div>
 
@@ -345,11 +346,11 @@ function updateWalletButtons() {
     ? `Connected: \( {current.tonWallet.slice(0,6)}... \){current.tonWallet.slice(-4)}`
     : 'Not Connected';
 }
-  function closeWelcome() {
+
+function closeWelcome() {
   document.getElementById('welcome-popup').style.display = 'none';
 }
-
-async function resetDailyAdsIfNeeded() {
+  async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
     current.adsToday = 0;
@@ -359,6 +360,32 @@ async function resetDailyAdsIfNeeded() {
   }
 }
 
+async function enableNotificationsHandler() {
+  try {
+    const granted = await tg.requestWriteAccess();
+    if (granted) {
+      current.notificationsEnabled = true;
+      current.ae += 200;
+      updateUI();
+      updateNotificationButton();
+      tg.showAlert('Notifications enabled! +200 Ae bonus!');
+      await saveDataToDb();
+    }
+  } catch (e) {
+    tg.showAlert('Failed.');
+  }
+}
+
+function updateNotificationButton() {
+  const btn = document.getElementById('enableNotifications');
+  if (current.notificationsEnabled) {
+    btn.innerText = 'Notifications Enabled ✓ (+200 Ae)';
+    btn.disabled = true;
+  } else {
+    btn.innerText = 'Enable Notifications & Get +200 Ae Bonus';
+    btn.disabled = false;
+  }
+}
 
 async function handleReferralParam(param) {
   const referrerId = param.replace('ref_', '');
@@ -575,4 +602,4 @@ initApp();
 </script>
 </body>
 </html>
-  
+    
