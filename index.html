@@ -16,18 +16,7 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-:root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a;async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
-  const refsCount = current.refs?.length || 0;
-  const adsDone = current.totalAds || 0;
-  if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert('Requirements not met');
-  if (current.claimedLevels?.includes(levelNo)) return tg.showAlert('Already claimed');
-  current.ae += reward;
-  current.claimedLevels.push(levelNo);
-  updateUI();
-  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} Ae!`);
-  await saveDataToDb();
-}
- --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
+:root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--muted); min-height: 100vh; padding: 14px; overflow-x: hidden; }
 .wrap { max-width: 720px; margin: 12px auto; }
@@ -69,6 +58,9 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 .leaderboard { list-style: none; padding: 0; }
 .leader-item { padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; }
 .gift-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(26,26,46,0.95)); color: #fff; padding: 24px; border-radius: 16px; text-align: center; z-index: 1000; animation: popupFade 0.6s; border: 1px solid var(--border); box-shadow: var(--glow); display: none; }
+.ref-list { list-style: none; padding: 0; }
+.ref-item { padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; }
+#airdrop-locked { text-align: center; padding: 20px; color: #ff5555; }
 </style>
 </head>
 <body>
@@ -85,7 +77,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
   <div class="card">
     <div class="stats">
-      <div class="stat"><div class="v" id="points">0</div><div class="l">Coins</div></div>
+      <div class="stat"><div class="v" id="points">0</div><div class="l">Ae</div></div>
       <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
       <div class="stat"><div class="v" id="level">1</div><div class="l">Level</div></div>
     </div>
@@ -100,21 +92,21 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
     <!-- HOME -->
     <div id="home" class="section active">
       <button id="startMining" class="btn">Start Passive Earning</button>
-      <p class="small">+1 coin every 2 seconds • Daily streak bonus</p>
+      <p class="small">+1 Ae every 2 seconds • Daily streak bonus</p>
 
       <div class="ref-box">
         <h3 style="color:var(--accent)">⭐ Official Channel</h3>
         <button id="openChannel" class="btn secondary">Join @Aetherofficialchannel</button>
       </div>
 
-      <button id="enableNotifications" class="btn">Enable Notifications & Get +200 Coins Bonus</button>
+      <button id="enableNotifications" class="btn">Enable Notifications & Get +200 Ae Bonus</button>
       <p class="small">Get instant alerts for bonuses & updates</p>
     </div>
 
     <!-- EARN -->
     <div id="tasks" class="section">
-      <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">50</span> Coins)</button>
-      <p class="small">Daily ads: <span id="adsToday">0</span> / 5 • After 5 ads: 30 min cooldown for next batch • Total: <span id="totalAds">0</span></p>
+      <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">100</span> Ae)</button>
+      <p class="small">Level: <span id="levelDisplay">1</span> • Ads Watched: <span id="totalAds">0</span></p>
 
       <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
       <div id="levelsList" class="levels"></div>
@@ -127,11 +119,13 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
-        <p style="margin-bottom:20px">Each referral = +500 coins for both!</p>
+        <p style="margin-bottom:20px">Each referral = +5000 Ae for both!</p>
         <div class="ref-box">
           <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
+        <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Your Referrals</h3>
+        <ul id="refList" class="ref-list"></ul>
         <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Leaderboard</h3>
         <ul id="leaderList" class="leaderboard"></ul>
       </div>
@@ -139,9 +133,13 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 
     <!-- AIRDROP -->
     <div id="airdrop" class="section">
-      <div style="text-align:center;padding:20px">
-        <h3 style="color:var(--accent);font-size:22px">TON Airdrop Coming Soon</h3>
-        <p class="small" style="margin-bottom:20px">Stay active • Invite friends • Connect wallet</p>
+      <div id="airdrop-locked" style="display:none">
+        <h3 style="color:#ff5555">Airdrop Locked</h3>
+        <p>Invite 3 friends to unlock!</p>
+      </div>
+      <div id="airdrop-content" style="display:none;text-align:center;padding:20px">
+        <h3 style="color:var(--accent);font-size:22px">Congratulations!</h3>
+        <p>Now connect your TON wallet to get Ae airdrop.</p>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           <button id="connectTon" class="btn">Connect TON Wallet</button>
           <button id="disconnectTon" class="btn secondary" style="display:none">Disconnect Wallet</button>
@@ -153,33 +151,21 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
   </div>
 
   <div class="footer">
-    © AETHER  Project 2026
+    © AETHER • Premium TON Project 2025
   </div>
 </div>
 
 <div id="welcome-popup" class="welcome-popup" style="display:none">
   <h2 style="color:var(--accent)">Welcome to Aether!</h2>
-  <p>Earn coins, invite friends & get ready for TON airdrop 🚀</p>
+  <p>Earn Ae, invite friends & get ready for TON airdrop 🚀</p>
   <button onclick="closeWelcome()" class="btn">Start Earning</button>
 </div>
 
 <div id="gift-popup" class="gift-popup">
   <h2 style="color:var(--accent)">Level 10 Gift!</h2>
   <p>Congrats! Choose your reward:</p>
-  <button id="gift2xAds" class="btn">2x Coins on Ads</button>
-  <button id="gift2xCoins" class="btn">2x All Coins</button>
-</div>
-<div id="welcome-popup" class="welcome-popup" style="display:none">
-  <h2 style="color:var(--accent)">Welcome to Aether!</h2>
-  <p>Earn coins, invite friends & get ready for TON airdrop 🚀</p>
-  <button onclick="closeWelcome()" class="btn">Start Earning</button>
-</div>
-
-<div id="gift-popup" class="gift-popup">
-  <h2 style="color:var(--accent)">Level 10 Gift!</h2>
-  <p>Congrats! Choose your reward:</p>
-  <button id="gift2xAds" class="btn">2x Coins on Ads</button>
-  <button id="gift2xCoins" class="btn">2x All Coins</button>
+  <button id="gift2xAds" class="btn">2x Ae on Ads</button>
+  <button id="gift2xAe" class="btn">2x All Ae</button>
 </div>
 
 <script>
@@ -192,8 +178,8 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const DAILY_AD_LIMIT = 5;
-const ADS_COOLDOWN_MINUTES = 30;
+const DAILY_AD_LIMIT = 50;
+const ADS_COOLDOWN_MINUTES = 1440; // 24 hours
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -207,7 +193,7 @@ tg.expand();
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
-  coins: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, username: '', multiplierAds: 1, multiplierCoins: 1, giftChosen: false
+  ae: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, username: '', multiplierAds: 1, multiplierAe: 1, giftChosen: false, refList: [], lastSaveTime: 0
 };
 let tonUI = null;
 let levelsRendered = 0;
@@ -233,7 +219,7 @@ async function initApp() {
     if (isNewUser) {
       await userRef().set({
         username: username,
-        coins: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, multiplierAds: 1, multiplierCoins: 1, giftChosen: false
+        ae: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, multiplierAds: 1, multiplierAe: 1, giftChosen: false, lastSaveTime: Date.now()
       });
     } else {
       const data = doc.data();
@@ -259,9 +245,9 @@ async function initApp() {
         updateAdReward();
         updateWalletButtons();
         checkLevel10Gift();
+        toggleAirdropSection();
       }
     });
-
     const refLink = 'https://t.me/AetherMineXBot?start=ref_' + userDocId;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
@@ -290,7 +276,7 @@ async function initApp() {
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/Aetherofficialchannel');
     document.getElementById('startMining').onclick = startPassiveMining;
-    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(50);
+    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(1000); // Load up to 1000
     document.getElementById('enableNotifications').onclick = enableNotificationsHandler;
 
     if (startParam && startParam.startsWith('ref_')) {
@@ -304,13 +290,21 @@ async function initApp() {
     updateAdReward();
     updateWalletButtons();
     loadLeaderboard();
+    loadRefList();
 
     setTimeout(() => {
       document.getElementById('welcome-popup').style.display = 'block';
     }, 500);
 
     document.getElementById('gift2xAds').onclick = () => chooseGift('ads');
-    document.getElementById('gift2xCoins').onclick = () => chooseGift('coins');
+    document.getElementById('gift2xAe').onclick = () => chooseGift('ae');
+
+    // 24h save timer
+    setInterval(async () => {
+      if (Date.now() - current.lastSaveTime >= 86400000) {
+        await saveDataToDb();
+      }
+    }, 60000); // Check every minute
   } catch (e) {
     console.error(e);
     tg.showAlert('Error: ' + e.message);
@@ -321,7 +315,6 @@ function computeLevel() {
   const refsCount = current.refs?.length || 0;
   const adsCount = current.totalAds || 0;
   current.level = Math.min(refsCount, adsCount) + 1;
-  userRef().update({ level: current.level });
 }
 
 function checkLevel10Gift() {
@@ -333,15 +326,15 @@ function checkLevel10Gift() {
 async function chooseGift(type) {
   if (type === 'ads') {
     current.multiplierAds = 2;
-  } else if (type === 'coins') {
-    current.multiplierCoins = 2;
-    await userRef().update({ coins: firebase.firestore.FieldValue.increment(current.coins) });
-    current.coins *= 2;
+  } else if (type === 'ae') {
+    current.multiplierAe = 2;
+    current.ae *= 2;
   }
-  await userRef().update({ giftChosen: true });
+  current.giftChosen = true;
   document.getElementById('gift-popup').style.display = 'none';
-  tg.showAlert(`Gift chosen: 2x ${type === 'ads' ? 'ads coins' : 'all coins'}!`);
+  tg.showAlert(`Gift chosen: 2x ${type === 'ads' ? 'ads Ae' : 'all Ae'}!`);
   updateUI();
+  await saveDataToDb();
 }
 
 function updateWalletButtons() {
@@ -360,10 +353,10 @@ function closeWelcome() {
 async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
-    await userRef().update({ adsToday: 0, lastResetDate: today });
     current.adsToday = 0;
     current.lastResetDate = today;
     computeLevel();
+    await saveDataToDb();
   }
 }
 
@@ -371,12 +364,12 @@ async function enableNotificationsHandler() {
   try {
     const granted = await tg.requestWriteAccess();
     if (granted) {
-      await userRef().update({ notificationsEnabled: true, coins: firebase.firestore.FieldValue.increment(200) });
-      current.coins += 200;
       current.notificationsEnabled = true;
+      current.ae += 200;
       updateUI();
       updateNotificationButton();
-      tg.showAlert('Notifications enabled! +200 coins bonus!');
+      tg.showAlert('Notifications enabled! +200 Ae bonus!');
+      await saveDataToDb();
     }
   } catch (e) {
     tg.showAlert('Failed.');
@@ -386,10 +379,10 @@ async function enableNotificationsHandler() {
 function updateNotificationButton() {
   const btn = document.getElementById('enableNotifications');
   if (current.notificationsEnabled) {
-    btn.innerText = 'Notifications Enabled ✓ (+200 coins)';
+    btn.innerText = 'Notifications Enabled ✓ (+200 Ae)';
     btn.disabled = true;
   } else {
-    btn.innerText = 'Enable Notifications & Get +200 Coins Bonus';
+    btn.innerText = 'Enable Notifications & Get +200 Ae Bonus';
     btn.disabled = false;
   }
 }
@@ -404,36 +397,25 @@ async function handleReferralParam(param) {
   const referrerDoc = await db.collection('users').doc(referrerId).get();
   if (!referrerDoc.exists) return;
 
-  // Update own refs and coins
-  await userRef().update({
-    refs: firebase.firestore.FieldValue.arrayUnion(referrerId),
-    coins: firebase.firestore.FieldValue.increment(500)
-  });
-
-  // Update referrer's refs and coins
-  await db.collection('users').doc(referrerId).update({
-    refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-    coins: firebase.firestore.FieldValue.increment(500)
-  });
-
   current.refs.push(referrerId);
-  current.coins += 500;
+  current.ae += 5000;
   computeLevel();
   updateUI();
-  tg.showAlert('Referral success! +500 coins for both!');
+  await saveDataToDb();
+  tg.showAlert('Referral success! +5000 Ae for both!');
 }
 
 function updateUI() {
-  document.getElementById('points').innerText = Math.floor(current.coins || 0);
+  document.getElementById('points').innerText = Math.floor(current.ae || 0);
   document.getElementById('refs').innerText = current.refs?.length || 0;
   document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('adsToday').innerText = current.adsToday || 0;
+  document.getElementById('levelDisplay').innerText = current.level || 1;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateWalletButtons();
 }
 
 function updateAdReward() {
-  const reward = (50 + (current.level - 1) * 10) * current.multiplierAds;
+  const reward = (100 + (current.level - 1) * 10) * current.multiplierAds;
   document.getElementById('adReward').innerText = reward;
 }
 
@@ -442,18 +424,18 @@ function openTab(tab) {
   document.getElementById(tab).classList.add('active');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
-  if (tab === 'referral') loadLeaderboard();
+  if (tab === 'airdrop') toggleAirdropSection();
+  if (tab === 'referral') loadRefList();
 }
-  
+
 let mining = false;
 function startPassiveMining() {
   if (mining) return tg.showAlert('Already mining!');
   mining = true;
   document.getElementById('startMining').innerText = 'Mining Active...';
-  setInterval(async () => {
+  setInterval(() => {
     if (!mining) return;
-    await userRef().update({ coins: firebase.firestore.FieldValue.increment(1 * current.multiplierCoins) });
-    current.coins += 1 * current.multiplierCoins;
+    current.ae += 1 * current.multiplierAe;
     updateUI();
   }, 2000);
   tg.showAlert('Passive mining started!');
@@ -464,14 +446,7 @@ async function watchAdHandler() {
 
   const now = Date.now();
   if (current.adsToday >= DAILY_AD_LIMIT) {
-    const timeSinceLast = now - (current.lastAdTime || 0);
-    if (timeSinceLast >= ADS_COOLDOWN_MINUTES * 60 * 1000) {
-      await userRef().update({ adsToday: 0 });
-      current.adsToday = 0;
-    } else {
-      const minutesLeft = Math.ceil((ADS_COOLDOWN_MINUTES * 60 * 1000 - timeSinceLast) / 60000);
-      return tg.showAlert(`Wait ${minutesLeft} minutes for next batch`);
-    }
+    return tg.showAlert('You have reached the ad limit for today. Come back in 24 hours!');
   }
 
   const btn = document.getElementById('watchAd');
@@ -481,42 +456,47 @@ async function watchAdHandler() {
   try {
     // Random ad type
     const adType = Math.random() < 0.5 ? '' : 'pop';
-    await show_10192178(adType);
-
-    const baseReward = 50 + (current.level - 1) * 10;
-    const reward = baseReward * current.multiplierAds;
-    await userRef().update({
-      coins: firebase.firestore.FieldValue.increment(reward),
-      totalAds: firebase.firestore.FieldValue.increment(1),
-      adsToday: firebase.firestore.FieldValue.increment(1),
-      lastAdTime: now
+    await new Promise((resolve, reject) => {
+      show_10192178(adType).then(resolve).catch(reject);
     });
-    current.coins += reward;
+
+    const baseReward = 100 + (current.level - 1) * 10;
+    const reward = baseReward * current.multiplierAds;
+    current.ae += reward;
     current.totalAds += 1;
     current.adsToday += 1;
     current.lastAdTime = now;
     computeLevel();
     updateUI();
-    tg.showAlert(`+${reward} coins!`);
+    tg.showAlert(`+${reward} Ae!`);
+    await randomGame();
   } catch (e) {
     tg.showAlert('Ad not completed');
   }
   btn.disabled = false;
-  btn.innerText = 'Watch Ad (+' + (50 + (current.level - 1) * 10) * current.multiplierAds + ' Coins)';
+  btn.innerText = 'Watch Ad (+' + (100 + (current.level - 1) * 10) * current.multiplierAds + ' Ae)';
+}
+
+async function randomGame() {
+  const durations = [30, 60]; // 30sec, 1min
+  const randomDuration = durations[Math.floor(Math.random() * durations.length)] * 1000;
+  tg.showAlert(`Play a quick game for ${randomDuration / 1000} seconds to continue!`);
+  await new Promise(resolve => setTimeout(resolve, randomDuration));
+  tg.showAlert('Game complete! You can watch more ads.');
 }
 
 async function trySaveTonWallet(addr) {
-  await userRef().update({ tonWallet: addr });
   current.tonWallet = addr;
   updateUI();
   updateWalletButtons();
   tg.showAlert('Wallet connected!');
+  await saveDataToDb();
 }
 
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
-  const end = Math.min(100, levelsRendered + max);
+  const end = Math.min(100000, levelsRendered + max); // Up to 100k
   for (let i = start; i <= end; i++) {
     const refsNeeded = i;
     const adsNeeded = i;
@@ -526,7 +506,7 @@ function renderLevelsChunk(max) {
     el.innerHTML = `
       <div style="font-weight:800;color:var(--accent)">Level ${i}</div>
       <div class="small">Requires: \( {refsNeeded} referral \){refsNeeded > 1 ? 's' : ''} & \( {adsNeeded} ad \){adsNeeded > 1 ? 's' : ''}</div>
-      <div class="small">Reward: ${reward} coins</div>
+      <div class="small">Reward: ${reward} Ae</div>
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
     `;
     container.appendChild(el);
@@ -534,9 +514,8 @@ function renderLevelsChunk(max) {
   }
   levelsRendered = end;
   updateLevelProgressUI();
-}
-
-async function updateLevelProgressUI() {
+  }
+  async function updateLevelProgressUI() {
   const refsCount = current.refs?.length || 0;
   const adsDone = current.totalAds || 0;
   for (let i = 1; i <= levelsRendered; i++) {
@@ -555,18 +534,15 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   const adsDone = current.totalAds || 0;
   if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert('Requirements not met');
   if (current.claimedLevels?.includes(levelNo)) return tg.showAlert('Already claimed');
-  await userRef().update({
-    coins: firebase.firestore.FieldValue.increment(reward),
-    claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo)
-  });
-  current.coins += reward;
+  current.ae += reward;
   current.claimedLevels.push(levelNo);
   updateUI();
-  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} coins!`);
+  tg.showAlert(`Level \( {levelNo} claimed! + \){reward} Ae!`);
+  await saveDataToDb();
 }
 
 async function loadLeaderboard() {
-  const snapshot = await db.collection('users').orderBy('coins', 'desc').limit(100).get();
+  const snapshot = await db.collection('users').orderBy('ae', 'desc').limit(100).get();
   const list = document.getElementById('leaderList');
   list.innerHTML = '';
   let rank = 1;
@@ -574,10 +550,51 @@ async function loadLeaderboard() {
     const data = doc.data();
     const item = document.createElement('li');
     item.className = 'leader-item';
-    item.innerHTML = `<span>User #\( {rank}</span><span> \){Math.floor(data.coins || 0)} coins</span>`;
+    item.innerHTML = `<span>User #\( {rank}</span><span> \){Math.floor(data.ae || 0)} Ae</span>`;
     list.appendChild(item);
     rank++;
   });
+}
+
+async function loadRefList() {
+  const list = document.getElementById('refList');
+  list.innerHTML = '';
+  current.refs.forEach(ref => {
+    const item = document.createElement('li');
+    item.className = 'ref-item';
+    item.innerText = `User ID: ${ref}`;
+    list.appendChild(item);
+  });
+}
+
+function toggleAirdropSection() {
+  if (current.refs.length >= 3) {
+    document.getElementById('airdrop-locked').style.display = 'none';
+    document.getElementById('airdrop-content').style.display = 'block';
+  } else {
+    document.getElementById('airdrop-locked').style.display = 'block';
+    document.getElementById('airdrop-content').style.display = 'none';
+  }
+}
+
+async function saveDataToDb() {
+  await userRef().update({
+    ae: current.ae,
+    refs: current.refs,
+    level: current.level,
+    adsToday: current.adsToday,
+    totalAds: current.totalAds,
+    claimedLevels: current.claimedLevels,
+    tonWallet: current.tonWallet,
+    lastAdTime: current.lastAdTime,
+    lastResetDate: current.lastResetDate,
+    notificationsEnabled: current.notificationsEnabled,
+    multiplierAds: current.multiplierAds,
+    multiplierAe: current.multiplierAe,
+    giftChosen: current.giftChosen,
+    lastSaveTime: Date.now()
+  });
+  current.lastSaveTime = Date.now();
 }
 
 initApp();
