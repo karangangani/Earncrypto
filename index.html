@@ -98,9 +98,6 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
         <h3 style="color:var(--accent)">⭐ Official Channel</h3>
         <button id="openChannel" class="btn secondary">Join @Aetherofficialchannel</button>
       </div>
-
-      <button id="enableNotifications" class="btn">Enable Notifications & Get +200 Ae Bonus</button>
-      <p class="small">Get instant alerts for bonuses & updates</p>
     </div>
 
     <!-- EARN -->
@@ -193,13 +190,12 @@ tg.expand();
 const tgUser = tg.initDataUnsafe.user || {};
 let userDocId = null;
 let current = {
-  ae: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', notificationsEnabled: false, username: '', multiplierAds: 1, multiplierAe: 1, giftChosen: false, refList: [], lastSaveTime: 0
+  ae: 0, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: '', username: '', multiplierAds: 1, multiplierAe: 1, giftChosen: false, refList: [], lastSaveTime: 0
 };
 let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
-
-const startParam = tg.initDataUnsafe.start_param || '';
+  const startParam = tg.initDataUnsafe.start_param || '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
 
@@ -219,7 +215,7 @@ async function initApp() {
     if (isNewUser) {
       await userRef().set({
         username: username,
-        ae: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), notificationsEnabled: false, multiplierAds: 1, multiplierAe: 1, giftChosen: false, lastSaveTime: Date.now()
+        ae: 20, refs: [], level: 1, adsToday: 0, totalAds: 0, claimedLevels: [], tonWallet: '', lastAdTime: 0, lastResetDate: new Date().toDateString(), multiplierAds: 1, multiplierAe: 1, giftChosen: false, lastSaveTime: Date.now()
       });
     } else {
       const data = doc.data();
@@ -241,13 +237,13 @@ async function initApp() {
         computeLevel();
         updateUI();
         updateLevelProgressUI();
-        updateNotificationButton();
         updateAdReward();
         updateWalletButtons();
         checkLevel10Gift();
         toggleAirdropSection();
       }
     });
+
     const refLink = 'https://t.me/AetherMineXBot?start=ref_' + userDocId;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = () => navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!'));
@@ -276,8 +272,7 @@ async function initApp() {
     document.getElementById('watchAd').onclick = watchAdHandler;
     document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/Aetherofficialchannel');
     document.getElementById('startMining').onclick = startPassiveMining;
-    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(1000); // Load up to 1000
-    document.getElementById('enableNotifications').onclick = enableNotificationsHandler;
+    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(1000);
 
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferralParam(startParam);
@@ -286,7 +281,6 @@ async function initApp() {
     renderLevelsChunk(20);
     await resetDailyAdsIfNeeded();
     updateUI();
-    updateNotificationButton();
     updateAdReward();
     updateWalletButtons();
     loadLeaderboard();
@@ -360,87 +354,6 @@ async function resetDailyAdsIfNeeded() {
   }
 }
 
-async function enableNotificationsHandler() {
-  try {
-    const granted = await tg.requestWriteAccess();
-    if (granted) {
-      current.notificationsEnabled = true;
-      current.ae += 200;
-      updateUI();
-      updateNotificationButton();
-      tg.showAlert('Notifications enabled! +200 Ae bonus!');
-      await saveDataToDb();
-    }
-  } catch (e) {
-    tg.showAlert('Failed.');
-  }
-}
-
-function updateNotificationButton() {
-  const btn = document.getElementById('enableNotifications');
-  if (current.notificationsEnabled) {
-    btn.innerText = 'Notifications Enabled ✓ (+200 Ae)';
-    btn.disabled = true;
-  } else {
-    btn.innerText = 'Enable Notifications & Get +200 Ae Bonus';
-    btn.disabled = false;
-  }
-}
-
-async function handleReferralParam(param) {
-  const referrerId = param.replace('ref_', '');
-  if (!referrerId || referrerId === userDocId) return;
-
-  const snap = await userRef().get();
-  if (snap.exists && snap.data().refs?.includes(referrerId)) return;
-
-  const referrerDoc = await db.collection('users').doc(referrerId).get();
-  if (!referrerDoc.exists) return;
-
-  current.refs.push(referrerId);
-  current.ae += 5000;
-  computeLevel();
-  updateUI();
-  await saveDataToDb();
-  tg.showAlert('Referral success! +5000 Ae for both!');
-}
-
-function updateUI() {
-  document.getElementById('points').innerText = Math.floor(current.ae || 0);
-  document.getElementById('refs').innerText = current.refs?.length || 0;
-  document.getElementById('level').innerText = current.level || 1;
-  document.getElementById('levelDisplay').innerText = current.level || 1;
-  document.getElementById('totalAds').innerText = current.totalAds || 0;
-  updateWalletButtons();
-}
-
-function updateAdReward() {
-  const reward = (100 + (current.level - 1) * 10) * current.multiplierAds;
-  document.getElementById('adReward').innerText = reward;
-}
-
-function openTab(tab) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  if (tab === 'airdrop') toggleAirdropSection();
-  if (tab === 'referral') loadRefList();
-}
-
-let mining = false;
-function startPassiveMining() {
-  if (mining) return tg.showAlert('Already mining!');
-  mining = true;
-  document.getElementById('startMining').innerText = 'Mining Active...';
-  setInterval(() => {
-    if (!mining) return;
-    current.ae += 1 * current.multiplierAe;
-    updateUI();
-  }, 2000);
-  tg.showAlert('Passive mining started!');
-}
-
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
@@ -491,9 +404,8 @@ async function trySaveTonWallet(addr) {
   updateWalletButtons();
   tg.showAlert('Wallet connected!');
   await saveDataToDb();
-}
-
-function renderLevelsChunk(max) {
+  }
+  function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
   const end = Math.min(100000, levelsRendered + max); // Up to 100k
@@ -514,8 +426,9 @@ function renderLevelsChunk(max) {
   }
   levelsRendered = end;
   updateLevelProgressUI();
-  }
-  async function updateLevelProgressUI() {
+}
+
+async function updateLevelProgressUI() {
   const refsCount = current.refs?.length || 0;
   const adsDone = current.totalAds || 0;
   for (let i = 1; i <= levelsRendered; i++) {
@@ -588,7 +501,6 @@ async function saveDataToDb() {
     tonWallet: current.tonWallet,
     lastAdTime: current.lastAdTime,
     lastResetDate: current.lastResetDate,
-    notificationsEnabled: current.notificationsEnabled,
     multiplierAds: current.multiplierAds,
     multiplierAe: current.multiplierAe,
     giftChosen: current.giftChosen,
@@ -601,3 +513,4 @@ initApp();
 </script>
 </body>
 </html>
+  
