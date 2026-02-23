@@ -163,9 +163,8 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
   <p>Congrats! Choose your reward:</p>
   <button id="gift2xAds" class="btn">2x Ae on Ads</button>
   <button id="gift2xAe" class="btn">2x All Ae</button>
-</div>
-
-<script>
+          </div>
+        <script>
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -195,7 +194,8 @@ let current = {
 let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
-  const startParam = tg.initDataUnsafe.start_param || '';
+
+const startParam = tg.initDataUnsafe.start_param || '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
 
@@ -343,8 +343,7 @@ function updateWalletButtons() {
 function closeWelcome() {
   document.getElementById('welcome-popup').style.display = 'none';
 }
-
-async function resetDailyAdsIfNeeded() {
+          async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
     current.adsToday = 0;
@@ -404,8 +403,9 @@ async function trySaveTonWallet(addr) {
   updateWalletButtons();
   tg.showAlert('Wallet connected!');
   await saveDataToDb();
-  }
-  function renderLevelsChunk(max) {
+}
+
+function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
   const end = Math.min(100000, levelsRendered + max); // Up to 100k
@@ -513,4 +513,3 @@ initApp();
 </script>
 </body>
 </html>
-  
