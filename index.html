@@ -107,7 +107,6 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
         <button id="showAllLevels" class="btn secondary">Load More Levels</button>
       </div>
     </div>
-
     <!-- INVITE -->
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
@@ -123,7 +122,8 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
         <div id="leaderList" class="leaderboard"></div>
       </div>
     </div>
- <!-- AIRDROP -->
+
+    <!-- AIRDROP -->
     <div id="airdrop" class="section">
       <div id="airdrop-locked" style="display:none;text-align:center;padding:20px;color:#ff5555">
         <h3>Airdrop Locked</h3>
@@ -162,7 +162,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
 </div>
 
 <script>
-/* ================== CONFIG (unchanged values from your file) ================== */
+/* ================== CONFIG ================== */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -206,27 +206,110 @@ let current = {
 let tonUI = null;
 let levelsRendered = 0;
 let unsubscribeSnapshot = null;
-
 const startParam = tg.initDataUnsafe?.start_param || '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
 
+/* ================== AD HELPER (robust) ================== */
+/**
+ * showAdNormalized()
+ * Returns: { completed: boolean }
+ * - tries promise-returning SDK
+ * - tries callback-style libtl example
+ * - listens to a possible global event 'libtl_ad_result'
+ * - times out after TIMEOUT_MS and returns {completed:false}
+ *
+ * ADJUST: if your SDK returns an object like {completed: true/false} on resolve,
+ * the code below handles that. If your SDK uses other event names, change accordingly.
+ */
+function showAdNormalized() {
+  return new Promise((resolve) => {
+    const TIMEOUT_MS = 30000; // 30s
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try { window.removeEventListener('libtl_ad_result', eventHandler); } catch(e){}
+      clearTimeout(timer);
+      resolve({ completed: !!ok });
+    };
+
+    const timer = setTimeout(() => {
+      console.warn('Ad SDK timeout');
+      finish(false);
+    }, TIMEOUT_MS);
+
+    // 1) Promise-style common
+    try {
+      if (window.show_10192178 && typeof window.show_10192178 === 'function') {
+        try {
+          const maybe = window.show_10192178('');
+          if (maybe && typeof maybe.then === 'function') {
+            maybe.then((res) => {
+              // If SDK resolves with object containing completed flag, respect it
+              if (res && typeof res === 'object' && 'completed' in res) finish(!!res.completed);
+              else finish(true); // assume resolved -> completed
+            }).catch((err) => {
+              console.warn('Ad promise rejected', err);
+              finish(false);
+            });
+            return;
+          }
+        } catch (ex) {
+          // fallthrough to other methods below
+          console.warn('show_10192178 threw', ex);
+        }
+      }
+    } catch(e){ console.warn(e); }
+
+    // 2) callback-style common libs (example for libtl)
+    try {
+      if (window.libtl && typeof window.libtl.show === 'function') {
+        try {
+          window.libtl.show({
+            zone: '10192178',
+            onComplete: function() { finish(true); },
+            onClose: function(watchedFully) { finish(!!watchedFully); },
+            onError: function() { finish(false); }
+          });
+          return;
+        } catch(ex) {
+          console.warn('libtl.show error', ex);
+        }
+      }
+    } catch(e){ console.warn(e); }
+
+    // 3) Listen for global event (if SDK dispatches)
+    const eventHandler = (ev) => {
+      // expect event.detail.completed boolean
+      try {
+        const ok = !!(ev.detail && ev.detail.completed);
+        finish(ok);
+      } catch(e) { finish(false); }
+    };
+    window.addEventListener('libtl_ad_result', eventHandler);
+      // 4) fallback attempt: call SDK without promise and wait for event/timer
+    try {
+      if (window.show_10192178 && typeof window.show_10192178 === 'function') {
+        try { window.show_10192178(''); } catch(e){}
+      }
+    } catch(e){}
+  });
+}
+
+/* ------------------------- INIT APP ------------------------- */
 async function initApp() {
   try {
     await auth.signInAnonymously();
 
-    // identify user using Telegram id if available, otherwise fallback
     const tgId = tgUser?.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
-    // create / load user doc
     const docSnap = await userRef().get();
     const isNewUser = !docSnap.exists;
-
     const username = tgUser?.username || tgUser?.first_name || 'User';
 
     if (isNewUser) {
-      // initialize new user document
       const payload = { ...current, username: username };
       await userRef().set(payload);
       Object.assign(current, payload);
@@ -236,7 +319,6 @@ async function initApp() {
 
     computeLevel();
 
-    // show profile pic if exists
     if (tgUser?.photo_url) {
       const el = document.getElementById('user-dp');
       el.src = tgUser.photo_url;
@@ -245,7 +327,7 @@ async function initApp() {
 
     document.getElementById('userLine').innerText = `${username} • ID: ${userDocId}`;
 
-    // realtime updates (so leaderboard/ref updates show instantly)
+    // realtime updates
     unsubscribeSnapshot = userRef().onSnapshot(doc => {
       if (!doc.exists) return;
       Object.assign(current, doc.data());
@@ -258,24 +340,21 @@ async function initApp() {
       checkLevel10Gift();
     });
 
-    // Set up UI handlers
     document.getElementById('copyRef').onclick = copyRefHandler;
     document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/Aetherofficialchannel');
     document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(100); // load more
     document.getElementById('watchAd').onclick = watchAdHandler;
 
-    // Build ref link
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
 
-    // TON connect UI
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
         await trySaveTonWallet(wallet.account.address);
       } else {
-        await userRef().update({ tonWallet: '' });
+        try { await userRef().update({ tonWallet: '' }); } catch(e){}
         current.tonWallet = '';
         updateUI();
         updateWalletButtons();
@@ -284,30 +363,28 @@ async function initApp() {
     document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
     document.getElementById('disconnectTon').onclick = async () => {
       try { await tonUI.disconnect(); } catch(e){}
-      await userRef().update({ tonWallet: '' });
+      try { await userRef().update({ tonWallet: '' }); } catch(e){}
       current.tonWallet = '';
       updateUI();
       updateWalletButtons();
       tg.showAlert('Wallet disconnected!');
     };
 
-    // referral param handling (if opened via ref_)
     if (startParam && startParam.startsWith('ref_')) {
       await handleReferralParam(startParam);
     }
-        // initial UI render
+
     renderLevelsChunk(20);
     await resetDailyAdsIfNeeded();
     updateUI();
     updateAdReward();
-    loadLeaderboard();
+    await loadLeaderboard();
     loadRefList();
 
     setTimeout(() => { document.getElementById('welcome-popup').style.display = 'block'; }, 500);
     document.getElementById('gift2xAds')?.addEventListener('click', () => chooseGift('ads'));
     document.getElementById('gift2xAe')?.addEventListener('click', () => chooseGift('ae'));
 
-    // periodic save (every minute check if we need to save)
     setInterval(async () => {
       if (Date.now() - (current.lastSaveTime || 0) >= 60000) {
         await saveDataToDb();
@@ -324,12 +401,11 @@ async function initApp() {
 function computeLevel() {
   const refsCount = (current.refs || []).length;
   const adsCount = current.totalAds || 0;
-  // level = maximum i such that refsCount >= i and adsCount >= i
-  current.level = Math.min(refsCount, adsCount); // this fits requirement: 1 ref + 1 ad => level 1
+  current.level = Math.min(refsCount, adsCount);
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
 
-/* ------------------------- LEVEL 10 GIFT ------------------------- */
+/* ------------------------- GIFTS ------------------------- */
 function checkLevel10Gift() {
   if (current.level >= 10 && !current.giftChosen) {
     document.getElementById('gift-popup').style.display = 'block';
@@ -344,7 +420,7 @@ async function chooseGift(type) {
   tg.showAlert(`Gift chosen: 2x ${type === 'ads' ? 'ads Ae' : 'all Ae'}!`);
 }
 
-/* ------------------------- WALLET UI ------------------------- */
+/* ------------------------- WALLET ------------------------- */
 function updateWalletButtons() {
   const connected = !!(current.tonWallet);
   document.getElementById('connectTon').style.display = connected ? 'none' : 'inline-block';
@@ -361,7 +437,7 @@ async function trySaveTonWallet(addr) {
   await saveDataToDb();
 }
 
-/* ------------------------- DAILY RESET ------------------------- */
+/* ------------------------- DAILY ------------------------- */
 async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
@@ -371,34 +447,27 @@ async function resetDailyAdsIfNeeded() {
   }
 }
 
-/* ------------------------- REFERRAL HANDLING ------------------------- */
+/* ------------------------- REFERRAL ------------------------- */
 async function handleReferralParam(param) {
   try {
     const referrerId = param.replace('ref_', '');
     if (!referrerId || referrerId === userDocId) return;
-
-    // If current user already has a referredBy set, ignore
     if (current.referredBy) return;
 
-    // Check referrer exists
     const refDoc = await db.collection('users').doc(referrerId).get();
     if (!refDoc.exists) return;
 
-    // 1) Add this user to referrer's refs and give referrer reward
     await db.collection('users').doc(referrerId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       ae: firebase.firestore.FieldValue.increment(5000)
     });
 
-    // 2) Give current user the referral bonus and mark referredBy
     current.referredBy = referrerId;
     current.ae = (current.ae || 0) + 5000;
     await saveDataToDb();
     tg.showAlert('Referral success! +5000 Ae!');
-
-    // Refresh lists
     await loadRefList();
-    loadLeaderboard();
+    await loadLeaderboard();
   } catch (e) {
     console.error('ref param error', e);
   }
@@ -407,8 +476,7 @@ function copyRefHandler() {
   const refLink = document.getElementById('myRef').innerText;
   navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!')).catch(()=>tg.showAlert('Copy failed'));
 }
-
-/* ------------------------- UI FUNCTIONS ------------------------- */
+/* ------------------------- UI ------------------------- */
 function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.ae || 0);
   document.getElementById('refs').innerText = (current.refs || []).length;
@@ -417,9 +485,7 @@ function updateUI() {
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateWalletButtons();
 }
-/* ------------------------- AD REWARD ------------------------- */
 function updateAdReward() {
-  // fixed 100 Ae per your request (multiplied by multiplierAds)
   const reward = 100 * (current.multiplierAds || 1);
   document.getElementById('adReward').innerText = reward;
 }
@@ -447,13 +513,12 @@ function startPassiveMining() {
     if (!mining) return;
     current.ae = (current.ae || 0) + (1 * (current.multiplierAe || 1));
     updateUI();
-    // save every 30 seconds while mining
     if (Date.now() - (current.lastSaveTime || 0) > 30000) await saveDataToDb();
   }, 2000);
   tg.showAlert('Passive mining started!');
 }
 
-/* ------------------------- WATCH AD (MAIN FIX: save after ad) ------------------------- */
+/* ------------------------- WATCH AD (uses normalized helper) ------------------------- */
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
@@ -464,27 +529,16 @@ async function watchAdHandler() {
 
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
+  const originalText = btn.innerText;
   btn.innerText = 'Loading Ad...';
 
   try {
-    // call ad SDK show function - existing global function (keeps your implementation)
-    // Some SDKs return Promise; adapt accordingly. We'll use a try/catch around global function.
-    await new Promise((resolve, reject) => {
-      // if show_10192178 returns a Promise
-      try {
-        const res = window.show_10192178 && window.show_10192178('');
-        if (res && typeof res.then === 'function') res.then(resolve).catch(reject);
-        else {
-          // fallback: resolve after short delay (some SDKs use callbacks)
-          setTimeout(resolve, 1500);
-        }
-      } catch (err) {
-        // if SDK throws synchronously, treat as failure
-        return reject(err);
-      }
-    });
+    const res = await showAdNormalized();
+    if (!res || !res.completed) {
+      tg.showAlert('Ad not completed.');
+      return;
+    }
 
-    // Reward fixed 100 Ae (multiplied if user chose gift)
     const reward = 100 * (current.multiplierAds || 1);
     current.ae = (current.ae || 0) + reward;
     current.totalAds = (current.totalAds || 0) + 1;
@@ -495,33 +549,30 @@ async function watchAdHandler() {
     updateUI();
     updateAdReward();
 
-    // --- IMPORTANT: Save immediately after ad so coins persist ---
     await saveDataToDb();
 
     tg.showAlert(`+${reward} Ae!`);
-    // optional small "game" delay
     await randomGame();
+
   } catch (e) {
     console.warn('Ad failed or cancelled', e);
     tg.showAlert('Ad not completed.');
-  } finally {
+      } finally {
     btn.disabled = false;
     updateAdReward();
-    btn.innerText = 'Watch Ad (+' + (100 * (current.multiplierAds || 1)) + ' Ae)';
+    btn.innerText = originalText || ('Watch Ad (+' + (100 * (current.multiplierAds || 1)) + ' Ae)');
   }
 }
 
 async function randomGame() {
-  // small fun wait — not necessary for logic
   const durations = [30, 60];
   const randomDuration = durations[Math.floor(Math.random() * durations.length)] * 1000;
-  // Use alerts to simulate short "game"
   tg.showAlert(`Play a quick game for ${randomDuration / 1000} seconds to continue!`);
   await new Promise(r => setTimeout(r, randomDuration));
   tg.showAlert('Game complete!');
 }
 
-/* ------------------------- RENDER LEVELS & CLAIM ------------------------- */
+/* ------------------------- LEVELS ------------------------- */
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
@@ -530,7 +581,7 @@ function renderLevelsChunk(max) {
     const refsNeeded = i;
     const adsNeeded = i;
     const reward = 500 * i;
-        const el = document.createElement('div');
+    const el = document.createElement('div');
     el.className = 'level';
     el.innerHTML = `
       <div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
@@ -539,14 +590,11 @@ function renderLevelsChunk(max) {
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
     `;
     container.appendChild(el);
-
-    // attach click handler
-    (function(levelIndex, rNeed, aNeed, rew){
-      const btn = document.getElementById(`claim_${levelIndex}`);
-      btn.addEventListener('click', async () => {
-        await claimLevel(levelIndex, rNeed, aNeed, rew);
-      });
-    })(i, refsNeeded, adsNeeded, reward);
+    // attach click handler after append
+    const btn = document.getElementById(`claim_${i}`);
+    btn.addEventListener('click', async () => {
+      await claimLevel(i, refsNeeded, adsNeeded, reward);
+    });
   }
   levelsRendered = end;
   updateLevelProgressUI();
@@ -584,7 +632,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ------------------------- LEADERBOARD & REFS ------------------------- */
+/* ------------------------- LEADERBOARD (top 100 with user id) ------------------------- */
 async function loadLeaderboard() {
   try {
     const snapshot = await db.collection('users').orderBy('ae', 'desc').limit(100).get();
@@ -595,7 +643,8 @@ async function loadLeaderboard() {
       const data = doc.data();
       const item = document.createElement('div');
       item.className = 'leader-item';
-      item.innerHTML = `<span>#${rank}</span><span>${Math.floor(data.ae || 0)} Ae</span>`;
+      // show doc.id (user id) and ae, you can format further if needed
+      item.innerHTML = `<span>#${rank} • ${doc.id}</span><span>${Math.floor(data.ae || 0)} Ae</span>`;
       list.appendChild(item);
       rank++;
     });
@@ -604,6 +653,7 @@ async function loadLeaderboard() {
   }
 }
 
+/* ------------------------- REF LIST ------------------------- */
 async function loadRefList() {
   const list = document.getElementById('refList');
   list.innerHTML = '';
@@ -615,7 +665,7 @@ async function loadRefList() {
   });
 }
 
-/* ------------------------- AIRDROP SECTION ------------------------- */
+/* ------------------------- AIRDROP ------------------------- */
 function toggleAirdropSection() {
   if ((current.refs || []).length >= 3) {
     document.getElementById('airdrop-locked').style.display = 'none';
@@ -626,7 +676,7 @@ function toggleAirdropSection() {
   }
 }
 
-/* ------------------------- SAVE TO FIRESTORE ------------------------- */
+/* ------------------------- SAVE ------------------------- */
 async function saveDataToDb() {
   try {
     const payload = {
@@ -652,7 +702,7 @@ async function saveDataToDb() {
   }
 }
 
-/* ------------------------- INITIALIZE ------------------------- */
+/* ------------------------- INIT ------------------------- */
 initApp();
 
 /* ------------------------- UTIL ------------------------- */
