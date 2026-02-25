@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Fixed)</title>
+<title>AETHER — Earn & Airdrop (Updated)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Firebase compat (same pattern you used) -->
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-<!-- TON connect UI (kept) -->
+<!-- TON connect UI -->
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
 
-<!-- Ad SDK (kept) -->
+<!-- Ad SDK -->
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
@@ -77,8 +77,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
       <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
       <div class="stat"><div class="v" id="level">0</div><div class="l">Level</div></div>
     </div>
-
-    <div class="tabs">
+      <div class="tabs">
       <div class="tab active" onclick="openTab('home', event)">Home</div>
       <div class="tab" onclick="openTab('tasks', event)">Earn</div>
       <div class="tab" onclick="openTab('referral', event)">Invite</div>
@@ -107,6 +106,7 @@ h1 { color: var(--text); font-size: 20px; margin-bottom: 2px; font-weight: 700; 
         <button id="showAllLevels" class="btn secondary">Load More Levels</button>
       </div>
     </div>
+
     <!-- INVITE -->
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
@@ -172,7 +172,12 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 const AD_FN = 'show_10192178';
-const DAILY_AD_LIMIT = 50;
+const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
+const ADS_WINDOW_LIMIT = 50;
+const LOCAL_SYNC_MS = 24 * 60 * 60 * 1000; // 24 hours (batch flush)
+const PENDING_KEY = 'aether_pending_v2';
+const STATE_KEY = 'aether_state_v2';
+const FLUSH_THRESHOLD_AE = 5000; // if pending Ae >= this, flush early
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -181,7 +186,7 @@ const auth = firebase.auth();
 
 const tg = window.Telegram.WebApp;
 tg.ready();
-try { tg.expand(); } catch(e) { /* ignore if not available */ }
+try { tg.expand(); } catch(e) { /* ignore */ }
 
 const tgUser = tg.initDataUnsafe?.user || {};
 let userDocId = null;
@@ -210,17 +215,87 @@ const startParam = tg.initDataUnsafe?.start_param || '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
 
+/* ================== Local storage helpers & pending queue ================== */
+function loadLocalStateAll() {
+  try {
+    const rawState = localStorage.getItem(STATE_KEY);
+    const rawPending = localStorage.getItem(PENDING_KEY);
+    const state = rawState ? JSON.parse(rawState) : {};
+    const pending = rawPending ? JSON.parse(rawPending) : { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+    return { state, pending };
+  } catch (e) {
+    return { state: {}, pending: { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 } };
+  }
+}
+function saveLocalStateAll(stateObj, pendingObj) {
+  try {
+    if (stateObj && typeof stateObj === 'object') localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
+    if (pendingObj && typeof pendingObj === 'object') localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
+  } catch (e) { console.warn('local save failed', e); }
+}
+// Initialize pending and load any saved state into current on startup
+(function initLocal() {
+  const { state, pending } = loadLocalStateAll();
+  if (state && Object.keys(state).length) {
+    // merge allowed fields into current
+    const keys = ['ae','refs','referredBy','level','adsToday','totalAds','claimedLevels','tonWallet','lastAdTime','lastResetDate','multiplierAds','multiplierAe','giftChosen','lastSaveTime','adsWindowStart','adsWindowCount'];
+    keys.forEach(k => { if (state[k] !== undefined) current[k] = state[k]; });
+  }
+  window.__aether_pending = pending;
+})();
+
+function queuePendingChange(aeDelta=0, adsDelta=0, addRef=null, addClaim=null) {
+  window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+  window.__aether_pending.aeDelta += aeDelta;
+  window.__aether_pending.adsDelta += adsDelta;
+  if (addRef) window.__aether_pending.refs.push(addRef);
+  if (addClaim) window.__aether_pending.claimed.push(addClaim);
+  saveLocalStateAll(current, window.__aether_pending);
+}
+
+async function flushPendingToFirestoreIfNeeded(force=false) {
+  try {
+    window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+    const now = Date.now();
+
+    // Nothing to flush
+    if (!force && window.__aether_pending.aeDelta === 0 && window.__aether_pending.adsDelta === 0 && window.__aether_pending.refs.length === 0 && window.__aether_pending.claimed.length === 0) return;
+
+    // If not forced and not yet past LOCAL_SYNC_MS, skip
+    if (!force && (now - (window.__aether_pending.lastFlush || 0) < LOCAL_SYNC_MS) && Math.abs(window.__aether_pending.aeDelta) < FLUSH_THRESHOLD_AE) return;
+
+    const updates = {};
+    if (window.__aether_pending.aeDelta !== 0) updates.ae = firebase.firestore.FieldValue.increment(window.__aether_pending.aeDelta);
+    if (window.__aether_pending.adsDelta !== 0) updates.totalAds = firebase.firestore.FieldValue.increment(window.__aether_pending.adsDelta);
+    if (window.__aether_pending.refs.length) updates.refs = firebase.firestore.FieldValue.arrayUnion(...window.__aether_pending.refs);
+    if (window.__aether_pending.claimed.length) updates.claimedLevels = firebase.firestore.FieldValue.arrayUnion(...window.__aether_pending.claimed);
+    updates.lastSaveTime = Date.now();
+
+    // perform server update (merge)
+    await userRef().update(updates);
+
+    // reset pending and record flush time
+    window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now };
+    saveLocalStateAll(current, window.__aether_pending);
+  } catch (e) {
+    console.warn('flushPending error', e);
+    // keep pending to attempt later
+  }
+}
+async function forceFlushPending() { await flushPendingToFirestoreIfNeeded(true); }
+  /* flush on unload (best effort - saves to localStorage which persists) */
+window.addEventListener('beforeunload', function () {
+  try { saveLocalStateAll(current, window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 }); } catch(e){}
+});
+
+/* periodic attempt to flush pending (every 5 minutes) */
+setInterval(() => { flushPendingToFirestoreIfNeeded(false).catch(()=>{}); }, 5 * 60 * 1000);
+
 /* ================== AD HELPER (robust) ================== */
 /**
  * showAdNormalized()
- * Returns: { completed: boolean }
- * - tries promise-returning SDK
- * - tries callback-style libtl example
- * - listens to a possible global event 'libtl_ad_result'
- * - times out after TIMEOUT_MS and returns {completed:false}
- *
- * ADJUST: if your SDK returns an object like {completed: true/false} on resolve,
- * the code below handles that. If your SDK uses other event names, change accordingly.
+ * - supports Promise-style, callback-style, event-style SDKs
+ * - returns { completed: boolean }
  */
 function showAdNormalized() {
   return new Promise((resolve) => {
@@ -239,16 +314,20 @@ function showAdNormalized() {
       finish(false);
     }, TIMEOUT_MS);
 
-    // 1) Promise-style common
+    // 1) Promise-style
     try {
       if (window.show_10192178 && typeof window.show_10192178 === 'function') {
         try {
           const maybe = window.show_10192178('');
           if (maybe && typeof maybe.then === 'function') {
             maybe.then((res) => {
-              // If SDK resolves with object containing completed flag, respect it
-              if (res && typeof res === 'object' && 'completed' in res) finish(!!res.completed);
-              else finish(true); // assume resolved -> completed
+              if (res && typeof res === 'object') {
+                if ('completed' in res) return finish(!!res.completed);
+                if ('success' in res) return finish(!!res.success);
+                if ('result' in res) return finish(res.result === 'completed' || res.result === 'success');
+              }
+              // resolved without detail -> assume completed
+              return finish(true);
             }).catch((err) => {
               console.warn('Ad promise rejected', err);
               finish(false);
@@ -256,13 +335,12 @@ function showAdNormalized() {
             return;
           }
         } catch (ex) {
-          // fallthrough to other methods below
           console.warn('show_10192178 threw', ex);
         }
       }
     } catch(e){ console.warn(e); }
 
-    // 2) callback-style common libs (example for libtl)
+    // 2) callback-style (example libtl)
     try {
       if (window.libtl && typeof window.libtl.show === 'function') {
         try {
@@ -279,16 +357,16 @@ function showAdNormalized() {
       }
     } catch(e){ console.warn(e); }
 
-    // 3) Listen for global event (if SDK dispatches)
+    // 3) global event fallback
     const eventHandler = (ev) => {
-      // expect event.detail.completed boolean
       try {
-        const ok = !!(ev.detail && ev.detail.completed);
+        const ok = !!(ev.detail && (ev.detail.completed || ev.detail.success || ev.detail.result === 'completed'));
         finish(ok);
       } catch(e) { finish(false); }
     };
     window.addEventListener('libtl_ad_result', eventHandler);
-      // 4) fallback attempt: call SDK without promise and wait for event/timer
+
+    // 4) fallback to calling SDK (some SDKs use internal callbacks)
     try {
       if (window.show_10192178 && typeof window.show_10192178 === 'function') {
         try { window.show_10192178(''); } catch(e){}
@@ -297,24 +375,30 @@ function showAdNormalized() {
   });
 }
 
-/* ------------------------- INIT APP ------------------------- */
+/* ------------------------- INIT APP (reduced reads) ------------------------- */
 async function initApp() {
   try {
     await auth.signInAnonymously();
 
+    // keep doc keyed by Telegram id as you used (you can change to auth.uid later)
     const tgId = tgUser?.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
-    const docSnap = await userRef().get();
-    const isNewUser = !docSnap.exists;
-    const username = tgUser?.username || tgUser?.first_name || 'User';
-
-    if (isNewUser) {
-      const payload = { ...current, username: username };
-      await userRef().set(payload);
-      Object.assign(current, payload);
-    } else {
-      Object.assign(current, docSnap.data());
+    // single read (reduce continuous reads)
+    try {
+      const docSnap = await userRef().get();
+      const isNewUser = !docSnap.exists;
+      const username = tgUser?.username || tgUser?.first_name || 'User';
+      if (isNewUser) {
+        const payload = { ...current, username: username };
+        // create initial doc (necessary)
+        await userRef().set(payload);
+        Object.assign(current, payload);
+      } else {
+        Object.assign(current, docSnap.data());
+      }
+    } catch(e) {
+      console.warn('initial read failed', e);
     }
 
     computeLevel();
@@ -325,25 +409,14 @@ async function initApp() {
       el.style.display = 'block';
     }
 
+    const username = tgUser?.username || tgUser?.first_name || 'User';
     document.getElementById('userLine').innerText = `${username} • ID: ${userDocId}`;
 
-    // realtime updates
-    unsubscribeSnapshot = userRef().onSnapshot(doc => {
-      if (!doc.exists) return;
-      Object.assign(current, doc.data());
-      computeLevel();
-      updateUI();
-      updateLevelProgressUI();
-      updateAdReward();
-      updateWalletButtons();
-      toggleAirdropSection();
-      checkLevel10Gift();
-    });
-
+    // UI handlers
     document.getElementById('copyRef').onclick = copyRefHandler;
     document.getElementById('openChannel').onclick = () => tg.openTelegramLink('https://t.me/Aetherofficialchannel');
     document.getElementById('startMining').onclick = startPassiveMining;
-    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(100); // load more
+    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(100);
     document.getElementById('watchAd').onclick = watchAdHandler;
 
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
@@ -385,6 +458,7 @@ async function initApp() {
     document.getElementById('gift2xAds')?.addEventListener('click', () => chooseGift('ads'));
     document.getElementById('gift2xAe')?.addEventListener('click', () => chooseGift('ae'));
 
+    // periodic small save (profile fields) and attempt flush pending
     setInterval(async () => {
       if (Date.now() - (current.lastSaveTime || 0) >= 60000) {
         await saveDataToDb();
@@ -416,6 +490,7 @@ async function chooseGift(type) {
   else if (type === 'ae') { current.multiplierAe = 2; current.ae = (current.ae || 0) * 2; }
   current.giftChosen = true;
   document.getElementById('gift-popup').style.display = 'none';
+  // small profile write only
   await saveDataToDb();
   tg.showAlert(`Gift chosen: 2x ${type === 'ads' ? 'ads Ae' : 'all Ae'}!`);
 }
@@ -434,10 +509,10 @@ async function trySaveTonWallet(addr) {
   updateUI();
   updateWalletButtons();
   tg.showAlert('Wallet connected!');
+  // small profile write only
   await saveDataToDb();
-}
-
-/* ------------------------- DAILY ------------------------- */
+  }
+  /* ------------------------- DAILY ------------------------- */
 async function resetDailyAdsIfNeeded() {
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) {
@@ -447,7 +522,7 @@ async function resetDailyAdsIfNeeded() {
   }
 }
 
-/* ------------------------- REFERRAL ------------------------- */
+/* ------------------------- REFERRAL (keeps immediate server update for referrer) ------------------------- */
 async function handleReferralParam(param) {
   try {
     const referrerId = param.replace('ref_', '');
@@ -457,14 +532,18 @@ async function handleReferralParam(param) {
     const refDoc = await db.collection('users').doc(referrerId).get();
     if (!refDoc.exists) return;
 
+    // update referrer immediately (server-side)
     await db.collection('users').doc(referrerId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       ae: firebase.firestore.FieldValue.increment(5000)
     });
 
+    // give current user local bonus and queue pending for server later
     current.referredBy = referrerId;
     current.ae = (current.ae || 0) + 5000;
-    await saveDataToDb();
+    queuePendingChange(5000, 0, null, null); // queue current user's ae change
+    saveLocalStateAll(current, window.__aether_pending);
+
     tg.showAlert('Referral success! +5000 Ae!');
     await loadRefList();
     await loadLeaderboard();
@@ -476,6 +555,7 @@ function copyRefHandler() {
   const refLink = document.getElementById('myRef').innerText;
   navigator.clipboard.writeText(refLink).then(() => tg.showAlert('Copied!')).catch(()=>tg.showAlert('Copy failed'));
 }
+
 /* ------------------------- UI ------------------------- */
 function updateUI() {
   document.getElementById('points').innerText = Math.floor(current.ae || 0);
@@ -513,18 +593,30 @@ function startPassiveMining() {
     if (!mining) return;
     current.ae = (current.ae || 0) + (1 * (current.multiplierAe || 1));
     updateUI();
+    // small profile save only
     if (Date.now() - (current.lastSaveTime || 0) > 30000) await saveDataToDb();
   }, 2000);
   tg.showAlert('Passive mining started!');
 }
 
-/* ------------------------- WATCH AD (uses normalized helper) ------------------------- */
+/* ------------------------- WATCH AD (with local batching & 12h window & cooldown) ------------------------- */
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
+  // Load window state from local saved state
+  const localState = loadLocalStateAll().state || {};
   const now = Date.now();
-  if (current.adsToday >= DAILY_AD_LIMIT) {
-    return tg.showAlert('You have reached the ad limit for today. Come back later!');
+  localState.adsWindowStart = localState.adsWindowStart || now;
+  localState.adsWindowCount = localState.adsWindowCount || 0;
+
+  // reset window if passed
+  if (now - localState.adsWindowStart >= ADS_WINDOW_MS) {
+    localState.adsWindowStart = now;
+    localState.adsWindowCount = 0;
+  }
+
+  if (localState.adsWindowCount >= ADS_WINDOW_LIMIT) {
+    return tg.showAlert(`Ad limit reached (${ADS_WINDOW_LIMIT} per 12 hours). Come back later.`);
   }
 
   const btn = document.getElementById('watchAd');
@@ -536,34 +628,57 @@ async function watchAdHandler() {
     const res = await showAdNormalized();
     if (!res || !res.completed) {
       tg.showAlert('Ad not completed.');
+      // small short cooldown to avoid immediate retry spamming UX
+      setTimeout(()=>{ btn.disabled = false; btn.innerText = originalText; }, 1500);
       return;
     }
 
     const reward = 100 * (current.multiplierAds || 1);
+
+    // local updates immediately for UI
     current.ae = (current.ae || 0) + reward;
     current.totalAds = (current.totalAds || 0) + 1;
     current.adsToday = (current.adsToday || 0) + 1;
     current.lastAdTime = now;
 
+    // local window state update and save
+    localState.adsWindowCount = (localState.adsWindowCount || 0) + 1;
+    // merge into current so state persists
+    current.adsWindowStart = localState.adsWindowStart;
+    current.adsWindowCount = localState.adsWindowCount;
+
+    // queue pending to flush later (reduces writes)
+    queuePendingChange(reward, 1, null, null);
+    saveLocalStateAll(current, window.__aether_pending);
+
     computeLevel();
     updateUI();
     updateAdReward();
 
-    await saveDataToDb();
+    // random cooldown 10-30s
+    const cooldown = 1000 * (10 + Math.floor(Math.random() * 21)); // 10..30 sec
+    btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerText = originalText || ('Watch Ad (+' + (100 * (current.multiplierAds || 1)) + ' Ae)');
+    }, cooldown);
+
+    // flush early if pending Ae big or time passed (prevent large local-only accumulation)
+    if (Math.abs(window.__aether_pending.aeDelta || 0) >= FLUSH_THRESHOLD_AE || (Date.now() - (window.__aether_pending.lastFlush || 0)) > LOCAL_SYNC_MS) {
+      await flushPendingToFirestoreIfNeeded(true);
+    }
 
     tg.showAlert(`+${reward} Ae!`);
     await randomGame();
-
   } catch (e) {
-    console.warn('Ad failed or cancelled', e);
-    tg.showAlert('Ad not completed.');
-      } finally {
+    console.warn('watchAdHandler error', e);
+    tg.showAlert('Ad failed. Try again later.');
     btn.disabled = false;
-    updateAdReward();
     btn.innerText = originalText || ('Watch Ad (+' + (100 * (current.multiplierAds || 1)) + ' Ae)');
   }
 }
 
+/* ------------------------- randomGame for UX ------------------------- */
 async function randomGame() {
   const durations = [30, 60];
   const randomDuration = durations[Math.floor(Math.random() * durations.length)] * 1000;
@@ -572,7 +687,7 @@ async function randomGame() {
   tg.showAlert('Game complete!');
 }
 
-/* ------------------------- LEVELS ------------------------- */
+/* ------------------------- LEVELS & CLAIM ------------------------- */
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
@@ -590,7 +705,6 @@ function renderLevelsChunk(max) {
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>
     `;
     container.appendChild(el);
-    // attach click handler after append
     const btn = document.getElementById(`claim_${i}`);
     btn.addEventListener('click', async () => {
       await claimLevel(i, refsNeeded, adsNeeded, reward);
@@ -622,17 +736,27 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   if ((current.claimedLevels || []).includes(levelNo)) {
     return tg.showAlert('Already claimed');
   }
+
+  // local update + queue pending claimedLevels and ae reward
   current.ae = (current.ae || 0) + reward;
   current.claimedLevels = current.claimedLevels || [];
   current.claimedLevels.push(levelNo);
+  queuePendingChange(reward, 0, null, levelNo);
+  saveLocalStateAll(current, window.__aether_pending);
+
   computeLevel();
   updateUI();
   updateLevelProgressUI();
-  await saveDataToDb();
+
+  // try flush if threshold reached
+  if (Math.abs(window.__aether_pending.aeDelta || 0) >= FLUSH_THRESHOLD_AE) {
+    await flushPendingToFirestoreIfNeeded(true);
+  }
+
   tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ------------------------- LEADERBOARD (top 100 with user id) ------------------------- */
+/* ------------------------- LEADERBOARD (top 100 with doc.id) ------------------------- */
 async function loadLeaderboard() {
   try {
     const snapshot = await db.collection('users').orderBy('ae', 'desc').limit(100).get();
@@ -643,7 +767,6 @@ async function loadLeaderboard() {
       const data = doc.data();
       const item = document.createElement('div');
       item.className = 'leader-item';
-      // show doc.id (user id) and ae, you can format further if needed
       item.innerHTML = `<span>#${rank} • ${doc.id}</span><span>${Math.floor(data.ae || 0)} Ae</span>`;
       list.appendChild(item);
       rank++;
@@ -676,37 +799,38 @@ function toggleAirdropSection() {
   }
 }
 
-/* ------------------------- SAVE ------------------------- */
+/* ------------------------- saveDataToDb (reduced writes) ------------------------- */
 async function saveDataToDb() {
   try {
-    const payload = {
-      ae: current.ae || 0,
-      refs: current.refs || [],
-      referredBy: current.referredBy || '',
-      level: current.level || 0,
-      adsToday: current.adsToday || 0,
-      totalAds: current.totalAds || 0,
-      claimedLevels: current.claimedLevels || [],
+    // write only small profile fields to reduce cost
+    const smallPayload = {
       tonWallet: current.tonWallet || '',
-      lastAdTime: current.lastAdTime || 0,
       lastResetDate: current.lastResetDate || new Date().toDateString(),
-      multiplierAds: current.multiplierAds || 1,
-      multiplierAe: current.multiplierAe || 1,
-      giftChosen: current.giftChosen || false,
-      lastSaveTime: Date.now()
+      lastSaveTime: Date.now(),
+      username: current.username || ''
     };
-    await userRef().set(payload, { merge: true });
+    await userRef().set(smallPayload, { merge: true });
+
+    // persist local pending and state
+    saveLocalStateAll(current, window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 });
+
+    // attempt to flush pending if needed (may skip based on timing)
+    await flushPendingToFirestoreIfNeeded(false);
+
     current.lastSaveTime = Date.now();
   } catch (e) {
-    console.error('save error', e);
+    console.warn('saveDataToDb error', e);
   }
 }
 
-/* ------------------------- INIT ------------------------- */
+/* ------------------------- INITIALIZE ------------------------- */
 initApp();
 
 /* ------------------------- UTIL ------------------------- */
 function closeWelcome() { document.getElementById('welcome-popup').style.display = 'none'; }
+
+// helper to access local saved state (small wrapper)
+function loadLocalStateAllPublic() { return loadLocalStateAll(); }
 </script>
 </body>
 </html>
