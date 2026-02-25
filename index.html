@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Fixed)</title>
+<title>AETHER — Earn & Airdrop (Final)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -172,8 +172,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-
-const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
+  const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
 const ADS_WINDOW_LIMIT = 50;
 const DAILY_AD_LIMIT = 50; // per 24h for adsToday logic
 const LOCAL_SYNC_MS = 24 * 60 * 60 * 1000; // 24 hours (batch flush)
@@ -191,8 +190,9 @@ try { tg.ready(); } catch(e){}
 try { tg.expand && tg.expand(); } catch(e) {}
 
 const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
-let userDocId = null
-  let current = {
+let userDocId = null;
+
+let current = {
   ae: 0,
   refs: [],
   referredBy: '',
@@ -388,38 +388,47 @@ function showFallbackAdModal(seconds = 30) {
   });
 }
 
-/* ------------------------- INIT APP (single read) ------------------------- */
+/* ------------------------- INIT APP (single read) with initial pending flush ------------------------- */
 async function initApp() {
   try {
     await auth.signInAnonymously();
+
+    // identify user using Telegram id if available, otherwise fallback
     const tgId = tgUser?.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
-    // single read
+    // load pending from local storage into global
+    window.__aether_pending = loadLocalStateAll().pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+
+    // try to read user doc; if not exists create it (so flush can update)
+    const docSnap = await userRef().get();
+    const isNewUser = !docSnap.exists;
+    const username = tgUser?.username || tgUser?.first_name || 'User';
+
+    if (isNewUser) {
+      const payload = { ...current, username: username };
+      await userRef().set(payload);
+      Object.assign(current, payload);
+    } else {
+      Object.assign(current, docSnap.data());
+    }
+
+    // Immediately try to flush any pending from previous sessions to Firestore
     try {
-      const docSnap = await userRef().get();
-      const isNewUser = !docSnap.exists;
-      const username = tgUser?.username || tgUser?.first_name || 'User';
-      if (isNewUser) {
-        const payload = { ...current, username: username };
-        await userRef().set(payload);
-        Object.assign(current, payload);
-      } else {
-        Object.assign(current, docSnap.data());
-      }
-    } catch(e) {
-      console.warn('initial read failed', e);
+      await flushPendingToFirestoreIfNeeded(true);
+    } catch (e) {
+      console.warn('Initial pending flush failed (will retry later)', e);
     }
 
     computeLevel();
 
+    // show profile pic if exists
     if (tgUser?.photo_url) {
       const el = document.getElementById('user-dp');
       el.src = tgUser.photo_url;
       el.style.display = 'block';
     }
 
-    const username = tgUser?.username || tgUser?.first_name || 'User';
     document.getElementById('userLine').innerText = `${username} • ID: ${userDocId}`;
 
     // UI handlers
@@ -432,6 +441,7 @@ async function initApp() {
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
 
+    // TON UI
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -601,28 +611,16 @@ function startPassiveMining() {
     if (Date.now() - (current.lastSaveTime || 0) > 30000) await saveDataToDb();
   }, 2000);
   tg.showAlert && tg.showAlert('Passive mining started!');
-  }
-  /* ------------------------- WATCH AD (REPLACED: improved version you provided) ------------------------- */
-/* REPLACE your existing watchAdHandler() with this improved version */
+}
 
+/* ------------------------- WATCH AD (immediate write + pending fallback) ------------------------- */
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
   const now = Date.now();
-  const savedAll = loadLocalStateAll();
-  const localState = savedAll.state || {};
-  localState.adsWindowStart = localState.adsWindowStart || now;
-  localState.adsWindowCount = localState.adsWindowCount || 0;
-  if (now - localState.adsWindowStart >= ADS_WINDOW_MS) {
-    localState.adsWindowStart = now;
-    localState.adsWindowCount = 0;
-  }
 
   if ((current.adsToday || 0) >= DAILY_AD_LIMIT) {
     return tg.showAlert && tg.showAlert('You have reached the ad limit for today. Come back later!');
-  }
-  if ((localState.adsWindowCount || 0) >= ADS_WINDOW_LIMIT) {
-    return tg.showAlert && tg.showAlert(`Ad limit reached (${ADS_WINDOW_LIMIT} per 12 hours). Come back later.`);
   }
 
   const btn = document.getElementById('watchAd');
@@ -630,118 +628,80 @@ async function watchAdHandler() {
   const originalText = btn.innerText;
   btn.innerText = 'Loading Ad...';
 
-  // store previous counts so we can detect if reward was applied by some external callback
+  // store previous counts to detect late/external updates
   const prevAe = current.ae || 0;
   const prevTotalAds = current.totalAds || 0;
-  let rewardGiven = false;
 
   try {
-    // try normalized ad (with retries)
-    const out = await showAdNormalized(2, 30000);
+    const res = await showAdNormalized(2, 30000); // existing helper
 
-    // if SDK reported success -> normal path
-    if (out && out.completed) {
-      const reward = 100 * (current.multiplierAds || 1);
-      current.ae = (current.ae || 0) + reward;
-      current.totalAds = (current.totalAds || 0) + 1;
-      current.adsToday = (current.adsToday || 0) + 1;
-      current.lastAdTime = now;
+    if (!res || !res.completed) {
+      // give a short grace for server/callback to update local snapshot
+      await new Promise(r => setTimeout(r, 1500));
+      if ((current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds) {
+        // external callback already applied reward -> treat as success
+        computeLevel(); updateUI(); updateAdReward();
+        btn.disabled = false; btn.innerText = originalText;
+        tg.showAlert && tg.showAlert(`+${(current.ae || 0) - prevAe} Ae!`);
+        return;
+      }
+      // if not completed, show fallback modal (existing flow)
+      const fb = await showFallbackAdModal(30);
+      if (!(fb && fb.completed)) {
+        tg.showAlert && tg.showAlert('Ad not completed.');
+        btn.disabled = false; btn.innerText = originalText;
+        return;
+      }
+      // fallback succeeded -> continue to award
+    }
 
-      // update local window counts
-      localState.adsWindowCount = (localState.adsWindowCount || 0) + 1;
-      current.adsWindowStart = localState.adsWindowStart;
-      current.adsWindowCount = localState.adsWindowCount;
+    // At this point: ad considered completed (either res.completed === true OR fallback succeeded)
+    const reward = 100 * (current.multiplierAds || 1);
 
-      // queue & save
+    // Update local immediately
+    current.ae = (current.ae || 0) + reward;
+    current.totalAds = (current.totalAds || 0) + 1;
+    current.adsToday = (current.adsToday || 0) + 1;
+    current.lastAdTime = now;
+    computeLevel();
+    updateUI();
+    updateAdReward();
+
+    // Try immediate small write to Firestore (important to persist before user closes)
+    try {
+      await userRef().update({
+        ae: firebase.firestore.FieldValue.increment(reward),
+        totalAds: firebase.firestore.FieldValue.increment(1),
+        adsToday: firebase.firestore.FieldValue.increment(1),
+        lastAdTime: now,
+        lastSaveTime: Date.now()
+      });
+      // immediate write success => save local state snapshot
+      saveLocalStateAll(current, window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 });
+    } catch (writeErr) {
+      // If immediate write fails, enqueue into pending and persist locally
+      console.warn('Immediate write failed, queuing pending', writeErr);
       queuePendingChange(reward, 1, null, null);
       saveLocalStateAll(current, window.__aether_pending);
-
-      rewardGiven = true;
-      computeLevel(); updateUI(); updateAdReward();
-
-      // cooldown 10-30s
-      const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
-      btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
-      setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
-
-      // flush early if needed
-      if (window.__aether_pending && Math.abs(window.__aether_pending.aeDelta || 0) >= FLUSH_THRESHOLD_AE) {
-        try { await flushPendingToFirestoreIfNeeded(true); } catch(e){ console.warn(e); }
-      }
-
-      tg.showAlert && tg.showAlert(`+${reward} Ae!`);
-      return;
     }
 
-    // SDK said not completed (or timed out). Wait small grace and re-check if some external callback already applied reward.
-    await new Promise(r => setTimeout(r, 1500)); // 1.5s grace
-    const gotAe = (current.ae || 0) > prevAe;
-    const gotAds = (current.totalAds || 0) > prevTotalAds;
+    // UI cooldown & alert
+    const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
+    btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
+    setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
 
-    if (gotAe || gotAds) {
-      // reward was added by external callback while our promise timed out -> treat as success
-      rewardGiven = true;
-      // ensure local state consistent: if reward came externally but not recorded in local pending, queue a minimal update to keep local flush consistent
-      // we can't know exact reward amount added externally; assume SDK gives same fixed reward so we compute delta:
-      const deltaAe = (current.ae || 0) - prevAe;
-      const deltaAds = (current.totalAds || 0) - prevTotalAds;
-      if (deltaAe > 0 || deltaAds > 0) {
-        queuePendingChange(deltaAe, deltaAds, null, null);
-        saveLocalStateAll(current, window.__aether_pending);
-      }
-      computeLevel(); updateUI(); updateAdReward();
-      btn.disabled = false;
-      btn.innerText = originalText;
-      tg.showAlert && tg.showAlert(`+${ ( (current.ae || 0) - prevAe ) || 100 } Ae!`);
-      return;
-    }
+    tg.showAlert && tg.showAlert(`+${reward} Ae!`);
 
-    // If SDK failed but no external reward, show fallback modal (like before)
-    const fallbackSeconds = 30;
-    const fb = await showFallbackAdModal(fallbackSeconds);
-    if (fb && fb.completed) {
-      const reward = 100 * (current.multiplierAds || 1);
-      current.ae = (current.ae || 0) + reward;
-      current.totalAds = (current.totalAds || 0) + 1;
-      current.adsToday = (current.adsToday || 0) + 1;
-      current.lastAdTime = now;
-
-      localState.adsWindowCount = (localState.adsWindowCount || 0) + 1;
-      current.adsWindowStart = localState.adsWindowStart;
-      current.adsWindowCount = localState.adsWindowCount;
-
-      queuePendingChange(reward, 1, null, null);
-      saveLocalStateAll(current, window.__aether_pending);
-
-      rewardGiven = true;
-      computeLevel(); updateUI(); updateAdReward();
-
-      const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
-      btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
-      setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
-
-      if (window.__aether_pending && Math.abs(window.__aether_pending.aeDelta || 0) >= FLUSH_THRESHOLD_AE) {
-        try { await flushPendingToFirestoreIfNeeded(true); } catch(e){ console.warn(e); }
-      }
-
-      tg.showAlert && tg.showAlert(`+${reward} Ae!`);
-      return;
-    } else {
-      // user cancelled fallback -> failure
-      tg.showAlert && tg.showAlert('Ad not completed.');
-      btn.disabled = false;
-      btn.innerText = originalText;
-      return;
-    }
+    // attempt early flush if pending grew large
+    try { await flushPendingToFirestoreIfNeeded(false); } catch(e){ /* ignore */ }
 
   } catch (err) {
-    console.warn('watchAdHandler unexpected error', err);
-    // if reward already applied by some weird callback, don't show fail
-    if (rewardGiven || (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds) {
-      // treat as success (no extra alert)
+    console.warn('watchAdHandler error', err);
+    // if current state already changed externally, treat as success
+    if ((current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds) {
       computeLevel(); updateUI(); updateAdReward();
-      btn.disabled = false;
-      btn.innerText = originalText;
+      btn.disabled = false; btn.innerText = originalText;
+      tg.showAlert && tg.showAlert(`+${(current.ae || 0) - prevAe} Ae!`);
       return;
     }
     tg.showAlert && tg.showAlert('Ad failed. Try again later.');
@@ -757,9 +717,8 @@ async function randomGame() {
   tg.showAlert && tg.showAlert(`Play a quick game for ${randomDuration / 1000} seconds to continue!`);
   await new Promise(r => setTimeout(r, randomDuration));
   tg.showAlert && tg.showAlert('Game complete!');
-}
-
-/* ------------------------- LEVELS & CLAIM ------------------------- */
+  }
+  /* ------------------------- LEVELS & CLAIM ------------------------- */
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
@@ -885,3 +844,4 @@ function closeWelcome() { document.getElementById('welcome-popup').style.display
 </script>
 </body>
 </html>
+  
