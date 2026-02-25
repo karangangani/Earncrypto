@@ -191,8 +191,8 @@ try { tg.ready(); } catch(e){}
 try { tg.expand && tg.expand(); } catch(e) {}
 
 const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
-let userDocId = null;
-          let current = {
+let userDocId = null
+  let current = {
   ae: 0,
   refs: [],
   referredBy: '',
@@ -378,7 +378,7 @@ function showFallbackAdModal(seconds = 30) {
         modal.style.display = 'none';
         resolve({ completed: true });
       }
-    }, 1000);
+    }, 1001);
 
     closeBtn.onclick = () => {
       clearInterval(interval);
@@ -486,8 +486,9 @@ function computeLevel() {
   const adsCount = current.totalAds || 0;
   current.level = Math.min(refsCount, adsCount);
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
-  }
-  /* ------------------------- GIFTS ------------------------- */
+}
+
+/* ------------------------- GIFTS ------------------------- */
 function checkLevel10Gift() {
   if (current.level >= 10 && !current.giftChosen) {
     document.getElementById('gift-popup').style.display = 'block';
@@ -600,9 +601,10 @@ function startPassiveMining() {
     if (Date.now() - (current.lastSaveTime || 0) > 30000) await saveDataToDb();
   }, 2000);
   tg.showAlert && tg.showAlert('Passive mining started!');
-}
+  }
+  /* ------------------------- WATCH AD (REPLACED: improved version you provided) ------------------------- */
+/* REPLACE your existing watchAdHandler() with this improved version */
 
-/* ------------------------- WATCH AD (robust + fallback + batching) ------------------------- */
 async function watchAdHandler() {
   await resetDailyAdsIfNeeded();
 
@@ -628,31 +630,73 @@ async function watchAdHandler() {
   const originalText = btn.innerText;
   btn.innerText = 'Loading Ad...';
 
+  // store previous counts so we can detect if reward was applied by some external callback
+  const prevAe = current.ae || 0;
+  const prevTotalAds = current.totalAds || 0;
+  let rewardGiven = false;
+
   try {
+    // try normalized ad (with retries)
     const out = await showAdNormalized(2, 30000);
+
+    // if SDK reported success -> normal path
     if (out && out.completed) {
       const reward = 100 * (current.multiplierAds || 1);
       current.ae = (current.ae || 0) + reward;
       current.totalAds = (current.totalAds || 0) + 1;
       current.adsToday = (current.adsToday || 0) + 1;
       current.lastAdTime = now;
+
+      // update local window counts
       localState.adsWindowCount = (localState.adsWindowCount || 0) + 1;
       current.adsWindowStart = localState.adsWindowStart;
       current.adsWindowCount = localState.adsWindowCount;
+
+      // queue & save
       queuePendingChange(reward, 1, null, null);
       saveLocalStateAll(current, window.__aether_pending);
+
+      rewardGiven = true;
       computeLevel(); updateUI(); updateAdReward();
+
+      // cooldown 10-30s
       const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
       btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
       setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
+
+      // flush early if needed
       if (window.__aether_pending && Math.abs(window.__aether_pending.aeDelta || 0) >= FLUSH_THRESHOLD_AE) {
         try { await flushPendingToFirestoreIfNeeded(true); } catch(e){ console.warn(e); }
       }
+
       tg.showAlert && tg.showAlert(`+${reward} Ae!`);
       return;
     }
 
-    // fallback
+    // SDK said not completed (or timed out). Wait small grace and re-check if some external callback already applied reward.
+    await new Promise(r => setTimeout(r, 1500)); // 1.5s grace
+    const gotAe = (current.ae || 0) > prevAe;
+    const gotAds = (current.totalAds || 0) > prevTotalAds;
+
+    if (gotAe || gotAds) {
+      // reward was added by external callback while our promise timed out -> treat as success
+      rewardGiven = true;
+      // ensure local state consistent: if reward came externally but not recorded in local pending, queue a minimal update to keep local flush consistent
+      // we can't know exact reward amount added externally; assume SDK gives same fixed reward so we compute delta:
+      const deltaAe = (current.ae || 0) - prevAe;
+      const deltaAds = (current.totalAds || 0) - prevTotalAds;
+      if (deltaAe > 0 || deltaAds > 0) {
+        queuePendingChange(deltaAe, deltaAds, null, null);
+        saveLocalStateAll(current, window.__aether_pending);
+      }
+      computeLevel(); updateUI(); updateAdReward();
+      btn.disabled = false;
+      btn.innerText = originalText;
+      tg.showAlert && tg.showAlert(`+${ ( (current.ae || 0) - prevAe ) || 100 } Ae!`);
+      return;
+    }
+
+    // If SDK failed but no external reward, show fallback modal (like before)
     const fallbackSeconds = 30;
     const fb = await showFallbackAdModal(fallbackSeconds);
     if (fb && fb.completed) {
@@ -661,28 +705,45 @@ async function watchAdHandler() {
       current.totalAds = (current.totalAds || 0) + 1;
       current.adsToday = (current.adsToday || 0) + 1;
       current.lastAdTime = now;
+
       localState.adsWindowCount = (localState.adsWindowCount || 0) + 1;
       current.adsWindowStart = localState.adsWindowStart;
       current.adsWindowCount = localState.adsWindowCount;
+
       queuePendingChange(reward, 1, null, null);
       saveLocalStateAll(current, window.__aether_pending);
+
+      rewardGiven = true;
       computeLevel(); updateUI(); updateAdReward();
+
       const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
       btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
       setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
+
       if (window.__aether_pending && Math.abs(window.__aether_pending.aeDelta || 0) >= FLUSH_THRESHOLD_AE) {
         try { await flushPendingToFirestoreIfNeeded(true); } catch(e){ console.warn(e); }
       }
+
       tg.showAlert && tg.showAlert(`+${reward} Ae!`);
       return;
     } else {
+      // user cancelled fallback -> failure
       tg.showAlert && tg.showAlert('Ad not completed.');
       btn.disabled = false;
       btn.innerText = originalText;
       return;
     }
+
   } catch (err) {
     console.warn('watchAdHandler unexpected error', err);
+    // if reward already applied by some weird callback, don't show fail
+    if (rewardGiven || (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds) {
+      // treat as success (no extra alert)
+      computeLevel(); updateUI(); updateAdReward();
+      btn.disabled = false;
+      btn.innerText = originalText;
+      return;
+    }
     tg.showAlert && tg.showAlert('Ad failed. Try again later.');
     btn.disabled = false;
     btn.innerText = originalText;
@@ -753,8 +814,9 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
     await flushPendingToFirestoreIfNeeded(true);
   }
   tg.showAlert && tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
-  }
-  /* ------------------------- LEADERBOARD ------------------------- */
+}
+
+/* ------------------------- LEADERBOARD ------------------------- */
 async function loadLeaderboard() {
   try {
     const snapshot = await db.collection('users').orderBy('ae', 'desc').limit(100).get();
@@ -823,4 +885,3 @@ function closeWelcome() { document.getElementById('welcome-popup').style.display
 </script>
 </body>
 </html>
-  
