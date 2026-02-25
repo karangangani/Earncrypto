@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Final)</title>
+<title>AETHER — Earn & Airdrop (Persist Fix)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -21,6 +21,7 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
+/* (same styles as before — omitted here for brevity in explanation) */
 :root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--muted); min-height: 100vh; padding: 14px; overflow-x: hidden; }
@@ -172,7 +173,8 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-  const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
 const ADS_WINDOW_LIMIT = 50;
 const DAILY_AD_LIMIT = 50; // per 24h for adsToday logic
 const LOCAL_SYNC_MS = 24 * 60 * 60 * 1000; // 24 hours (batch flush)
@@ -214,7 +216,7 @@ let levelsRendered = 0;
 const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) ? tg.initDataUnsafe.start_param : '';
 
 function userRef() { return db.collection('users').doc(userDocId); }
-
+  
 /* ================== Local storage helpers & pending queue ================== */
 function loadLocalStateAll() {
   try {
@@ -233,6 +235,9 @@ function saveLocalStateAll(stateObj, pendingObj) {
     if (pendingObj && typeof pendingObj === 'object') localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
   } catch (e) { console.warn('local save failed', e); }
 }
+
+/* IMPORTANT: initLocal reads local snapshot but DOES NOT blindly overwrite server authoritative data.
+   We'll later re-read server after flush and then update current accordingly so UI matches server. */
 (function initLocal() {
   const { state, pending } = loadLocalStateAll();
   if (state && Object.keys(state).length) {
@@ -241,6 +246,7 @@ function saveLocalStateAll(stateObj, pendingObj) {
   }
   window.__aether_pending = pending;
 })();
+
 function queuePendingChange(aeDelta=0, adsDelta=0, addRef=null, addClaim=null) {
   window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
   window.__aether_pending.aeDelta += aeDelta;
@@ -249,6 +255,10 @@ function queuePendingChange(aeDelta=0, adsDelta=0, addRef=null, addClaim=null) {
   if (addClaim) window.__aether_pending.claimed.push(addClaim);
   saveLocalStateAll(current, window.__aether_pending);
 }
+
+/* Flush pending to Firestore when necessary.
+   After forcing a flush, the caller SHOULD re-read the doc from Firestore
+   to make sure local `current` matches server (we do that in initApp). */
 async function flushPendingToFirestoreIfNeeded(force=false) {
   try {
     window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
@@ -266,6 +276,7 @@ async function flushPendingToFirestoreIfNeeded(force=false) {
     saveLocalStateAll(current, window.__aether_pending);
   } catch (e) {
     console.warn('flushPending error', e);
+    throw e;
   }
 }
 async function forceFlushPending() { await flushPendingToFirestoreIfNeeded(true); }
@@ -388,19 +399,20 @@ function showFallbackAdModal(seconds = 30) {
   });
 }
 
-/* ------------------------- INIT APP (single read) with initial pending flush ------------------------- */
+/* ------------------------- INIT APP with correct flush+re-read flow ------------------------- */
 async function initApp() {
   try {
+    // ensure anonymous auth ready
     await auth.signInAnonymously();
 
-    // identify user using Telegram id if available, otherwise fallback
+    // identify user
     const tgId = tgUser?.id ? tgUser.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
-    // load pending from local storage into global
+    // ensure pending loaded
     window.__aether_pending = loadLocalStateAll().pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
-    // try to read user doc; if not exists create it (so flush can update)
+    // read user doc (if not exist create)
     const docSnap = await userRef().get();
     const isNewUser = !docSnap.exists;
     const username = tgUser?.username || tgUser?.first_name || 'User';
@@ -410,14 +422,24 @@ async function initApp() {
       await userRef().set(payload);
       Object.assign(current, payload);
     } else {
+      // merge server doc into current (server is authoritative; but we will soon flush pending then re-read)
       Object.assign(current, docSnap.data());
     }
 
-    // Immediately try to flush any pending from previous sessions to Firestore
+    // TRY to flush any pending that remained from previous sessions
     try {
       await flushPendingToFirestoreIfNeeded(true);
+      // important: after forcing flush to server, re-read the server doc so local 'current' is fresh
+      const fresh = await userRef().get();
+      if (fresh.exists) {
+        Object.assign(current, fresh.data());
+      }
+      // persist local snapshot
+      saveLocalStateAll(current, window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 });
     } catch (e) {
       console.warn('Initial pending flush failed (will retry later)', e);
+      // even if flush fails, keep current as we have it (it may include local pending)
+      saveLocalStateAll(current, window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 });
     }
 
     computeLevel();
@@ -427,9 +449,29 @@ async function initApp() {
       const el = document.getElementById('user-dp');
       el.src = tgUser.photo_url;
       el.style.display = 'block';
-    }
-
+  }
     document.getElementById('userLine').innerText = `${username} • ID: ${userDocId}`;
+
+    // realtime updates (keeps UI in sync with remote writes)
+    const unsub = userRef().onSnapshot(doc => {
+      if (!doc.exists) return;
+      // IMPORTANT: merge snapshot into local but DO NOT clobber local pending state:
+      const serverData = doc.data();
+      // apply server values
+      Object.assign(current, serverData);
+      // re-apply any local pending deltas to the in-memory current for accurate display
+      if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
+      if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
+      computeLevel();
+      updateUI();
+      updateLevelProgressUI();
+      updateAdReward();
+      updateWalletButtons();
+      toggleAirdropSection();
+      checkLevel10Gift();
+    });
+    // store unsubscribe in case you need to stop it
+    // window.__aether_unsub = unsub;
 
     // UI handlers
     document.getElementById('copyRef').onclick = copyRefHandler;
@@ -489,6 +531,11 @@ async function initApp() {
     tg.showAlert && tg.showAlert('Init error: ' + (e.message || e));
   }
 }
+
+/* rest of code: computeLevel, chooseGift, wallet helpers, resetDailyAdsIfNeeded,
+   handleReferralParam, UI update, ad flow, levels, leaderboard, saveDataToDb etc.
+   (Use same implementations as prior stable file — they are unchanged except for
+   the initApp & flush-related behavior.) */
 
 /* ------------------------- LEVEL LOGIC ------------------------- */
 function computeLevel() {
@@ -683,8 +730,7 @@ async function watchAdHandler() {
       console.warn('Immediate write failed, queuing pending', writeErr);
       queuePendingChange(reward, 1, null, null);
       saveLocalStateAll(current, window.__aether_pending);
-    }
-
+  }
     // UI cooldown & alert
     const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
     btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
@@ -710,15 +756,7 @@ async function watchAdHandler() {
   }
 }
 
-/* ------------------------- randomGame for UX (optional) ------------------------- */
-async function randomGame() {
-  const durations = [30, 60];
-  const randomDuration = durations[Math.floor(Math.random() * durations.length)] * 1000;
-  tg.showAlert && tg.showAlert(`Play a quick game for ${randomDuration / 1000} seconds to continue!`);
-  await new Promise(r => setTimeout(r, randomDuration));
-  tg.showAlert && tg.showAlert('Game complete!');
-  }
-  /* ------------------------- LEVELS & CLAIM ------------------------- */
+/* ------------------------- LEVELS & CLAIM (same as before) ------------------------- */
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
@@ -775,7 +813,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   tg.showAlert && tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ------------------------- LEADERBOARD ------------------------- */
+/* ------------------------- LEADERBOARD & REFS (same) ------------------------- */
 async function loadLeaderboard() {
   try {
     const snapshot = await db.collection('users').orderBy('ae', 'desc').limit(100).get();
@@ -795,7 +833,6 @@ async function loadLeaderboard() {
   }
 }
 
-/* ------------------------- REF LIST ------------------------- */
 async function loadRefList() {
   const list = document.getElementById('refList');
   list.innerHTML = '';
@@ -844,4 +881,5 @@ function closeWelcome() { document.getElementById('welcome-popup').style.display
 </script>
 </body>
 </html>
-  
+    
+                                                                             
