@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Stable Persist)</title>
+<title>AETHER — Earn & Airdrop (Stable v5)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -13,7 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-<!-- TON connect UI (kept) -->
+<!-- TON connect UI -->
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
 
@@ -21,44 +21,39 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-:root{ --bg:linear-gradient(135deg, #0c0c0c, #1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
+:root{ --bg:linear-gradient(135deg,#0c0c0c,#1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;background:var(--bg);color:var(--muted);min-height:100vh;padding:14px;overflow-x:hidden}
+body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--muted);min-height:100vh;padding:14px;overflow-x:hidden}
 .wrap{max-width:720px;margin:12px auto}
 .header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:linear-gradient(135deg, rgba(0,211,138,0.06), rgba(0,211,138,0.02));border:1px solid var(--border);box-shadow:var(--glow)}
-.logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:900;position:relative;box-shadow:var(--glow)}
-.logo::after{content:'Ae';font-size:24px;font-weight:900;color:var(--accent);text-shadow:var(--glow)}
+.logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:900;box-shadow:var(--glow)}
+.logo::after{content:'Ae';font-size:24px;font-weight:900;color:var(--accent)}
 .user-dp{width:32px;height:32px;border-radius:50%;margin-left:8px;border:2px solid var(--accent)}
 h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .sub{color:var(--muted);font-size:13px}
 .card{background:var(--card);padding:18px;border-radius:16px;margin-top:12px;border:1px solid rgba(255,255,255,0.05);box-shadow:0 4px 20px rgba(0,0,0,0.3)}
 .stats{display:flex;gap:10px}
-.stat{flex:1;padding:14px;background:rgba(0,211,138,0.06);border-radius:12px;text-align:center;transition:all 0.3s}
+.stat{flex:1;padding:14px;background:rgba(0,211,138,0.06);border-radius:12px;text-align:center}
 .v{font-weight:900;color:var(--text);font-size:20px}
 .l{font-size:11px;color:var(--muted)}
 .tabs{display:flex;gap:8px;margin-top:12px}
-.tab{flex:1;padding:12px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.05);cursor:pointer;color:var(--muted);transition:all 0.3s;font-weight:600}
+.tab{flex:1;padding:12px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.05);cursor:pointer;color:var(--muted);font-weight:600}
 .tab.active{background:rgba(0,211,138,0.2);color:var(--text);border-color:var(--accent);box-shadow:var(--glow)}
 .section{display:none;padding-top:12px}
-.section.active{display:block;animation:fadeIn 0.5s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.3s;box-shadow:0 4px 10px rgba(0,211,138,0.3)}
-.btn.secondary{background:linear-gradient(135deg,#333,#555);color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.3)}
-.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.section.active{display:block}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;box-shadow:0 4px 10px rgba(0,211,138,0.3)}
+.btn.secondary{background:linear-gradient(135deg,#333,#555);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
 .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
 .ref-box{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(0,211,138,0.04);border:1px solid var(--border)}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
-.level{padding:12px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);transition:all 0.3s}
-.claimBtn{background:linear-gradient(135deg,var(--accent),#00a877);color:#001;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;width:100%;margin-top:10px;transition:all 0.3s}
+.level{padding:12px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border)}
+.claimBtn{background:linear-gradient(135deg,var(--accent),#00a877);color:#001;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;width:100%;margin-top:10px}
 .claimBtn:disabled{background:#333;color:#666;cursor:not-allowed}
-.leaderboard{list-style:none;padding:0}
 .leader-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between}
-.ref-list{list-style:none;padding:0}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
 .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:12px}
-.welcome-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(0,0,0,0.95),rgba(26,26,46,0.95));color:#fff;padding:24px;border-radius:16px;text-align:center;z-index:1000;animation:popupFade 0.6s;border:1px solid var(--border);box-shadow:var(--glow);display:none}
-@keyframes popupFade{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
-#myRef{word-break:break-all;padding:8px;background:rgba(0,0,0,0.3);border-radius:8px;color:var(--accent)}
+#warn { color: #ffcc66; text-align:center; margin-top:8px }
 </style>
 </head>
 <body>
@@ -85,22 +80,16 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       <div class="tab" onclick="openTab('referral', event)">Invite</div>
       <div class="tab" onclick="openTab('airdrop', event)">Airdrop</div>
     </div>
-     <!-- HOME -->
+
     <div id="home" class="section active">
       <button id="startMining" class="btn">Start Passive Earning</button>
-      <p class="small">+1 Ae every 2 seconds • Daily streak bonus (optional)</p>
-
-      <div class="ref-box" style="margin-top:12px">
-        <h3 style="color:var(--accent)">⭐ Official Channel</h3>
-        <button id="openChannel" class="btn secondary">Join @Aetherofficialchannel</button>
-      </div>
+      <p class="small">+1 Ae every 2 seconds</p>
     </div>
 
-    <!-- EARN -->
     <div id="tasks" class="section">
       <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">100</span> Ae)</button>
-      <p class="small" style="margin-top:8px">Level: <span id="levelDisplay">0</span> • Ads Watched: <span id="totalAds">0</span></p>
-
+      <p class="small">Level: <span id="levelDisplay">0</span> • Ads Watched Today: <span id="totalAds">0</span></p>
+      <div id="warn"></div>
       <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
       <div id="levelsList" class="levels"></div>
       <div style="text-align:center;margin-top:16px">
@@ -108,31 +97,28 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       </div>
     </div>
 
-    <!-- INVITE -->
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
-        <p style="margin-bottom:20px">Each referral = +5000 Ae for both!</p>
+        <p>Each referral = +5000 Ae for both!</p>
         <div class="ref-box">
           <div id="myRef">Generating...</div>
           <button id="copyRef" class="btn">COPY LINK</button>
         </div>
-        <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Your Referrals</h3>
-        <ul id="refList" class="ref-list"></ul>
-        <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Leaderboard</h3>
-        <div id="leaderList" class="leaderboard"></div>
+        <h3 style="color:var(--accent);margin-top:20px">Your Referrals</h3>
+        <ul id="refList"></ul>
+        <h3 style="color:var(--accent);margin-top:20px">Leaderboard</h3>
+        <div id="leaderList"></div>
       </div>
     </div>
 
-    <!-- AIRDROP -->
     <div id="airdrop" class="section">
       <div id="airdrop-locked" style="display:none;text-align:center;padding:20px;color:#ff5555">
-        <h3>Airdrop Locked</h3>
-        <p>Invite 3 friends to unlock!</p>
+        <h3>Airdrop Locked</h3><p>Invite 3 friends to unlock!</p>
       </div>
       <div id="airdrop-content" style="display:none;text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:22px">Airdrop Ready</h3>
-        <p>Connect your TON wallet to get Ae airdrop.</p>
+        <p>Connect TON wallet to claim.</p>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           <button id="connectTon" class="btn">Connect TON Wallet</button>
           <button id="disconnectTon" class="btn secondary" style="display:none">Disconnect Wallet</button>
@@ -144,26 +130,11 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 
   </div>
 
-  <div class="footer">
-    © AETHER • Premium TON Project 2025
-  </div>
-</div>
-
-<div id="welcome-popup" class="welcome-popup">
-  <h2 style="color:var(--accent)">Welcome to Aether!</h2>
-  <p>Earn Ae, invite friends & get ready for TON airdrop 🚀</p>
-  <button onclick="closeWelcome()" class="btn">Start Earning</button>
-</div>
-
-<div id="gift-popup" class="welcome-popup" style="display:none">
-  <h2 style="color:var(--accent)">Level 10 Gift!</h2>
-  <p>Congrats! Choose your reward:</p>
-  <button id="gift2xAds" class="btn">2x Ae on Ads</button>
-  <button id="gift2xAe" class="btn">2x All Ae</button>
+  <div class="footer">© AETHER • 2025</div>
 </div>
 
 <script>
-/* ================== CONFIG ================== */
+/* ========= CONFIG ========== */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -173,26 +144,24 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 
-const PENDING_KEY = 'aether_pending_v4';
-const STATE_KEY = 'aether_state_v4';
+const STORAGE_STATE = 'aether_state_v5';
+const STORAGE_PENDING = 'aether_pending_v5';
 const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12h
-const ADS_WINDOW_LIMIT = 50;
-const DAILY_AD_LIMIT = 50;
-const FLUSH_THRESHOLD_AE = 3000; // flush early if pending Ae reaches this
-const FLUSH_INTERVAL_MS = 2 * 60 * 1000; // try flushing every 2 minutes
+const ADS_WINDOW_LIMIT = 10;               // <= 10 per 12h
+const DAILY_AD_LIMIT = 10;                 // <= 10 per calendar day
+const LEVEL_CLAIM_DAILY_LIMIT = 10;        // max 10 level claims per day
+const FLUSH_INTERVAL_MS = 2 * 60 * 1000;   // try flush every 2 min
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-const tg = window.Telegram?.WebApp || {};
-try { tg.ready(); } catch(e) {}
-try { tg.expand && tg.expand(); } catch(e) {}
+// Telegram
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : { ready:()=>{}, initDataUnsafe:{} };
+try { tg.ready(); tg.expand && tg.expand(); } catch(e){}
 
-const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
-let userDocId = null;
-
+/* ======= in-memory state ======= */
 let current = {
   username: '',
   ae: 0,
@@ -209,432 +178,343 @@ let current = {
   multiplierAe: 1,
   giftChosen: false,
   lastSaveTime: Date.now(),
-  // ads window state (local)
+  // local windows
   adsWindowStart: Date.now(),
-  adsWindowCount: 0
+  adsWindowCount: 0,
+  // claims per day
+  claimedTodayCount: 0,
+  lastClaimDate: new Date().toDateString()
 };
-
+  let userDocId = null;
 let tonUI = null;
 let levelsRendered = 0;
-const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) ? tg.initDataUnsafe.start_param : '';
+const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
 
-function userRef() { return db.collection('users').doc(userDocId); }
+// Pending (local)
+window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
-/* ---------------- Local storage helpers ---------------- */
-function readLocal() {
+/* ======= local helpers ======= */
+function readStorage() {
   try {
-    return {
-      state: JSON.parse(localStorage.getItem(STATE_KEY) || 'null') || {},
-      pending: JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 }
-    };
-  } catch (e) {
-    console.warn('local read err', e);
-    return { state: {}, pending: { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 } };
-  }
+    const s = JSON.parse(localStorage.getItem(STORAGE_STATE) || 'null') || {};
+    const p = JSON.parse(localStorage.getItem(STORAGE_PENDING) || 'null') || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+    return { state: s, pending: p };
+  } catch (e) { return { state:{}, pending:{ aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 } }; }
 }
-function writeLocal(stateObj, pendingObj) {
+function writeStorage() {
   try {
-    if (stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
-    if (pendingObj) localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
-  } catch (e) { console.warn('local write err', e); }
+    localStorage.setItem(STORAGE_STATE, JSON.stringify(current));
+    localStorage.setItem(STORAGE_PENDING, JSON.stringify(window.__aether_pending));
+  } catch(e){ console.warn('storage write failed', e); }
 }
 
-/* Initialize from local snapshot (so UI shows latest even offline) */
+/* Load local snapshot first */
 (function initLocalSnapshot(){
-  const { state, pending } = readLocal();
-  if (state && Object.keys(state).length) {
-    Object.assign(current, state);
-  }
-  window.__aether_pending = pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+  const { state, pending } = readStorage();
+  if (state && Object.keys(state).length) Object.assign(current, state);
+  window.__aether_pending = pending || window.__aether_pending;
 })();
 
-/* ---------------- Pending queue helpers ---------------- */
+/* ======= Firestore helpers (pending flush) ======= */
 function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null) {
   window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
-  window.__aether_pending.aeDelta += Number(aeDelta || 0);
-  window.__aether_pending.adsDelta += Number(adsDelta || 0);
+  window.__aether_pending.aeDelta += Number(aeDelta||0);
+  window.__aether_pending.adsDelta += Number(adsDelta||0);
   if (addRef) window.__aether_pending.refs.push(addRef);
   if (addClaim) window.__aether_pending.claimed.push(addClaim);
-  writeLocal(current, window.__aether_pending);
+  writeStorage();
 }
 
-/* Flush pending to Firestore: if force=true flush now; else obey thresholds/time */
 async function flushPending(force=false) {
   try {
-    window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
-    const p = window.__aether_pending;
-    const now = Date.now();
-    const shouldFlush = force ||
-      Math.abs(p.aeDelta || 0) >= FLUSH_THRESHOLD_AE ||
-      (now - (p.lastFlush || 0)) > (24 * 60 * 60 * 1000); // at least once a day
-
-    if (!shouldFlush) return;
-
-    // Build updates (use atomic increments and arrayUnion)
+    const p = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+    if (!force && Math.abs(p.aeDelta) < 1 && p.adsDelta === 0 && (!p.refs || p.refs.length===0) && (!p.claimed || p.claimed.length===0)) return;
     const updates = {};
     if (p.aeDelta) updates.ae = firebase.firestore.FieldValue.increment(p.aeDelta);
-    if (p.adsDelta) updates.totalAds = firebase.firestore.FieldValue.increment(p.adsDelta);
-    if (p.adsDelta) updates.adsToday = firebase.firestore.FieldValue.increment(p.adsDelta);
-    if (Array.isArray(p.refs) && p.refs.length) updates.refs = firebase.firestore.FieldValue.arrayUnion(...p.refs);
-    if (Array.isArray(p.claimed) && p.claimed.length) updates.claimedLevels = firebase.firestore.FieldValue.arrayUnion(...p.claimed);
-    updates.lastSaveTime = now;
-
-    // try update
-    await userRef().update(updates);
-
-    // on success clear pending
-    window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now };
-    writeLocal(current, window.__aether_pending);
-
-    // IMPORTANT: after flush, re-read server doc and set current to server state (so UI authoritative)
-    const fresh = await userRef().get();
+    if (p.adsDelta) { updates.totalAds = firebase.firestore.FieldValue.increment(p.adsDelta); updates.adsToday = firebase.firestore.FieldValue.increment(p.adsDelta); }
+    if (p.refs && p.refs.length) updates.refs = firebase.firestore.FieldValue.arrayUnion(...p.refs);
+    if (p.claimed && p.claimed.length) updates.claimedLevels = firebase.firestore.FieldValue.arrayUnion(...p.claimed);
+    updates.lastSaveTime = Date.now();
+    await db.collection('users').doc(userDocId).update(updates);
+    // clear pending
+    window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: Date.now() };
+    writeStorage();
+    // re-read server to sync authoritative state
+    const fresh = await db.collection('users').doc(userDocId).get();
     if (fresh.exists) {
       Object.assign(current, fresh.data());
-      // re-apply any still-remaining local pending (should be none)
-      if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae += window.__aether_pending.aeDelta;
-      writeLocal(current, window.__aether_pending);
+      // reapply local pending (should be none)
+      writeStorage();
       updateUI();
     }
   } catch (e) {
-    console.warn('flushPending error', e);
+    console.warn('flushPending failed', e);
     throw e;
   }
 }
 
-/* Periodic flush attempt */
-setInterval(() => { flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
+/* Periodic & event-driven flush */
+setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
+window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
+document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'hidden') flushPending(true).catch(()=>{}); });
+window.addEventListener('beforeunload', ()=>{ try { writeStorage(); } catch(e){} });
 
-/* Flush on network regain */
-window.addEventListener('online', () => { flushPending(true).catch(()=>{}); });
-
-/* Try to flush on page hide/unload (best-effort) */
-async function tryFlushOnUnload() {
-  try {
-    if (navigator.onLine) {
-      await flushPending(true);
-    } else {
-      // just persist local snapshot, will flush at next online/start
-      writeLocal(current, window.__aether_pending);
-    }
-  } catch (e) {
-    writeLocal(current, window.__aether_pending);
-  }
-}
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') tryFlushOnUnload();
-});
-window.addEventListener('beforeunload', (e) => {
-  tryFlushOnUnload();
-  // no need to block unload
-});
-  /* ================== AD HELPER (robust) ================== */
-/* Attempts the SDK in multiple ways; returns {completed: boolean} */
+/* ======= Ad helper: safe normalized SDK call ======= */
 function showAdNormalized(timeoutMs = 30000) {
   return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      resolve({ completed: false, reason: 'timeout' });
-    }, timeoutMs);
+    let done = false;
+    const finish = (ok, info) => { if(done) return; done=true; try{window.removeEventListener('libtl_ad_result', eventHandler)}catch(e){}; clearTimeout(timer); resolve({completed:!!ok, info}); };
+    const timer = setTimeout(()=>finish(false,'timeout'), timeoutMs);
 
-    // 1) SDK returns Promise
+    // 1) Promise-style SDK
     try {
       if (window.show_10192178 && typeof window.show_10192178 === 'function') {
-        try {
-          const maybe = window.show_10192178('');
-          if (maybe && typeof maybe.then === 'function') {
-            maybe.then(res => {
-              clearTimeout(timer);
-              // many SDKs return nothing; treat a resolved promise as success
-              if (res && typeof res === 'object' && ('completed' in res)) resolve({ completed: !!res.completed });
-              else resolve({ completed: true });
-            }).catch(err => { clearTimeout(timer); resolve({ completed: false, reason: err && err.message }); });
-            return;
-          }
-        } catch(e){}
+        const maybe = window.show_10192178('');
+        if (maybe && typeof maybe.then === 'function') {
+          maybe.then(res => finish(true,res)).catch(err => finish(false,err));
+          return;
+        }
       }
-    } catch(e){}
+    } catch(e){ /* continue */ }
 
-    // 2) try libtl callback style (example)
+    // 2) callback-style (example)
     try {
       if (window.libtl && typeof window.libtl.show === 'function') {
-        try {
-          window.libtl.show({
-            zone: '10192178',
-            onComplete: function(){ clearTimeout(timer); resolve({ completed: true }); },
-            onClose: function(watchedFull){ clearTimeout(timer); resolve({ completed: !!watchedFull }); },
-            onError: function(){ clearTimeout(timer); resolve({ completed: false }); }
-          });
-          return;
-        } catch(e){}
+        window.libtl.show({
+          zone: '10192178',
+          onComplete: ()=>finish(true,'libtl_complete'),
+          onClose: (watched)=>finish(!!watched,'libtl_close'),
+          onError: ()=>finish(false,'libtl_error')
+        });
+        return;
       }
     } catch(e){}
 
-    // 3) fallback: listen for a global event some SDKs might emit
-    const handler = (ev) => {
-      clearTimeout(timer);
-      try {
-        const ok = !!(ev.detail && (ev.detail.completed || ev.detail.success));
-        resolve({ completed: ok });
-      } catch(e) { resolve({ completed: false }); }
-      window.removeEventListener('libtl_ad_result', handler);
+    // 3) listen for global event
+    const eventHandler = (ev) => {
+      try { const ok = !!(ev.detail && (ev.detail.completed || ev.detail.success)); finish(ok, ev.detail); } catch(e){ finish(false,'event error'); }
     };
-    window.addEventListener('libtl_ad_result', handler);
+    window.addEventListener('libtl_ad_result', eventHandler);
 
-    // 4) finally, call the SDK and wait for event/timer
-    try { if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); } catch(e){}
+    // 4) best-effort call
+    try { if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); } catch(e){ }
   });
 }
 
-/* fallback short flow if SDK fails */
-function showFallbackAdModal(seconds = 30) {
-  return new Promise((resolve) => {
-    let modal = document.getElementById('fallback-ad-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'fallback-ad-modal';
-      Object.assign(modal.style, { position:'fixed', left:0, right:0, top:0, bottom:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,.6)', zIndex:99999 });
-      modal.innerHTML = `
-        <div style="width:90%;max-width:420px;background:#0f1724;padding:18px;border-radius:12px;color:#fff;text-align:center;border:1px solid rgba(0,211,138,0.15)">
-          <h3 style="color:#00d38a">Short flow for reward</h3>
-          <p style="color:#d0d6db">Ad provider temporarily unavailable. Wait <span id="fallback-count">${seconds}</span>s to get the reward, or Cancel.</p>
-          <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-            <button id="fallback-cancel" style="padding:10px 14px;border-radius:8px;border:none;background:#333;color:#fff;cursor:pointer">Cancel</button>
-          </div>
-        </div>`;
-      document.body.appendChild(modal);
-    }
-    modal.style.display = 'flex';
-    const countdownEl = modal.querySelector('#fallback-count');
-    const cancelBtn = modal.querySelector('#fallback-cancel');
-    let remaining = seconds;
-    countdownEl.innerText = remaining;
-    const iv = setInterval(()=>{ remaining--; countdownEl.innerText = remaining; if (remaining<=0){ clearInterval(iv); modal.style.display='none'; resolve({completed:true}); } }, 1000);
-    cancelBtn.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
+/* fallback short flow */
+function fallbackShort(seconds=20) {
+  return new Promise((resolve)=>{
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style,{position:'fixed',left:0,right:0,top:0,bottom:0,background:'rgba(0,0,0,.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:99999});
+    overlay.innerHTML = `<div style="background:#0f1724;padding:18px;border-radius:12px;color:#fff;text-align:center;max-width:420px;width:90%">
+      <h3 style="color:#00d38a">Short flow</h3>
+      <p>Ad provider unavailable. Wait <span id="fbcount">${seconds}</span>s to get reward or Cancel.</p>
+      <div style="margin-top:12px"><button id="fbcancel" style="padding:8px 12px;border-radius:8px;border:none;background:#333;color:#fff;cursor:pointer">Cancel</button></div>
+    </div>`;
+    document.body.appendChild(overlay);
+    const span = overlay.querySelector('#fbcount');
+    const cancelBtn = overlay.querySelector('#fbcancel');
+    let rem = seconds;
+    const iv = setInterval(()=>{ rem--; span.innerText = rem; if(rem<=0){ clearInterval(iv); document.body.removeChild(overlay); resolve({completed:true}); } },1000);
+    cancelBtn.onclick = ()=>{ clearInterval(iv); document.body.removeChild(overlay); resolve({completed:false}); };
   });
 }
 
-/* ================== APP INIT & SYNC FLOW ================== */
-async function initApp() {
-  try {
+/* ======= UI helpers ======= */
+function updateUI(){
+  document.getElementById('points').innerText = Math.floor(current.ae || 0);
+  document.getElementById('refs').innerText = (current.refs||[]).length;
+  document.getElementById('level').innerText = current.level || 0;
+  document.getElementById('levelDisplay').innerText = current.level || 0;
+  document.getElementById('totalAds').innerText = current.adsToday || 0;
+  document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1);
+}
+function openTab(id, ev){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); if(ev && ev.currentTarget) ev.currentTarget.classList.add('active'); if(id==='referral'){ loadRefList(); loadLeaderboard(); } if(id==='airdrop') toggleAirdropSection(); }
+
+/* ======= level computation ======= */
+function computeLevel(){
+  const refs = (current.refs||[]).length;
+  const ads = current.totalAds || 0;
+  current.level = Math.min(refs, ads);
+  if(!Number.isFinite(current.level) || current.level<0) current.level=0;
+}
+
+/* ======= init app ======= */
+async function initApp(){
+  try{
     await auth.signInAnonymously();
-
-    const tgId = tgUser?.id ? tgUser.id.toString() : 'guest_' + Date.now();
+    const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
-    // ensure pending loaded
-    window.__aether_pending = readLocal().pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
-
-    // load/create server doc
-    const doc = await userRef().get();
-    const isNew = !doc.exists;
-    const username = tgUser?.username || tgUser?.first_name || 'User';
-    if (isNew) {
-      // create with current (local) values merged with defaults
-      current.username = username;
-      try { await userRef().set(current); } catch(e){ console.warn('create failed', e); }
+    // ensure pending loaded (already done at top)
+    const docRef = db.collection('users').doc(userDocId);
+    const doc = await docRef.get();
+    if(!doc.exists){
+      // create initial doc with current (merged defaults)
+      current.username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
+      await docRef.set(current);
     } else {
-      // merge server data into current (server authoritative)
       Object.assign(current, doc.data());
     }
 
-    // Try flush pending now (force). After flush, re-read server to get authoritative state.
-    try {
-      if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta || (window.__aether_pending.refs && window.__aether_pending.refs.length))) ) {
-        await flushPending(true);
-      } else {
-        // still re-read to show server state reliably
-        const fresh = await userRef().get();
-        if (fresh.exists) { Object.assign(current, fresh.data()); }
-      }
-    } catch(e) {
-      console.warn('initial flush failed', e);
-      // if flush fails, we still keep local current (which includes local pending applied earlier)
-    }
+    // attempt to flush pending immediately (startup persist)
+    try{ await flushPending(true); } catch(e){ console.warn('startup flush failed', e); /* still continue */ }
 
     computeLevel();
+    // show profile
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){
+      const el = document.getElementById('user-dp'); el.src = tg.initDataUnsafe.user.photo_url; el.style.display='block';
+    }
+    document.getElementById('userLine').innerText = `${current.username || 'User'} • ID: ${userDocId}`;
 
-    if (tgUser?.photo_url) { const el = document.getElementById('user-dp'); el.src = tgUser.photo_url; el.style.display='block'; }
-    document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
-
-    // realtime update: merge server data then re-apply local pending on top so UI reflects both
-    userRef().onSnapshot(docSnap => {
-      if (!docSnap.exists) return;
-      const server = docSnap.data();
-      Object.assign(current, server);
-      // apply pending visual deltas so user sees local queued coins too
-      if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
-      if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
-      computeLevel();
-      updateUI();
-      updateLevelProgressUI();
-      updateAdReward();
-      updateWalletButtons();
-      toggleAirdropSection();
-      checkLevel10Gift();
+    // live listener: merge server data then reapply local pending visually
+    docRef.onSnapshot(snap => {
+      if(!snap.exists) return;
+      Object.assign(current, snap.data());
+      // apply visual delta of pending
+      if(window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae||0) + window.__aether_pending.aeDelta;
+      if(window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds||0) + window.__aether_pending.adsDelta;
+      computeLevel(); updateUI();
     });
 
-    // UI handlers
-    document.getElementById('copyRef').onclick = copyRefHandler;
-    document.getElementById('openChannel').onclick = () => tg.openTelegramLink && tg.openTelegramLink('https://t.me/Aetherofficialchannel');
-    document.getElementById('startMining').onclick = startPassiveMining;
-    document.getElementById('showAllLevels').onclick = () => renderLevelsChunk(100);
+    // UI hooks
     document.getElementById('watchAd').onclick = watchAdHandler;
-
+    document.getElementById('startMining').onclick = startPassiveMining;
+    document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
+    document.getElementById('copyRef').onclick = ()=>{ navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); };
 
-    // TON connect
+    // TON UI
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
-    tonUI.onStatusChange(async (wallet) => {
-      if (wallet && wallet.account && wallet.account.address) {
-        await trySaveTonWallet(wallet.account.address);
+    tonUI.onStatusChange(async (wallet)=>{
+      if(wallet && wallet.account && wallet.account.address) {
+        current.tonWallet = wallet.account.address;
+        updateUI();
+        enqueuePending(0,0,null,null); writeStorage();
+        try{ await flushPending(true); }catch(e){}
       } else {
-        try { await userRef().update({ tonWallet: '' }); } catch(e){}
         current.tonWallet = '';
-        updateUI(); updateWalletButtons();
+        updateUI();
       }
     });
-    document.getElementById('connectTon').onclick = () => tonUI.connectWallet();
-    document.getElementById('disconnectTon').onclick = async () => {
-      try { await tonUI.disconnect(); } catch(e){}
-      try { await userRef().update({ tonWallet: '' }); } catch(e){}
-      current.tonWallet = ''; updateUI(); updateWalletButtons(); tg.showAlert && tg.showAlert('Wallet disconnected!');
-    };
+    document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
+    document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} current.tonWallet=''; updateUI(); };
 
-    if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
+    if(startParam && startParam.startsWith('ref_')) await handleReferral(startParam);
 
     renderLevelsChunk(20);
-    await resetDailyAdsIfNeeded();
-    updateUI(); updateAdReward();
+    updateUI();
     await loadLeaderboard();
     loadRefList();
 
-    setTimeout(()=>{ document.getElementById('welcome-popup').style.display='block'; }, 500);
-    document.getElementById('gift2xAds')?.addEventListener('click', ()=>chooseGift('ads'));
-    document.getElementById('gift2xAe')?.addEventListener('click', ()=>chooseGift('ae'));
+    // periodic save small state + flush attempt
+    setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false);}catch(e){} }, 60*1000);
 
-    // periodic save (small write) and flush attempt
-    setInterval(async ()=> {
-      // save small state to reduce differences (no heavy writes)
-      try {
-        await saveSmallState();
-        await flushPending(false);
-      } catch(e){}
-    }, 60*1000);
-
-  } catch (e) {
-    console.error('init error', e);
+  } catch(e){
+    console.error('initApp err', e);
     tg.showAlert && tg.showAlert('Init error: ' + (e.message || e));
   }
 }
 
-/* ----------------- small state save (reduce reads) ----------------- */
-async function saveSmallState() {
-  try {
-    const small = {
+/* ======= save small state (cheap) ======= */
+async function saveSmallState(){
+  try{
+    await db.collection('users').doc(userDocId).set({
       tonWallet: current.tonWallet || '',
       lastResetDate: current.lastResetDate || new Date().toDateString(),
       lastSaveTime: Date.now(),
-      username: current.username || current.username || ''
-    };
-    // Firestore set merge (cheap)
-    await userRef().set(small, { merge: true });
-    writeLocal(current, window.__aether_pending);
-  } catch(e) {
-    // fallback to just local
-    writeLocal(current, window.__aether_pending);
+      username: current.username || ''
+    }, { merge: true });
+    writeStorage();
+  } catch(e){
+    writeStorage();
   }
 }
 
-/* ----------------- watchAd handler (robust) ----------------- */
+/* ======= watchAd (with guaranteed local persist) ======= */
 async function watchAdHandler() {
-  await resetDailyAdsIfNeeded();
+  // check daily & window limits
   const now = Date.now();
+  const today = new Date().toDateString();
+  if (current.lastResetDate !== today) { current.adsToday = 0; current.lastResetDate = today; }
+  // reset window if needed
+  if (!current.adsWindowStart || now - current.adsWindowStart >= ADS_WINDOW_MS) { current.adsWindowStart = now; current.adsWindowCount = 0; }
 
-  // ads window enforcement (12h window)
-  const saved = readLocal();
-  const s = saved.state || {};
-  const localWindowStart = s.adsWindowStart || current.adsWindowStart || now;
-  let localWindowCount = s.adsWindowCount || current.adsWindowCount || 0;
-  if (now - localWindowStart >= ADS_WINDOW_MS) { s.adsWindowStart = now; localWindowCount = 0; }
-  if ((current.adsToday || 0) >= DAILY_AD_LIMIT) return tg.showAlert && tg.showAlert('You reached daily ad limit. Come later.');
-  if (localWindowCount >= ADS_WINDOW_LIMIT) return tg.showAlert && tg.showAlert('You reached 12h ad limit. Come later.');
+  if (current.adsToday >= DAILY_AD_LIMIT) { tg.showAlert && tg.showAlert(`Daily limit: ${DAILY_AD_LIMIT} ads`); return; }
+  if (current.adsWindowCount >= ADS_WINDOW_LIMIT) { tg.showAlert && tg.showAlert(`12h window limit: ${ADS_WINDOW_LIMIT} ads`); return; }
 
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
   const originalText = btn.innerText;
   btn.innerText = 'Loading Ad...';
 
+  // store previous
   const prevAe = current.ae || 0;
   const prevTotalAds = current.totalAds || 0;
 
   try {
-    const res = await showAdNormalized(30000); // 30s timeout
+    const res = await showAdNormalized(25000); // 25s timeout
+    let completed = !!(res && res.completed);
 
-    if (!res || !res.completed) {
-      // short grace: some SDKs update via callback after our promise timed out
-      await new Promise(r => setTimeout(r, 1200));
-      if ((current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds) {
-        // success already applied externally
-        computeLevel(); updateUI(); updateAdReward();
-        btn.disabled = false; btn.innerText = originalText;
-        tg.showAlert && tg.showAlert(`+${(current.ae||0)-prevAe} Ae!`);
-        return;
-      }
-      // fallback short modal
-      const fb = await showFallbackAdModal(20);
+    if (!completed) {
+      // small grace: external callback might have updated state
+      await new Promise(r=>setTimeout(r,1200));
+      completed = (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds;
+    }
+
+    if (!completed) {
+      // fallback short flow
+      const fb = await fallbackShort(18);
       if (!fb || !fb.completed) {
         tg.showAlert && tg.showAlert('Ad not completed.');
         btn.disabled = false; btn.innerText = originalText;
         return;
       }
-  }
-    // Successful ad flow: credit user locally and attempt immediate server write
+    }
+
+    // success: credit locally, enqueue and try immediate write
     const reward = 100 * (current.multiplierAds || 1);
     current.ae = (current.ae || 0) + reward;
     current.totalAds = (current.totalAds || 0) + 1;
     current.adsToday = (current.adsToday || 0) + 1;
     current.lastAdTime = now;
 
-    // update local window
-    s.adsWindowStart = s.adsWindowStart || now;
-    localWindowCount++;
-    s.adsWindowCount = localWindowCount;
-    // persist small state
-    Object.assign(current, { adsWindowStart: s.adsWindowStart, adsWindowCount: s.adsWindowCount });
-    writeLocal(current, window.__aether_pending);
+    // window
+    current.adsWindowCount = (current.adsWindowCount || 0) + 1;
 
-    computeLevel(); updateUI(); updateAdReward();
-    // try immediate write
+    // persist local immediately
+    enqueuePending(reward, 1, null, null);
+    writeStorage();
+
+    // attempt immediate write; if fails, pending keeps local safe
     try {
-      await userRef().update({
+      await db.collection('users').doc(userDocId).update({
         ae: firebase.firestore.FieldValue.increment(reward),
         totalAds: firebase.firestore.FieldValue.increment(1),
         adsToday: firebase.firestore.FieldValue.increment(1),
         lastAdTime: now,
         lastSaveTime: Date.now()
       });
-      // successful: persist small state
-      writeLocal(current, window.__aether_pending);
-    } catch (writeErr) {
-      // enqueue pending; will flush later
-      console.warn('Immediate write failed, enqueuing pending', writeErr);
-      enqueuePending(reward, 1, null, null);
-    }
+      // success -> clear pending as flushPending will handle, but re-read to sync
+      await flushPending(true);
+    } catch(writeErr){
+      console.warn('Immediate ad write failed, will flush later', writeErr);
+  }
+    computeLevel();
+    updateUI();
 
-    // cooldown UI (10-30s)
+    // cooldown UI
     const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
-    btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
+    btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s`;
     setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
 
     tg.showAlert && tg.showAlert(`+${reward} Ae!`);
-    // try early flush if pending large
-    try { await flushPending(false); } catch(e){}
-
-  } catch (err) {
-    console.warn('watchAdHandler unexpected', err);
-    // check if reward applied externally
-    if ((current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds) {
-      computeLevel(); updateUI(); updateAdReward();
+  } catch(err) {
+    console.warn('watchAdHandler err', err);
+    if ((current.ae||0) > prevAe || (current.totalAds||0) > prevTotalAds) {
+      // treat as success
+      computeLevel(); updateUI();
       btn.disabled = false; btn.innerText = originalText;
       tg.showAlert && tg.showAlert(`+${(current.ae||0)-prevAe} Ae!`);
       return;
@@ -644,217 +524,143 @@ async function watchAdHandler() {
   }
 }
 
-/* ----------------- other helpers ----------------- */
-function copyRefHandler() {
-  const refLink = document.getElementById('myRef').innerText;
-  navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed'));
-}
-
-function updateUI(){
-  document.getElementById('points').innerText = Math.floor(current.ae || 0);
-  document.getElementById('refs').innerText = (current.refs || []).length;
-  document.getElementById('level').innerText = current.level || 0;
-  document.getElementById('levelDisplay').innerText = current.level || 0;
-  document.getElementById('totalAds').innerText = current.totalAds || 0;
-  updateWalletButtons();
-}
-function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
-
-function openTab(tabId, ev) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
-  if (tabId === 'referral') { loadRefList(); loadLeaderboard(); }
-  if (tabId === 'airdrop') toggleAirdropSection();
-}
-
-/* ----------------- passive mining ----------------- */
-let mining=false;
-function startPassiveMining(){
-  if(mining) return tg.showAlert && tg.showAlert('Already mining!');
-  mining=true;
-  document.getElementById('startMining').innerText='Mining Active...';
-  setInterval(async ()=>{
-    if(!mining) return;
-    current.ae = (current.ae||0) + (1 * (current.multiplierAe||1));
-    updateUI();
-    if(Date.now() - (current.lastSaveTime||0) > 30000) await saveSmallState();
-  },2000);
-  tg.showAlert && tg.showAlert('Passive mining started!');
-}
-
-/* ----------------- level logic ----------------- */
-function computeLevel(){
-  const refsCount = (current.refs||[]).length;
-  const adsCount = current.totalAds || 0;
-  current.level = Math.min(refsCount, adsCount);
-  if(!Number.isFinite(current.level) || current.level<0) current.level=0;
-}
-
-/* gifts */
-function checkLevel10Gift(){ if(current.level>=10 && !current.giftChosen) document.getElementById('gift-popup').style.display='block'; }
-async function chooseGift(type){
-  if(type==='ads') current.multiplierAds=2;
-  else if(type==='ae'){ current.multiplierAe=2; current.ae=(current.ae||0)*2; }
-  current.giftChosen=true; document.getElementById('gift-popup').style.display='none';
-  enqueuePending(0,0,null,null); writeLocal(current, window.__aether_pending);
-  await saveSmallState();
-  tg.showAlert && tg.showAlert(`Gift chosen: 2x ${type==='ads'?'ads Ae':'all Ae'}!`);
-}
-
-/* wallet UI */
-function updateWalletButtons(){
-  const connected = !!(current.tonWallet);
-  document.getElementById('connectTon').style.display = connected ? 'none' : 'inline-block';
-  document.getElementById('disconnectTon').style.display = connected ? 'inline-block' : 'none';
-  document.getElementById('walletStatus').innerText = connected ? `Connected: ${current.tonWallet.slice(0,6)}...${current.tonWallet.slice(-4)}` : 'Not Connected';
-}
-async function trySaveTonWallet(addr){
-  current.tonWallet = addr; updateUI(); updateWalletButtons(); tg.showAlert && tg.showAlert('Wallet connected!');
-  enqueuePending(0,0,null,null); // just persist local
-  await saveSmallState();
-}
-
-/* ----------------- daily reset ----------------- */
-async function resetDailyAdsIfNeeded(){
-  const today = new Date().toDateString();
-  if(current.lastResetDate !== today){
-    current.adsToday = 0;
-    current.lastResetDate = today;
-    await saveSmallState();
-  }
-}
-
-/* ----------------- referral param ----------------- */
-async function handleReferralParam(param){
-  try{
-    const referrerId = param.replace('ref_','');
-    if(!referrerId || referrerId === userDocId) return;
-    if(current.referredBy) return;
-    const rDoc = await db.collection('users').doc(referrerId).get();
-    if(!rDoc.exists) return;
-    // give referrer immediate server credit
-    await db.collection('users').doc(referrerId).update({
-      refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-      ae: firebase.firestore.FieldValue.increment(5000)
-    });
-    // give current user local credit and enqueue pending
-    current.referredBy = referrerId;
-    current.ae = (current.ae||0) + 5000;
-    enqueuePending(5000,0,null,null);
-    writeLocal(current, window.__aether_pending);
-    await saveSmallState();
-    tg.showAlert && tg.showAlert('Referral success! +5000 Ae!');
-    await loadRefList(); await loadLeaderboard();
-  }catch(e){ console.warn('ref param err', e); }
-}
-
-/* ----------------- levels & claim ----------------- */
-function renderLevelsChunk(max){
+/* ======= Level rendering & claim with daily limit (max 10 claims/day) ======= */
+function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
   const end = levelsRendered + max;
-  for(let i=start;i<=end;i++){
+  for (let i=start;i<=end;i++){
     const refsNeeded = i;
     const adsNeeded = i;
     const reward = 500 * i;
     const el = document.createElement('div');
     el.className='level';
-    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
+    el.innerHTML = `<div style="font-weight:800;color:var(--accent)">Level ${i}</div>
       <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
       <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
       <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
     container.appendChild(el);
-    const btn = document.getElementById(`claim_${i}`);
-    btn.addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
+    document.getElementById(`claim_${i}`).addEventListener('click', ()=>claimLevel(i, refsNeeded, adsNeeded, reward));
   }
   levelsRendered = end;
   updateLevelProgressUI();
 }
+
 function updateLevelProgressUI(){
-  const refsCount = (current.refs||[]).length;
-  const adsDone = current.totalAds || 0;
-  for(let i=1;i<=levelsRendered;i++){
+  // reset daily claim count if date changed
+  const today = new Date().toDateString();
+  if (current.lastClaimDate !== today) { current.claimedTodayCount = 0; current.lastClaimDate = today; }
+
+  const refs = (current.refs||[]).length;
+  const ads = current.totalAds || 0;
+  for (let i=1;i<=levelsRendered;i++){
     const btn = document.getElementById(`claim_${i}`);
-    if(!btn) continue;
+    if (!btn) continue;
     const claimed = (current.claimedLevels||[]).includes(i);
-    const canClaim = !claimed && refsCount >= i && adsDone >= i;
+    const canClaim = !claimed && refs >= i && ads >= i && current.claimedTodayCount < LEVEL_CLAIM_DAILY_LIMIT;
     btn.disabled = !canClaim;
-    btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
+    btn.innerText = claimed ? 'Claimed ✓' : (current.claimedTodayCount >= LEVEL_CLAIM_DAILY_LIMIT ? 'Daily limit reached' : 'Claim');
   }
 }
-async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
-  const refsCount = (current.refs||[]).length;
-  const adsDone = current.totalAds || 0;
-  if(refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert && tg.showAlert('Requirements not met');
-  if((current.claimedLevels||[]).includes(levelNo)) return tg.showAlert && tg.showAlert('Already claimed');
+
+async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
+  const today = new Date().toDateString();
+  if (current.lastClaimDate !== today) { current.claimedTodayCount = 0; current.lastClaimDate = today; }
+  if (current.claimedTodayCount >= LEVEL_CLAIM_DAILY_LIMIT) { tg.showAlert && tg.showAlert(`You already claimed ${LEVEL_CLAIM_DAILY_LIMIT} levels today`); return; }
+
+  const refs = (current.refs||[]).length;
+  const ads = current.totalAds || 0;
+  if (refs < refsNeeded || ads < adsNeeded) { tg.showAlert && tg.showAlert('Requirements not met'); return; }
+  if ((current.claimedLevels||[]).includes(levelNo)) { tg.showAlert && tg.showAlert('Already claimed'); return; }
+
   current.ae = (current.ae||0) + reward;
   current.claimedLevels = current.claimedLevels || [];
   current.claimedLevels.push(levelNo);
+  current.claimedTodayCount = (current.claimedTodayCount||0) + 1;
+  current.lastClaimDate = today;
+
   enqueuePending(reward, 0, null, levelNo);
-  writeLocal(current, window.__aether_pending);
-  computeLevel(); updateUI(); updateLevelProgressUI();
-  if(Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
+  writeStorage();
+
+  // try immediate write; flush if pending large
+  try {
+    await db.collection('users').doc(userDocId).update({
+      ae: firebase.firestore.FieldValue.increment(reward),
+      claimedLevels: firebase.firestore.FieldValue.arrayUnion(levelNo),
+      lastSaveTime: Date.now()
+    });
+    await flushPending(true);
+  } catch(e) {
+    console.warn('claim immediate write failed, queued', e);
+  }
+
+  computeLevel();
+  updateUI();
+  updateLevelProgressUI();
   tg.showAlert && tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ----------------- leaderboard & refs ----------------- */
+/* ======= Leaderboard + refs ======= */
 async function loadLeaderboard(){
   try{
     const snap = await db.collection('users').orderBy('ae','desc').limit(100).get();
-    const list = document.getElementById('leaderList'); list.innerHTML='';
+    const list = document.getElementById('leaderList'); list.innerHTML = '';
     let rank=1;
-    snap.forEach(doc => {
-      const data = doc.data();
-      const item = document.createElement('div');
-      item.className='leader-item';
-      item.innerHTML = `<span>#${rank} • ${doc.id}</span><span>${Math.floor(data.ae||0)} Ae</span>`;
-      list.appendChild(item);
-      rank++;
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const el = document.createElement('div'); el.className='leader-item';
+      el.innerHTML = `<span>#${rank} • ${doc.id}</span><span>${Math.floor(d.ae||0)} Ae</span>`;
+      list.appendChild(el); rank++;
     });
-  }catch(e){ console.warn('leader load err', e); }
+  } catch(e){ console.warn('leader load', e); }
 }
-async function loadRefList(){
-  const list = document.getElementById('refList'); list.innerHTML='';
-  (current.refs||[]).forEach(ref=>{
-    const li = document.createElement('li'); li.className='ref-item'; li.innerText = `User ID: ${ref}`; list.appendChild(li);
+function loadRefList(){
+  const list = document.getElementById('refList'); list.innerHTML = '';
+  (current.refs||[]).forEach(r=>{
+    const li = document.createElement('li'); li.className='ref-item'; li.innerText = `User ID: ${r}`; list.appendChild(li);
   });
 }
 
-/* ----------------- airdrop toggle ----------------- */
-function toggleAirdropSection(){
-  if((current.refs||[]).length >= 3){
-    document.getElementById('airdrop-locked').style.display='none';
-    document.getElementById('airdrop-content').style.display='block';
-  } else {
-    document.getElementById('airdrop-locked').style.display='block';
-    document.getElementById('airdrop-content').style.display='none';
-  }
+/* ======= referral handling ======= */
+async function handleReferral(param) {
+  try {
+    const refid = param.replace('ref_','');
+    if (!refid || refid === userDocId) return;
+    if (current.referredBy) return;
+    const doc = await db.collection('users').doc(refid).get();
+    if (!doc.exists) return;
+    await db.collection('users').doc(refid).update({ refs: firebase.firestore.FieldValue.arrayUnion(userDocId), ae: firebase.firestore.FieldValue.increment(5000) });
+    current.referredBy = refid;
+    current.ae = (current.ae||0) + 5000;
+    enqueuePending(5000,0,null,null);
+    writeStorage();
+    try { await flushPending(false); } catch(e){}
+    tg.showAlert && tg.showAlert('Referral success! +5000 Ae!');
+  } catch(e){ console.warn('handleReferral', e); }
 }
 
-/* ----------------- small server save wrapper ----------------- */
-async function saveSmallState(){
-  try{
-    const small = {
-      tonWallet: current.tonWallet||'',
-      lastResetDate: current.lastResetDate||new Date().toDateString(),
-      lastSaveTime: Date.now(),
-      username: current.username||''
-    };
-    await userRef().set(small, { merge: true });
-    writeLocal(current, window.__aether_pending);
-  }catch(e){
-    writeLocal(current, window.__aether_pending);
-  }
+/* ======= passive mining ======= */
+let mining=false;
+function startPassiveMining(){
+  if(mining) return tg.showAlert && tg.showAlert('Already mining!');
+  mining=true; document.getElementById('startMining').innerText='Mining Active...';
+  setInterval(async ()=>{
+    if(!mining) return;
+    current.ae = (current.ae||0) + 1 * (current.multiplierAe||1);
+    writeStorage();
+    updateUI();
+  }, 2000);
 }
 
-/* ----------------- init ----------------- */
+/* ======= initialization ======= */
 initApp();
 
-/* ----------------- utilities ----------------- */
-function closeWelcome(){ document.getElementById('welcome-popup').style.display='none'; }
+/* ======= debug util (optional) ======= */
+// window.aetherDebug = ()=>({pending: window.__aether_pending, state: JSON.parse(localStorage.getItem(STORAGE_STATE)||'null')});
 
+/* ======= end ======= */
 </script>
 </body>
 </html>
+    
+        
