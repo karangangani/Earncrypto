@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Stable v5)</title>
+<title>AETHER — Earn & Airdrop (Stable v5 — website + whitepaper + channel flow)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -53,7 +53,13 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .leader-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
 .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:12px}
-#warn { color: #ffcc66; text-align:center; margin-top:8px }
+.modal-bg{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal{background:linear-gradient(135deg,#071026,#0f1724);padding:22px;border-radius:12px;color:#fff;max-width:720px;width:92%;box-shadow:var(--glow);border:1px solid var(--border)}
+.modal h2{color:var(--accent);margin-bottom:8px}
+.modal p{color:var(--muted);line-height:1.45}
+.modal .small-note{color:#cbd5e1;margin-top:12px}
+#welcomeChannel{position:fixed;right:14px;bottom:14px;background:linear-gradient(135deg,#00d38a,#009772);color:#001;padding:12px;border-radius:12px;box-shadow:var(--glow);display:none;z-index:10000}
+#tonBtnRoot{display:inline-block}
 </style>
 </head>
 <body>
@@ -61,7 +67,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
   <div class="header">
     <div class="logo"></div>
     <img id="user-dp" class="user-dp" src="" alt="User DP" style="display:none">
-    <div>
+    <div style="flex:1">
       <h1>AETHER — Earn & Airdrop</h1>
       <div id="userLine" class="sub">Loading...</div>
     </div>
@@ -81,11 +87,17 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       <div class="tab" onclick="openTab('airdrop', event)">Airdrop</div>
     </div>
 
+    <!-- HOME -->
     <div id="home" class="section active">
-      <button id="startMining" class="btn">Start Passive Earning</button>
-      <p class="small">+1 Ae every 2 seconds</p>
+      <div style="text-align:center">
+        <button id="openWebsite" class="btn">Official Website — Read More</button>
+        <div style="height:10px"></div>
+        <button id="openChannelBtn" class="btn secondary">Join Official Channel</button>
+        <p class="small" style="margin-top:10px">Stay updated — airdrop & roadmap info inside website.</p>
+      </div>
     </div>
 
+    <!-- EARN -->
     <div id="tasks" class="section">
       <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">100</span> Ae)</button>
       <p class="small">Level: <span id="levelDisplay">0</span> • Ads Watched Today: <span id="totalAds">0</span></p>
@@ -97,6 +109,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       </div>
     </div>
 
+    <!-- INVITE -->
     <div id="referral" class="section">
       <div style="text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
@@ -112,6 +125,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       </div>
     </div>
 
+    <!-- AIRDROP -->
     <div id="airdrop" class="section">
       <div id="airdrop-locked" style="display:none;text-align:center;padding:20px;color:#ff5555">
         <h3>Airdrop Locked</h3><p>Invite 3 friends to unlock!</p>
@@ -119,7 +133,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       <div id="airdrop-content" style="display:none;text-align:center;padding:20px">
         <h3 style="color:var(--accent);font-size:22px">Airdrop Ready</h3>
         <p>Connect TON wallet to claim.</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px">
           <button id="connectTon" class="btn">Connect TON Wallet</button>
           <button id="disconnectTon" class="btn secondary" style="display:none">Disconnect Wallet</button>
           <div id="tonBtnRoot"></div>
@@ -130,11 +144,37 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 
   </div>
 
-  <div class="footer">© AETHER • 2025</div>
+  <div class="footer">© AETHER • 2025 • Contact: karangangani05@gmail.com</div>
+</div>
+
+<!-- Website modal -->
+<div id="websiteModal" class="modal-bg" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>Welcome to AETHER — Phase 1</h2>
+    <p><strong>Total supply:</strong> 97,000,000,000 Ae</p>
+    <p><strong>Airdrop allocation:</strong> 30% of total supply will be distributed to early users and community.</p>
+    <p>We use ad revenue to add liquidity and fund long-term development. This is <em>Phase 1</em> — we're preparing infrastructure and planning future blockchain systems (Infinity Blockchain). Early users receive priority benefits and extra airdrop boosts.</p>
+    <p class="small-note"><strong>Contact:</strong> karangangani05@gmail.com • <strong>Disclaimer:</strong> AETHER is an early-stage project. Do not share private keys. This is not financial advice; tokens/airdrops depend on project conditions.</p>
+
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <a id="whitepaperHref" href="https://karangangani.github.io/Earncrypto/whitepaper.pdf" target="_blank" class="btn" rel="noopener noreferrer">Download Whitepaper / One-pager</a>
+      <button id="visitAppCTA" class="btn secondary">Back to App</button>
+    </div>
+
+    <div style="margin-top:10px">
+      <button id="joinChannelModalBtn" class="btn secondary">Join Official Channel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Channel welcome small toast (after user taps join) -->
+<div id="welcomeChannel" role="status" aria-live="polite">
+  <div style="font-weight:800;margin-bottom:6px">Welcome to AETHER Channel 👋</div>
+  <div style="font-size:13px;color:#013122">Thanks for joining — check pinned post for airdrop steps. Stay safe: never share keys. Tap to close.</div>
 </div>
 
 <script>
-/* ========= CONFIG ========== */
+/* ========= CONFIG & CONSTANTS ========= */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
   authDomain: "earncryptomp.firebaseapp.com",
@@ -152,12 +192,13 @@ const DAILY_AD_LIMIT = 10;                 // <= 10 per calendar day
 const LEVEL_CLAIM_DAILY_LIMIT = 10;        // max 10 level claims per day
 const FLUSH_INTERVAL_MS = 2 * 60 * 1000;   // try flush every 2 min
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
+const OFFICIAL_CHANNEL_LINK = 'https://t.me/Aetherofficialchannel';
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Telegram
+/* Telegram WebApp */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : { ready:()=>{}, initDataUnsafe:{} };
 try { tg.ready(); tg.expand && tg.expand(); } catch(e){}
 
@@ -178,22 +219,21 @@ let current = {
   multiplierAe: 1,
   giftChosen: false,
   lastSaveTime: Date.now(),
-  // local windows
   adsWindowStart: Date.now(),
   adsWindowCount: 0,
-  // claims per day
   claimedTodayCount: 0,
   lastClaimDate: new Date().toDateString()
 };
-  let userDocId = null;
+
+let userDocId = null;
 let tonUI = null;
 let levelsRendered = 0;
 const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
 
-// Pending (local)
+// pending queue
 window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
-/* ======= local helpers ======= */
+/* ======= local storage helpers ======= */
 function readStorage() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_STATE) || 'null') || {};
@@ -208,14 +248,14 @@ function writeStorage() {
   } catch(e){ console.warn('storage write failed', e); }
 }
 
-/* Load local snapshot first */
+/* load local snapshot */
 (function initLocalSnapshot(){
   const { state, pending } = readStorage();
   if (state && Object.keys(state).length) Object.assign(current, state);
   window.__aether_pending = pending || window.__aether_pending;
 })();
 
-/* ======= Firestore helpers (pending flush) ======= */
+/* ======= pending queue & flush ======= */
 function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null) {
   window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
   window.__aether_pending.aeDelta += Number(aeDelta||0);
@@ -243,7 +283,6 @@ async function flushPending(force=false) {
     const fresh = await db.collection('users').doc(userDocId).get();
     if (fresh.exists) {
       Object.assign(current, fresh.data());
-      // reapply local pending (should be none)
       writeStorage();
       updateUI();
     }
@@ -253,20 +292,19 @@ async function flushPending(force=false) {
   }
 }
 
-/* Periodic & event-driven flush */
+/* triggers */
 setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
 document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'hidden') flushPending(true).catch(()=>{}); });
 window.addEventListener('beforeunload', ()=>{ try { writeStorage(); } catch(e){} });
 
-/* ======= Ad helper: safe normalized SDK call ======= */
+/* ======= ad SDK normalized ======= */
 function showAdNormalized(timeoutMs = 30000) {
   return new Promise((resolve) => {
     let done = false;
     const finish = (ok, info) => { if(done) return; done=true; try{window.removeEventListener('libtl_ad_result', eventHandler)}catch(e){}; clearTimeout(timer); resolve({completed:!!ok, info}); };
     const timer = setTimeout(()=>finish(false,'timeout'), timeoutMs);
 
-    // 1) Promise-style SDK
     try {
       if (window.show_10192178 && typeof window.show_10192178 === 'function') {
         const maybe = window.show_10192178('');
@@ -275,9 +313,8 @@ function showAdNormalized(timeoutMs = 30000) {
           return;
         }
       }
-    } catch(e){ /* continue */ }
+    } catch(e){}
 
-    // 2) callback-style (example)
     try {
       if (window.libtl && typeof window.libtl.show === 'function') {
         window.libtl.show({
@@ -290,18 +327,16 @@ function showAdNormalized(timeoutMs = 30000) {
       }
     } catch(e){}
 
-    // 3) listen for global event
     const eventHandler = (ev) => {
       try { const ok = !!(ev.detail && (ev.detail.completed || ev.detail.success)); finish(ok, ev.detail); } catch(e){ finish(false,'event error'); }
     };
     window.addEventListener('libtl_ad_result', eventHandler);
 
-    // 4) best-effort call
-    try { if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); } catch(e){ }
+    try { if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); } catch(e){}
   });
 }
 
-/* fallback short flow */
+/* fallback short flow UI */
 function fallbackShort(seconds=20) {
   return new Promise((resolve)=>{
     const overlay = document.createElement('div');
@@ -331,7 +366,7 @@ function updateUI(){
 }
 function openTab(id, ev){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); if(ev && ev.currentTarget) ev.currentTarget.classList.add('active'); if(id==='referral'){ loadRefList(); loadLeaderboard(); } if(id==='airdrop') toggleAirdropSection(); }
 
-/* ======= level computation ======= */
+/* ======= level calculation ======= */
 function computeLevel(){
   const refs = (current.refs||[]).length;
   const ads = current.totalAds || 0;
@@ -346,32 +381,28 @@ async function initApp(){
     const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
 
-    // ensure pending loaded (already done at top)
     const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
     if(!doc.exists){
-      // create initial doc with current (merged defaults)
       current.username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
       await docRef.set(current);
     } else {
       Object.assign(current, doc.data());
     }
 
-    // attempt to flush pending immediately (startup persist)
-    try{ await flushPending(true); } catch(e){ console.warn('startup flush failed', e); /* still continue */ }
+    // flush early
+    try{ await flushPending(true); } catch(e){ console.warn('startup flush failed', e); }
 
     computeLevel();
-    // show profile
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){
       const el = document.getElementById('user-dp'); el.src = tg.initDataUnsafe.user.photo_url; el.style.display='block';
     }
+
     document.getElementById('userLine').innerText = `${current.username || 'User'} • ID: ${userDocId}`;
 
-    // live listener: merge server data then reapply local pending visually
     docRef.onSnapshot(snap => {
       if(!snap.exists) return;
       Object.assign(current, snap.data());
-      // apply visual delta of pending
       if(window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae||0) + window.__aether_pending.aeDelta;
       if(window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds||0) + window.__aether_pending.adsDelta;
       computeLevel(); updateUI();
@@ -379,13 +410,12 @@ async function initApp(){
 
     // UI hooks
     document.getElementById('watchAd').onclick = watchAdHandler;
-    document.getElementById('startMining').onclick = startPassiveMining;
     document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
     document.getElementById('copyRef').onclick = ()=>{ navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); };
 
-    // TON UI
+    // connect TON UI
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet)=>{
       if(wallet && wallet.account && wallet.account.address) {
@@ -401,6 +431,19 @@ async function initApp(){
     document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
     document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} current.tonWallet=''; updateUI(); };
 
+    // official website + channel buttons
+    document.getElementById('openWebsite').onclick = ()=>{ document.getElementById('websiteModal').style.display='flex'; };
+    document.getElementById('visitAppCTA').onclick = ()=>{ document.getElementById('websiteModal').style.display='none'; };
+    document.getElementById('openChannelBtn').onclick = async ()=>{
+      try { tg.openTelegramLink && tg.openTelegramLink(OFFICIAL_CHANNEL_LINK); } catch(e){}
+      // show friendly in-app welcome toast
+      showChannelWelcome();
+    };
+    document.getElementById('joinChannelModalBtn').onclick = async ()=>{
+      try { tg.openTelegramLink && tg.openTelegramLink(OFFICIAL_CHANNEL_LINK); } catch(e){}
+      showChannelWelcome();
+    };
+
     if(startParam && startParam.startsWith('ref_')) await handleReferral(startParam);
 
     renderLevelsChunk(20);
@@ -408,7 +451,6 @@ async function initApp(){
     await loadLeaderboard();
     loadRefList();
 
-    // periodic save small state + flush attempt
     setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false);}catch(e){} }, 60*1000);
 
   } catch(e){
@@ -432,13 +474,11 @@ async function saveSmallState(){
   }
 }
 
-/* ======= watchAd (with guaranteed local persist) ======= */
+/* ======= watchAd (persist local-first) ======= */
 async function watchAdHandler() {
-  // check daily & window limits
   const now = Date.now();
   const today = new Date().toDateString();
   if (current.lastResetDate !== today) { current.adsToday = 0; current.lastResetDate = today; }
-  // reset window if needed
   if (!current.adsWindowStart || now - current.adsWindowStart >= ADS_WINDOW_MS) { current.adsWindowStart = now; current.adsWindowCount = 0; }
 
   if (current.adsToday >= DAILY_AD_LIMIT) { tg.showAlert && tg.showAlert(`Daily limit: ${DAILY_AD_LIMIT} ads`); return; }
@@ -449,22 +489,19 @@ async function watchAdHandler() {
   const originalText = btn.innerText;
   btn.innerText = 'Loading Ad...';
 
-  // store previous
   const prevAe = current.ae || 0;
   const prevTotalAds = current.totalAds || 0;
 
   try {
-    const res = await showAdNormalized(25000); // 25s timeout
+    const res = await showAdNormalized(25000);
     let completed = !!(res && res.completed);
 
     if (!completed) {
-      // small grace: external callback might have updated state
       await new Promise(r=>setTimeout(r,1200));
       completed = (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds;
     }
 
     if (!completed) {
-      // fallback short flow
       const fb = await fallbackShort(18);
       if (!fb || !fb.completed) {
         tg.showAlert && tg.showAlert('Ad not completed.');
@@ -473,21 +510,16 @@ async function watchAdHandler() {
       }
     }
 
-    // success: credit locally, enqueue and try immediate write
     const reward = 100 * (current.multiplierAds || 1);
     current.ae = (current.ae || 0) + reward;
     current.totalAds = (current.totalAds || 0) + 1;
     current.adsToday = (current.adsToday || 0) + 1;
     current.lastAdTime = now;
-
-    // window
     current.adsWindowCount = (current.adsWindowCount || 0) + 1;
 
-    // persist local immediately
     enqueuePending(reward, 1, null, null);
     writeStorage();
 
-    // attempt immediate write; if fails, pending keeps local safe
     try {
       await db.collection('users').doc(userDocId).update({
         ae: firebase.firestore.FieldValue.increment(reward),
@@ -496,15 +528,12 @@ async function watchAdHandler() {
         lastAdTime: now,
         lastSaveTime: Date.now()
       });
-      // success -> clear pending as flushPending will handle, but re-read to sync
       await flushPending(true);
-    } catch(writeErr){
-      console.warn('Immediate ad write failed, will flush later', writeErr);
-  }
+    } catch(writeErr){ console.warn('Immediate ad write failed, will flush later', writeErr); }
+
     computeLevel();
     updateUI();
 
-    // cooldown UI
     const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
     btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s`;
     setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
@@ -513,9 +542,7 @@ async function watchAdHandler() {
   } catch(err) {
     console.warn('watchAdHandler err', err);
     if ((current.ae||0) > prevAe || (current.totalAds||0) > prevTotalAds) {
-      // treat as success
-      computeLevel(); updateUI();
-      btn.disabled = false; btn.innerText = originalText;
+      computeLevel(); updateUI(); btn.disabled = false; btn.innerText = originalText;
       tg.showAlert && tg.showAlert(`+${(current.ae||0)-prevAe} Ae!`);
       return;
     }
@@ -524,7 +551,8 @@ async function watchAdHandler() {
   }
 }
 
-/* ======= Level rendering & claim with daily limit (max 10 claims/day) ======= */
+/* ======= levels, claims, leaderboard, referrals ======= */
+/* (same code as before) */
 function renderLevelsChunk(max) {
   const container = document.getElementById('levelsList');
   const start = levelsRendered + 1;
@@ -544,13 +572,10 @@ function renderLevelsChunk(max) {
   }
   levelsRendered = end;
   updateLevelProgressUI();
-}
-
-function updateLevelProgressUI(){
-  // reset daily claim count if date changed
+  }
+  function updateLevelProgressUI(){
   const today = new Date().toDateString();
   if (current.lastClaimDate !== today) { current.claimedTodayCount = 0; current.lastClaimDate = today; }
-
   const refs = (current.refs||[]).length;
   const ads = current.totalAds || 0;
   for (let i=1;i<=levelsRendered;i++){
@@ -582,7 +607,6 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   enqueuePending(reward, 0, null, levelNo);
   writeStorage();
 
-  // try immediate write; flush if pending large
   try {
     await db.collection('users').doc(userDocId).update({
       ae: firebase.firestore.FieldValue.increment(reward),
@@ -590,9 +614,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
       lastSaveTime: Date.now()
     });
     await flushPending(true);
-  } catch(e) {
-    console.warn('claim immediate write failed, queued', e);
-  }
+  } catch(e) { console.warn('claim immediate write failed, queued', e); }
 
   computeLevel();
   updateUI();
@@ -600,7 +622,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward) {
   tg.showAlert && tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ======= Leaderboard + refs ======= */
+/* leaderboard & refs */
 async function loadLeaderboard(){
   try{
     const snap = await db.collection('users').orderBy('ae','desc').limit(100).get();
@@ -621,7 +643,7 @@ function loadRefList(){
   });
 }
 
-/* ======= referral handling ======= */
+/* referral handling */
 async function handleReferral(param) {
   try {
     const refid = param.replace('ref_','');
@@ -639,28 +661,19 @@ async function handleReferral(param) {
   } catch(e){ console.warn('handleReferral', e); }
 }
 
-/* ======= passive mining ======= */
-let mining=false;
-function startPassiveMining(){
-  if(mining) return tg.showAlert && tg.showAlert('Already mining!');
-  mining=true; document.getElementById('startMining').innerText='Mining Active...';
-  setInterval(async ()=>{
-    if(!mining) return;
-    current.ae = (current.ae||0) + 1 * (current.multiplierAe||1);
-    writeStorage();
-    updateUI();
-  }, 2000);
+/* ======= channel welcome UI ======= */
+function showChannelWelcome(){
+  const w = document.getElementById('welcomeChannel');
+  w.style.display = 'block';
+  w.onclick = ()=>{ w.style.display='none'; };
+  // auto hide after 10s
+  setTimeout(()=>{ try{ w.style.display='none'; }catch(e){} }, 10000);
 }
 
-/* ======= initialization ======= */
+/* ======= start ======= */
 initApp();
 
-/* ======= debug util (optional) ======= */
-// window.aetherDebug = ()=>({pending: window.__aether_pending, state: JSON.parse(localStorage.getItem(STORAGE_STATE)||'null')});
-
-/* ======= end ======= */
 </script>
 </body>
 </html>
-    
-        
+
