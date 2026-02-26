@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Final)</title>
+<title>AETHER — Earn & Airdrop (Stable v6)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -51,8 +51,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .level{padding:12px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);transition:all 0.3s}
 .claimBtn{background:linear-gradient(135deg,var(--accent),#00a877);color:#001;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;width:100%;margin-top:10px;transition:all 0.3s}
 .claimBtn:disabled{background:#333;color:#666;cursor:not-allowed}
-.leaderboard{list-style:none;padding:0}
-.leader-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between}
 .ref-list{list-style:none;padding:0}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
 .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:12px}
@@ -94,7 +92,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
           <button id="openChannel" class="btn secondary">Join @Aetherofficialchannel</button>
           <button id="projectInfoBtn" class="btn">Project Info</button>
         </div>
-        <p class="small" style="margin-top:10px">Click "Project Info" for allocation, roadmap & Phase-1 details (mini-app modal).</p>
+        <p class="small" style="margin-top:10px">Click "Project Info" to view allocation, roadmap & Phase-1 details inside the mini-app.</p>
       </div>
     </div>
 
@@ -122,8 +120,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
         </div>
         <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Your Referrals</h3>
         <ul id="refList" class="ref-list"></ul>
-        <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Leaderboard (Top 100)</h3>
-        <div id="leaderList" class="leaderboard"></div>
       </div>
     </div>
 
@@ -153,19 +149,20 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 <!-- Project Info Modal -->
 <div id="projectInfoModal" class="modal">
   <div class="card">
-    <h2 style="color:var(--accent)">About AETHER — Phase 1</h2>
+    <h2 style="color:var(--accent)">Aether — Project Info (Phase 1)</h2>
     <p style="color:var(--muted);line-height:1.45">
-      AETHER is a community-first rewards project. Phase 1 focuses on building a sustainable rewards pool funded by ad revenue — a portion goes to liquidity and token allocation, another portion funds audits, marketing and ecosystem growth.
-      Our allocation plan: total supply will be defined publicly; ~30% reserved for airdrops & early users, remaining distributed for liquidity, team, and growth with transparent on-chain proof when the token launches.
-      Roadmap (short): 1) Fair airdrop & referral rewards, 2) Jetton/smart-contract integration for secure claims, 3) Listing & liquidity provisioning, 4) Platform features (staking, governance) in later phases. Early users get priority for future programs.
+      Aether is an innovative Web3 project designed to empower users with decentralized earning opportunities and seamless blockchain integration.
+      Phase 1 builds a sustainable rewards pool funded by ad revenue and reserves a portion for liquidity and token allocation.
+      Total supply will be published at launch (target: 97,000,000,000 tokens). Approximately 30% is allocated for airdrops and early user rewards;
+      remaining supply is assigned for liquidity, platform growth and team with transparent on-chain proofs at token launch.
+      Roadmap (short): 1) Fair airdrop & referral rewards, 2) Jetton/smart-contract integration for secure claims, 3) Listing & liquidity provisioning, 4) Platform features (staking, governance) in later phases.
+      Early users receive priority and higher allocation in future programs. Join Aether now to secure your position in this Web3 journey.
     </p>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
       <button id="closeProjectInfo" class="btn secondary">Close</button>
     </div>
   </div>
 </div>
-
-<!-- Fallback modal will be created dynamically -->
 
 <script>
 /* ================== CONFIG ================== */
@@ -178,13 +175,13 @@ const FIREBASE_CONFIG = {
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
 
-const STATE_KEY = 'aether_state_final_v1';
-const PENDING_KEY = 'aether_pending_final_v1';
+const STATE_KEY = 'aether_state_v6';
+const PENDING_KEY = 'aether_pending_v6';
 const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12h
-const ADS_WINDOW_LIMIT = 10;  // max per 12h
-const DAILY_AD_LIMIT = 10;    // max per day
-const FLUSH_THRESHOLD_AE = 3000; // flush if pending ae >= this
-const FLUSH_INTERVAL_MS = 2 * 60 * 1000; // try flush every 2 minutes
+const ADS_WINDOW_LIMIT = 50;  // changed to 50
+const DAILY_AD_LIMIT = 50;    // changed to 50
+const FLUSH_THRESHOLD_AE = 3000;
+const FLUSH_INTERVAL_MS = 2 * 60 * 1000;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -235,7 +232,7 @@ function writeLocal(stateObj, pendingObj){
   }catch(e){ console.warn('local write failed', e); }
 }
 
-/* init from local so UI shows recent */
+/* init from local */
 (function initLocal(){
   const { state, pending } = readLocal();
   if (state && Object.keys(state).length) Object.assign(current, state);
@@ -269,20 +266,16 @@ async function flushPending(force=false){
     await db.collection('users').doc(userDocId).update(updates);
     window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now };
     writeLocal(current, window.__aether_pending);
-    // refresh authoritative server state
     const fresh = await db.collection('users').doc(userDocId).get();
     if (fresh.exists) { Object.assign(current, fresh.data()); if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae += window.__aether_pending.aeDelta; writeLocal(current, window.__aether_pending); updateUI(); }
-  }catch(e){
-    console.warn('flush pending error', e);
-    throw e;
-  }
+  }catch(e){ console.warn('flush pending error', e); throw e; }
 }
-  /* periodic flush & online hooks */
+
+/* periodic flush & online hooks */
 setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
 document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
 window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending);}catch(e){} });
-
 /* ================== AD HELPER (robust) ================== */
 function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
@@ -308,7 +301,7 @@ function showAdNormalized(timeoutMs = 30000){
   });
 }
 
-/* fallback short flow modal (if SDK down) */
+/* fallback short modal (if SDK down) */
 function showFallbackAdModal(seconds = 20){
   return new Promise((resolve) => {
     let modal = document.getElementById('fallback-ad-modal');
@@ -331,14 +324,15 @@ function showFallbackAdModal(seconds = 20){
   });
 }
 
-/* ================== UI helpers ================== */
+/* ================== UI helpers (ensure defined before init) ================== */
+function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
 function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.ae || 0);
   document.getElementById('refs').innerText = (current.refs || []).length;
   document.getElementById('level').innerText = current.level || 0;
   document.getElementById('levelDisplay').innerText = current.level || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
-  document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1);
+  updateAdReward();
   updateWalletButtons();
 }
 function openTab(tabId, ev){
@@ -346,7 +340,7 @@ function openTab(tabId, ev){
   document.getElementById(tabId).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
-  if (tabId === 'referral'){ loadRefList(); loadLeaderboard(); }
+  if (tabId === 'referral'){ loadRefList(); /* leaderboard removed to save reads */ }
   if (tabId === 'airdrop') toggleAirdropSection();
 }
 
@@ -368,10 +362,8 @@ async function initApp(){
     await auth.signInAnonymously();
     const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
-    // ensure pending loaded (already from local)
     window.__aether_pending = readLocal().pending || window.__aether_pending;
 
-    // load or create user doc
     const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
     const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
@@ -382,7 +374,6 @@ async function initApp(){
       Object.assign(current, doc.data());
     }
 
-    // try flush pending (if any) to server now
     try{
       if (window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta || (window.__aether_pending.refs && window.__aether_pending.refs.length))) {
         await flushPending(true);
@@ -390,13 +381,13 @@ async function initApp(){
         const fresh = await docRef.get();
         if (fresh.exists) Object.assign(current, fresh.data());
       }
-    } catch(e){ console.warn('initial flush failed', e); }
+    }catch(e){ console.warn('initial flush failed', e); }
 
     computeLevel();
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
     document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
 
-    // realtime: merge server data then reapply local pending visually
+    // realtime update (merge server and reapply pending visually)
     docRef.onSnapshot(snap => {
       if (!snap.exists) return;
       const server = snap.data();
@@ -414,7 +405,6 @@ async function initApp(){
     document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
     document.getElementById('watchAd').onclick = watchAdHandler;
 
-    // build referral link
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
 
@@ -437,21 +427,31 @@ async function initApp(){
     renderLevelsChunk(20);
     await resetDailyAdsIfNeeded();
     updateUI(); updateAdReward();
-    await loadLeaderboard();
     loadRefList();
 
+    // recover stuck button when user returns from ad (focus)
+    window.addEventListener('focus', () => {
+      const btn = document.getElementById('watchAd');
+      if (!btn) return;
+      // if there are pending items or very recent ad timestamp, re-enable and sync UI
+      const local = readLocal();
+      if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta)) ||
+          (current.lastAdTime && (Date.now() - (current.lastAdTime || 0) < 60000))) {
+        btn.disabled = false;
+        btn.innerText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
+        try { flushPending(false).catch(()=>{}); } catch(e){}
+      }
+    });
+
     // periodic save small state + flush attempt
-    setInterval(async ()=>{
-      try{ await saveSmallState(); await flushPending(false); }catch(e){}
-    }, 60*1000);
+    setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false); }catch(e){} }, 60*1000);
 
   }catch(e){
     console.error('initApp err', e);
     if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e));
   }
-}
-
-/* ----------------- save small state ----------------- */
+  }
+  /* ----------------- save small state ----------------- */
 async function saveSmallState(){
   try{
     const small = { tonWallet: current.tonWallet||'', lastResetDate: current.lastResetDate||new Date().toDateString(), lastSaveTime: Date.now(), username: current.username||'' };
@@ -466,7 +466,6 @@ async function saveSmallState(){
 async function watchAdHandler(){
   await resetDailyAdsIfNeeded();
   const now = Date.now();
-  // enforce window counts from local snapshot
   const local = readLocal();
   const s = local.state || {};
   const windowStart = s.adsWindowStart || current.adsWindowStart || now;
@@ -478,7 +477,7 @@ async function watchAdHandler(){
 
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
-  const originalText = btn.innerText;
+  const originalText = btn.innerText || `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
 
   const prevAe = current.ae || 0;
   const prevTotalAds = current.totalAds || 0;
@@ -488,7 +487,7 @@ async function watchAdHandler(){
     let completed = !!(res && res.completed);
 
     if (!completed){
-      // small grace (external callback)
+      // small grace for external SDK callbacks
       await new Promise(r=>setTimeout(r, 1200));
       completed = (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds;
     }
@@ -497,8 +496,9 @@ async function watchAdHandler(){
       // fallback short modal
       const fb = await showFallbackAdModal(18);
       if (!fb || !fb.completed) { if (tg.showAlert) tg.showAlert('Ad not completed.'); btn.disabled=false; btn.innerText = originalText; return; }
-  }
-  // success — credit locally + enqueue + try immediate write
+    }
+
+    // success — credit locally + enqueue + try immediate write
     const reward = 100 * (current.multiplierAds || 1);
     current.ae = (current.ae || 0) + reward;
     current.totalAds = (current.totalAds || 0) + 1;
@@ -512,11 +512,10 @@ async function watchAdHandler(){
     current.adsWindowStart = s.adsWindowStart;
     current.adsWindowCount = s.adsWindowCount;
 
-    // persist local snapshot & enqueue pending
     enqueuePending(reward, 1, null, null);
     writeLocal(current, window.__aether_pending);
 
-    // try immediate server update
+    // try immediate server update (best-effort)
     try{
       await db.collection('users').doc(userDocId).update({
         ae: firebase.firestore.FieldValue.increment(reward),
@@ -525,7 +524,6 @@ async function watchAdHandler(){
         lastAdTime: now,
         lastSaveTime: Date.now()
       });
-      // success: flush pending if any
       try{ await flushPending(false); } catch(e){}
     }catch(writeErr){
       console.warn('immediate write failed, pending queued', writeErr);
@@ -533,7 +531,7 @@ async function watchAdHandler(){
 
     computeLevel(); updateUI(); updateAdReward();
 
-    // cooldown UI random 10-30s
+    // cooldown random 10-30s
     const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
     btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
     setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
@@ -541,7 +539,6 @@ async function watchAdHandler(){
     if (tg.showAlert) tg.showAlert(`You get ${reward} Ae!`);
   }catch(err){
     console.warn('watchAdHandler err', err);
-    // if reward applied externally, consider success
     if ((current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds){
       computeLevel(); updateUI(); updateAdReward();
       btn.disabled=false; btn.innerText = originalText;
@@ -561,19 +558,17 @@ async function handleReferralParam(param){
     if (current.referredBy) return;
     const rDoc = await db.collection('users').doc(referrerId).get();
     if (!rDoc.exists) return;
-    // credit referrer immediately on server
     await db.collection('users').doc(referrerId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
       ae: firebase.firestore.FieldValue.increment(5000)
     });
-    // credit current locally + enqueue pending
     current.referredBy = referrerId;
     current.ae = (current.ae||0) + 5000;
     enqueuePending(5000, 0, null, null);
     writeLocal(current, window.__aether_pending);
     await saveSmallState();
     if (tg.showAlert) tg.showAlert('Referral success! +5000 Ae!');
-    await loadRefList(); await loadLeaderboard();
+    loadRefList();
   }catch(e){ console.warn('handleReferral err', e); }
 }
 function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); }
@@ -615,14 +610,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ----------------- leaderboard & refs ----------------- */
-async function loadLeaderboard(){
-  try{
-    const snap = await db.collection('users').orderBy('ae','desc').limit(100).get();
-    const list = document.getElementById('leaderList'); list.innerHTML=''; let rank=1;
-    snap.forEach(doc=>{ const d = doc.data(); const item = document.createElement('div'); item.className='leader-item'; item.innerHTML = `<span>#${rank} • ${doc.id}</span><span>${Math.floor(d.ae||0)} Ae</span>`; list.appendChild(item); rank++; });
-  }catch(e){ console.warn('leader load err', e); }
-}
+/* ----------------- refs ----------------- */
 function loadRefList(){ const list = document.getElementById('refList'); list.innerHTML=''; (current.refs||[]).forEach(r=>{ const li = document.createElement('li'); li.className='ref-item'; li.innerText = `User ID: ${r}`; list.appendChild(li); }); }
 
 /* ----------------- airdrop toggle ----------------- */
@@ -635,13 +623,12 @@ async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); upd
 /* ----------------- daily reset ----------------- */
 async function resetDailyAdsIfNeeded(){ const today = new Date().toDateString(); if (current.lastResetDate !== today){ current.adsToday = 0; current.lastResetDate = today; await saveSmallState(); } }
 
-/* ----------------- start ----------------- */
+/* ----------------- start app ----------------- */
 initApp();
 
-/* ----------------- small util ----------------- */
-function closeWelcome(){ document.getElementById('welcome-popup') && (document.getElementById('welcome-popup').style.display='none'); }
+/* ----------------- helper ----------------- */
+function closeWelcome(){ /* not used */ }
 
 </script>
 </body>
 </html>
-      
