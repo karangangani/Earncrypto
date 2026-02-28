@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Stable v6 - updated)</title>
+<title>AETHER — Earn & Airdrop (Stable v6)</title>
 
 <!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -44,7 +44,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.3s;box-shadow:0 4px 10px rgba(0,211,138,0.3)}
 .btn.secondary{background:linear-gradient(135deg,#333,#555);color:#fff}
-.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
 .ref-box{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(0,211,138,0.04);border:1px solid var(--border)}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
@@ -55,7 +55,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
 .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:12px}
 .modal { position: fixed; inset: 0; display:none; align-items:center; justify-content:center; z-index:99999; background: rgba(0,0,0,0.6); }
-.modal .card { max-width:520px; width:92%; padding:18px; }
+.modal .card { max-width:520px; width:92%; }
 #warn{color:#ffcc66;text-align:center;margin-top:8px}
 </style>
 </head>
@@ -149,21 +149,14 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 <!-- Project Info Modal -->
 <div id="projectInfoModal" class="modal">
   <div class="card">
-    <h2 style="color:var(--accent);margin-bottom:8px">About AETHER — Phase 1</h2>
+    <h2 style="color:var(--accent)">Aether — Project Info (Phase 1)</h2>
     <p style="color:var(--muted);line-height:1.45">
       Aether is an innovative Web3 project designed to empower users with decentralized earning opportunities and seamless blockchain integration.
       Phase 1 builds a sustainable rewards pool funded by ad revenue and reserves a portion for liquidity and token allocation.
       Total supply will be published at launch (target: 97,000,000,000 tokens). Approximately 30% is allocated for airdrops and early user rewards;
       remaining supply is assigned for liquidity, platform growth and team with transparent on-chain proofs at token launch.
-      <br><br>
-      Roadmap (short):
-      <ol style="color:var(--muted);margin-top:8px">
-        <li>Fair airdrop & strong referral rewards</li>
-        <li>Jetton / smart-contract integration for secure on-chain claims</li>
-        <li>Token listing & liquidity provisioning</li>
-        <li>Platform features (staking, governance) in later phases</li>
-      </ol>
-      Early users receive priority and higher allocation in future programs. We reinvest ad revenue into liquidity, audits, integrations and marketing to grow a sustainable ecosystem.
+      Roadmap (short): 1) Fair airdrop & referral rewards, 2) Jetton/smart-contract integration for secure claims, 3) Listing & liquidity provisioning, 4) Platform features (staking, governance) in later phases.
+      Early users receive priority and higher allocation in future programs. Join Aether now to secure your position in this Web3 journey.
     </p>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
       <button id="closeProjectInfo" class="btn secondary">Close</button>
@@ -190,9 +183,6 @@ const DAILY_AD_LIMIT = 50;    // changed to 50
 const FLUSH_THRESHOLD_AE = 3000;
 const FLUSH_INTERVAL_MS = 2 * 60 * 1000;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
-
-// Referral reward (must match bot)
-const REF_REWARD = 5000;
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
@@ -223,7 +213,8 @@ let current = {
   adsWindowStart: Date.now(),
   adsWindowCount: 0
 };
-  window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+
+window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
 /* ---------------- Local storage helpers ---------------- */
 function readLocal(){
@@ -285,7 +276,6 @@ setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
 document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
 window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending);}catch(e){} });
-
 /* ================== AD HELPER (robust) ================== */
 function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
@@ -361,28 +351,21 @@ function computeLevel(){
   current.level = Math.min(refsCount, adsCount);
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
-
 /* ----------------- init app ----------------- */
 let tonUI = null;
 let levelsRendered = 0;
-
-// Start param detection (Telegram start_param OR URL query fallback)
-const urlParams = new URLSearchParams(window.location.search || '');
-const urlStart = urlParams.get('start') || urlParams.get('startapp') || urlParams.get('ref') || '';
-const startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) ? tg.initDataUnsafe.start_param : (urlStart || '');
+const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
 
 async function initApp(){
   try{
     await auth.signInAnonymously();
-    const tgId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
+    const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
     window.__aether_pending = readLocal().pending || window.__aether_pending;
-
-    const docRef = db.collection('users').doc(userDocId);
+        const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
-    const username = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
+    const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
     if (!doc.exists){
-      // create initial doc using fields expected by rules
       current.username = username;
       try{ await docRef.set(current); } catch(e){ console.warn('create failed', e); }
     } else {
@@ -400,8 +383,7 @@ async function initApp(){
 
     computeLevel();
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
-
-document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
+    document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
 
     // realtime update (merge server and reapply pending visually)
     docRef.onSnapshot(snap => {
@@ -438,7 +420,6 @@ document.getElementById('userLine').innerText = `${current.username || username}
     document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
     document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
 
-    // If bot passed start param or URL had it, handle referral safely
     if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
 
     renderLevelsChunk(20);
@@ -467,9 +448,8 @@ document.getElementById('userLine').innerText = `${current.username || username}
     console.error('initApp err', e);
     if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e));
   }
-}
-
-/* ----------------- save small state ----------------- */
+  }
+  /* ----------------- save small state ----------------- */
 async function saveSmallState(){
   try{
     const small = { tonWallet: current.tonWallet||'', lastResetDate: current.lastResetDate||new Date().toDateString(), lastSaveTime: Date.now(), username: current.username||'' };
@@ -568,62 +548,46 @@ async function watchAdHandler(){
   }
 }
 
-/* ----------------- referral handling (safe server-check) ----------------- */
+/* ----------------- referral handling ----------------- */
 async function handleReferralParam(param){
   try{
     const referrerId = param.replace('ref_','');
-    if(!referrerId || referrerId === userDocId) return;
-
-    // read our server doc to see if we are already referred
-    const myDocSnap = await db.collection('users').doc(userDocId).get();
-    if (myDocSnap.exists) {
-      const myData = myDocSnap.data();
-      if (myData.referredBy) {
-        // server already handled referral -> nothing to do
-        return;
-      }
-    }
-
-    // fetch referrer
-    const rDocRef = db.collection('users').doc(referrerId);
-    const rDoc = await rDocRef.get();
+    if (!referrerId || referrerId === userDocId) return;
+    if (current.referredBy) return;
+    const rDoc = await db.collection('users').doc(referrerId).get();
     if (!rDoc.exists) return;
-
-    // avoid duplicating if referrer already has this user in refs
-    const refData = rDoc.data();
-    if (Array.isArray(refData.refs) && refData.refs.includes(userDocId)) {
-      // ensure our doc marked referredBy too
-      try { await db.collection('users').doc(userDocId).update({ referredBy: referrerId }); } catch(e){}
-      const fresh = await db.collection('users').doc(userDocId).get();
-      if (fresh.exists) Object.assign(current, fresh.data());
-      updateUI();
-      return;
-    }
-
-    // Safe: perform server updates (this will be allowed by your Firestore rules because
-    // request is coming from authenticated client; ensure rules allow update of these fields)
-    await rDocRef.update({
+    await db.collection('users').doc(referrerId).update({
       refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-      ae: firebase.firestore.FieldValue.increment(REF_REWARD)
+      ae: firebase.firestore.FieldValue.increment(5000)
     });
-
-    await db.collection('users').doc(userDocId).update({
-      refs: firebase.firestore.FieldValue.arrayUnion(referrerId),
-      ae: firebase.firestore.FieldValue.increment(REF_REWARD),
-      referredBy: referrerId
-    });
-
-    // refresh local
-    const fresh = await db.collection('users').doc(userDocId).get();
-    if (fresh.exists) Object.assign(current, fresh.data());
+    current.referredBy = referrerId;
+    current.ae = (current.ae||0) + 5000;
+    enqueuePending(5000, 0, null, null);
     writeLocal(current, window.__aether_pending);
-    updateUI();
-
-    if (tg.showAlert) tg.showAlert(`Referral success! +${REF_REWARD} Ae!`);
-
-  }catch(e){ console.warn('handleReferralParam err', e); }
+    await saveSmallState();
+    if (tg.showAlert) tg.showAlert('Referral success! +5000 Ae!');
+    loadRefList();
+  }catch(e){ console.warn('handleReferral err', e); }
 }
+function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); }
 
+/* ----------------- levels & claim ----------------- */
+function renderLevelsChunk(max){
+  const container = document.getElementById('levelsList');
+  const start = levelsRendered + 1;
+  const end = levelsRendered + max;
+  for (let i=start;i<=end;i++){
+    const refsNeeded = i; const adsNeeded = i; const reward = 500 * i;
+    const el = document.createElement('div'); el.className='level';
+    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
+      <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
+      <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
+      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
+    container.appendChild(el);
+    document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
+  }
+  levelsRendered = end; updateLevelProgressUI();
+}
 function updateLevelProgressUI(){
   const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
   for (let i=1;i<=levelsRendered;i++){
@@ -657,39 +621,11 @@ async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); upd
 /* ----------------- daily reset ----------------- */
 async function resetDailyAdsIfNeeded(){ const today = new Date().toDateString(); if (current.lastResetDate !== today){ current.adsToday = 0; current.lastResetDate = today; await saveSmallState(); } }
 
-/* ---------------- Levels rendering ----------------- */
-function renderLevelsChunk(max){
-  const container = document.getElementById('levelsList');
-  const start = levelsRendered + 1;
-  const end = levelsRendered + max;
-  for(let i=start;i<=end;i++){
-    const refsNeeded = i;
-    const adsNeeded = i;
-    const reward = 500 * i;
-    const el = document.createElement('div');
-    el.className='level';
-    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
-      <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
-      <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
-      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
-    container.appendChild(el);
-    const btn = document.getElementById(`claim_${i}`);
-    btn.addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
-  }
-  levelsRendered = end;
-  updateLevelProgressUI();
-}
-
-/* ----------------- init ----------------- */
+/* ----------------- start app ----------------- */
 initApp();
 
 /* ----------------- helper ----------------- */
-function copyRefHandler() {
-  const refLink = document.getElementById('myRef').innerText;
-  navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed'));
-}
-function closeProjectInfo(){ document.getElementById('projectInfoModal').style.display='none'; }
-function checkLevel10Gift(){ if(current.level>=10 && !current.giftChosen) document.getElementById('gift-popup')?.style.display='block'; }
+function closeWelcome(){ /* not used */ }
 
 </script>
 </body>
