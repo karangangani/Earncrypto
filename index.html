@@ -55,8 +55,19 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
 .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:12px}
 .modal { position: fixed; inset: 0; display:none; align-items:center; justify-content:center; z-index:99999; background: rgba(0,0,0,0.6); }
-.modal .card { max-width:520px; width:92%; }
+.modal .card { max-width:520px; width:92%; padding:18px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--muted) }
 #warn{color:#ffcc66;text-align:center;margin-top:8px}
+
+/* --- X button styling --- */
+.x-follow { display:flex; gap:8px; align-items:center; justify-content:center; padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer; border:none; }
+.x-follow svg { width:18px; height:18px; display:block; }
+.x-follow.primary { background: linear-gradient(135deg,#1DA1F2,#00a4ff); color:#001; box-shadow:0 6px 18px rgba(0,164,255,0.12); }
+.x-follow.primary:active { transform: translateY(1px); }
+
+.project-info-steps { list-style:none; padding-left:0; margin:8px 0 0 0; color:var(--muted); line-height:1.5 }
+.project-info-steps li { margin:8px 0; padding-left:10px; position:relative }
+.project-info-steps li::before { content: counter(item) ". "; counter-increment: item; position:absolute; left:-28px; color:var(--accent); font-weight:700 }
+.counter-reset { counter-reset: item }
 </style>
 </head>
 <body>
@@ -87,12 +98,27 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
     <!-- HOME -->
     <div id="home" class="section active">
       <div class="ref-box">
-        <h3 style="color:var(--accent)">Join Official Channel</h3>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button id="openChannel" class="btn secondary">Join @Aetherofficialchannel</button>
-          <button id="projectInfoBtn" class="btn">Project Info</button>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">⭐ Official Channel</h3>
+            <button id="openChannel" class="btn secondary" style="width:100%;padding:10px;font-size:14px">Join @Aetherofficialchannel</button>
+          </div>
+
+          <div style="width:180px;min-width:140px">
+            <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">Follow on X</h3>
+            <button id="followXBtn" class="x-follow primary" title="Follow us on X (Twitter)">
+              <!-- X icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 3c-.8.35-1.7.58-2.6.69a4.48 4.48 0 0 0 1.96-2.48c-.86.51-1.8.87-2.8 1.07A4.48 4.48 0 0 0 16.5 2c-2.5 0-4.5 2.05-4.5 4.58 0 .36.04.71.12 1.05C8.1 7.55 4.3 5.7 1.7 2.48c-.4.68-.6 1.47-.6 2.32 0 1.6.82 3.02 2.06 3.85-.76-.03-1.47-.24-2.09-.57v.06c0 2.25 1.6 4.13 3.73 4.55-.39.11-.8.16-1.22.16-.3 0-.6-.03-.88-.08.6 1.94 2.35 3.35 4.42 3.39A9.04 9.04 0 0 1 1 19.54a12.8 12.8 0 0 0 6.92 2.03c8.3 0 12.85-6.8 12.85-12.7v-.58A8.94 8.94 0 0 0 23 3z"/></svg>
+              <span style="font-size:14px">Follow @Aetherofficia97</span>
+            </button>
+          </div>
         </div>
-        <p class="small" style="margin-top:10px">Click "Project Info" to view allocation, roadmap & Phase-1 details inside the mini-app.</p>
+
+        <div style="margin-top:10px">
+          <button id="projectInfoBtn" class="btn secondary">Project Info</button>
+        </div>
+
+        <p class="small" style="margin-top:10px">Tap Project Info to view token allocation, roadmap and Phase-1 details inside the mini-app.</p>
       </div>
     </div>
 
@@ -149,15 +175,20 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 <!-- Project Info Modal -->
 <div id="projectInfoModal" class="modal">
   <div class="card">
-    <h2 style="color:var(--accent)">Aether — Project Info (Phase 1)</h2>
-    <p style="color:var(--muted);line-height:1.45">
-      Aether is an innovative Web3 project designed to empower users with decentralized earning opportunities and seamless blockchain integration.
-      Phase 1 builds a sustainable rewards pool funded by ad revenue and reserves a portion for liquidity and token allocation.
-      Total supply will be published at launch (target: 97,000,000,000 tokens). Approximately 30% is allocated for airdrops and early user rewards;
-      remaining supply is assigned for liquidity, platform growth and team with transparent on-chain proofs at token launch.
-      Roadmap (short): 1) Fair airdrop & referral rewards, 2) Jetton/smart-contract integration for secure claims, 3) Listing & liquidity provisioning, 4) Platform features (staking, governance) in later phases.
-      Early users receive priority and higher allocation in future programs. Join Aether now to secure your position in this Web3 journey.
+    <h2 style="color:var(--accent); margin:0 0 8px 0">Aether — Phase 1 (Clear & Professional)</h2>
+    <p style="color:var(--muted);margin:0 0 8px 0;line-height:1.45">
+      Aether is a sustainable Web3 rewards platform built to onboard users into a tokenized economy. Phase-1 focuses on building a fair airdrop and stable reward mechanics funded primarily by ad revenue.
     </p>
+
+    <ol class="project-info-steps counter-reset" style="margin-top:6px">
+      <li><strong>Token & Allocation (target)</strong> — Total supply: 97,000,000,000 (target). ~30% reserved for airdrops & early user incentives; remaining supply used for liquidity, platform growth and audits.</li>
+      <li><strong>How rewards work</strong> — Users earn Ae via ad-watching, referrals, and level rewards. Ad revenue is partially routed to liquidity + ecosystem development ensuring long-term sustainability.</li>
+      <li><strong>Roadmap (Phase 1 → 2)</strong> — 1) Fair airdrop & referral campaign, 2) Jetton / smart-contract integration for secure claims, 3) Listing & liquidity provisioning, 4) Staking/governance in later phases.</li>
+      <li><strong>Security & transparency</strong> — Allocations and claims will be verifiable on-chain once smart contracts launch; audits and on-chain proofs planned before major token events.</li>
+    </ol>
+
+    <p style="color:var(--muted);margin-top:10px">Early participants gain priority in distribution windows and special multipliers; keep participating to secure higher allocation.</p>
+
     <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
       <button id="closeProjectInfo" class="btn secondary">Close</button>
     </div>
@@ -213,7 +244,7 @@ let current = {
   adsWindowStart: Date.now(),
   adsWindowCount: 0
 };
-
+  
 window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
 /* ---------------- Local storage helpers ---------------- */
@@ -355,7 +386,6 @@ function computeLevel(){
 let tonUI = null;
 let levelsRendered = 0;
 const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
-
 async function initApp(){
   try{
     await auth.signInAnonymously();
@@ -439,6 +469,12 @@ async function initApp(){
         btn.innerText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
         try { flushPending(false).catch(()=>{}); } catch(e){}
       }
+    });
+
+    // follow X button hook
+    document.getElementById('followXBtn')?.addEventListener('click', ()=> {
+      const X_URL = 'https://x.com/Aetherofficia97';
+      try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; }
     });
 
     // periodic save small state + flush attempt
@@ -606,12 +642,8 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   computeLevel(); updateUI(); updateLevelProgressUI();
   if (Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
   if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
-}
-
-/* ----------------- refs ----------------- */
-function loadRefList(){ const list = document.getElementById('refList'); list.innerHTML=''; (current.refs||[]).forEach(r=>{ const li = document.createElement('li'); li.className='ref-item'; li.innerText = `User ID: ${r}`; list.appendChild(li); }); }
-
-/* ----------------- airdrop toggle ----------------- */
+  }
+  /* ----------------- airdrop toggle ----------------- */
 function toggleAirdropSection(){ if ((current.refs||[]).length >= 3){ document.getElementById('airdrop-locked').style.display='none'; document.getElementById('airdrop-content').style.display='block'; } else { document.getElementById('airdrop-locked').style.display='block'; document.getElementById('airdrop-content').style.display='none'; } }
 
 /* ----------------- wallet helpers ----------------- */
@@ -630,3 +662,4 @@ function closeWelcome(){ /* not used */ }
 </script>
 </body>
 </html>
+  
