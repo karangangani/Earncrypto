@@ -64,10 +64,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .x-follow.primary { background: linear-gradient(135deg,#1DA1F2,#00a4ff); color:#001; box-shadow:0 6px 18px rgba(0,164,255,0.12); }
 .x-follow.primary:active { transform: translateY(1px); }
 
-.project-info-steps { list-style:none; padding-left:0; margin:8px 0 0 0; color:var(--muted); line-height:1.5 }
-.project-info-steps li { margin:8px 0; padding-left:10px; position:relative }
-.project-info-steps li::before { content: counter(item) ". "; counter-increment: item; position:absolute; left:-28px; color:var(--accent); font-weight:700 }
-.counter-reset { counter-reset: item }
 </style>
 </head>
 <body>
@@ -114,11 +110,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
           </div>
         </div>
 
-        <div style="margin-top:10px">
-          <button id="projectInfoBtn" class="btn secondary">Project Info</button>
-        </div>
-
-        <p class="small" style="margin-top:10px">Tap Project Info to view token allocation, roadmap and Phase-1 details inside the mini-app.</p>
+        <p class="small" style="margin-top:10px">Follow us on Telegram and X to stay updated — links open in a new tab.</p>
       </div>
     </div>
 
@@ -172,29 +164,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
   <div class="footer">© AETHER •  Project 2026</div>
 </div>
 
-<!-- Project Info Modal -->
-<div id="projectInfoModal" class="modal">
-  <div class="card">
-    <h2 style="color:var(--accent); margin:0 0 8px 0">Aether — Phase 1 (Clear & Professional)</h2>
-    <p style="color:var(--muted);margin:0 0 8px 0;line-height:1.45">
-      Aether is a sustainable Web3 rewards platform built to onboard users into a tokenized economy. Phase-1 focuses on building a fair airdrop and stable reward mechanics funded primarily by ad revenue.
-    </p>
-
-    <ol class="project-info-steps counter-reset" style="margin-top:6px">
-      <li><strong>Token & Allocation (target)</strong> — Total supply: 97,000,000,000 (target). ~30% reserved for airdrops & early user incentives; remaining supply used for liquidity, platform growth and audits.</li>
-      <li><strong>How rewards work</strong> — Users earn Ae via ad-watching, referrals, and level rewards. Ad revenue is partially routed to liquidity + ecosystem development ensuring long-term sustainability.</li>
-      <li><strong>Roadmap (Phase 1 → 2)</strong> — 1) Fair airdrop & referral campaign, 2) Jetton / smart-contract integration for secure claims, 3) Listing & liquidity provisioning, 4) Staking/governance in later phases.</li>
-      <li><strong>Security & transparency</strong> — Allocations and claims will be verifiable on-chain once smart contracts launch; audits and on-chain proofs planned before major token events.</li>
-    </ol>
-
-    <p style="color:var(--muted);margin-top:10px">Early participants gain priority in distribution windows and special multipliers; keep participating to secure higher allocation.</p>
-
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-      <button id="closeProjectInfo" class="btn secondary">Close</button>
-    </div>
-  </div>
-</div>
-
 <script>
 /* ================== CONFIG ================== */
 const FIREBASE_CONFIG = {
@@ -244,7 +213,7 @@ let current = {
   adsWindowStart: Date.now(),
   adsWindowCount: 0
 };
-  
+
 window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
 /* ---------------- Local storage helpers ---------------- */
@@ -279,8 +248,7 @@ function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
   if(addClaim) window.__aether_pending.claimed.push(addClaim);
   writeLocal(current, window.__aether_pending);
 }
-
-/* ---------------- Flush pending to Firestore ---------------- */
+  /* ---------------- Flush pending to Firestore ---------------- */
 async function flushPending(force=false){
   try{
     window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
@@ -307,6 +275,7 @@ setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
 document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
 window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending);}catch(e){} });
+
 /* ================== AD HELPER (robust) ================== */
 function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
@@ -382,17 +351,69 @@ function computeLevel(){
   current.level = Math.min(refsCount, adsCount);
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
-/* ----------------- init app ----------------- */
-let tonUI = null;
+
+/* ----------------- refs (DEFINE BEFORE initApp) ----------------- */
+function loadRefList(){
+  const list = document.getElementById('refList');
+  if(!list) return;
+  list.innerHTML='';
+  (current.refs||[]).forEach(r=>{
+    const li = document.createElement('li');
+    li.className='ref-item';
+    li.innerText = `User ID: ${r}`;
+    list.appendChild(li);
+  });
+}
+
+/* ----------------- levels & claim (keep before init) ----------------- */
 let levelsRendered = 0;
+function renderLevelsChunk(max){
+  const container = document.getElementById('levelsList');
+  const start = levelsRendered + 1;
+  const end = levelsRendered + max;
+  for (let i=start;i<=end;i++){
+    const refsNeeded = i; const adsNeeded = i; const reward = 500 * i;
+    const el = document.createElement('div'); el.className='level';
+    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
+      <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
+      <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
+      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
+    container.appendChild(el);
+    document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
+  }
+  levelsRendered = end; updateLevelProgressUI();
+}
+function updateLevelProgressUI(){
+  const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
+  for (let i=1;i<=levelsRendered;i++){
+    const btn = document.getElementById(`claim_${i}`); if(!btn) continue;
+    const claimed = (current.claimedLevels || []).includes(i);
+    const canClaim = !claimed && refsCount >= i && adsDone >= i;
+    btn.disabled = !canClaim; btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
+  }
+}
+async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
+  const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
+  if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert && tg.showAlert('Requirements not met');
+  if ((current.claimedLevels||[]).includes(levelNo)) return tg.showAlert && tg.showAlert('Already claimed');
+  current.ae = (current.ae||0) + reward; current.claimedLevels = current.claimedLevels || []; current.claimedLevels.push(levelNo);
+  enqueuePending(reward, 0, null, levelNo); writeLocal(current, window.__aether_pending);
+  computeLevel(); updateUI(); updateLevelProgressUI();
+  if (Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
+  if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
+}
+
+/* ----------------- init app ----------------- */
 const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
+let tonUI = null;
+
 async function initApp(){
   try{
     await auth.signInAnonymously();
     const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
     window.__aether_pending = readLocal().pending || window.__aether_pending;
-        const docRef = db.collection('users').doc(userDocId);
+    const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
     const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
     if (!doc.exists){
@@ -427,16 +448,13 @@ async function initApp(){
 
     // UI hooks
     document.getElementById('openChannel').onclick = ()=>{ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
-    document.getElementById('projectInfoBtn').onclick = ()=>{ document.getElementById('projectInfoModal').style.display='flex'; };
-    document.getElementById('closeProjectInfo').onclick = ()=>{ document.getElementById('projectInfoModal').style.display='none'; };
     document.getElementById('copyRef').onclick = copyRefHandler;
     document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
     document.getElementById('watchAd').onclick = watchAdHandler;
 
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
-
-    // TON connect
+  // TON connect
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -461,7 +479,6 @@ async function initApp(){
     window.addEventListener('focus', () => {
       const btn = document.getElementById('watchAd');
       if (!btn) return;
-      // if there are pending items or very recent ad timestamp, re-enable and sync UI
       const local = readLocal();
       if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta)) ||
           (current.lastAdTime && (Date.now() - (current.lastAdTime || 0) < 60000))) {
@@ -484,8 +501,9 @@ async function initApp(){
     console.error('initApp err', e);
     if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e));
   }
-  }
-  /* ----------------- save small state ----------------- */
+}
+
+/* ----------------- save small state ----------------- */
 async function saveSmallState(){
   try{
     const small = { tonWallet: current.tonWallet||'', lastResetDate: current.lastResetDate||new Date().toDateString(), lastSaveTime: Date.now(), username: current.username||'' };
@@ -607,43 +625,7 @@ async function handleReferralParam(param){
 }
 function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); }
 
-/* ----------------- levels & claim ----------------- */
-function renderLevelsChunk(max){
-  const container = document.getElementById('levelsList');
-  const start = levelsRendered + 1;
-  const end = levelsRendered + max;
-  for (let i=start;i<=end;i++){
-    const refsNeeded = i; const adsNeeded = i; const reward = 500 * i;
-    const el = document.createElement('div'); el.className='level';
-    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
-      <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
-      <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
-      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
-    container.appendChild(el);
-    document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
-  }
-  levelsRendered = end; updateLevelProgressUI();
-}
-function updateLevelProgressUI(){
-  const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
-  for (let i=1;i<=levelsRendered;i++){
-    const btn = document.getElementById(`claim_${i}`); if(!btn) continue;
-    const claimed = (current.claimedLevels || []).includes(i);
-    const canClaim = !claimed && refsCount >= i && adsDone >= i;
-    btn.disabled = !canClaim; btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
-  }
-}
-async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
-  const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
-  if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert && tg.showAlert('Requirements not met');
-  if ((current.claimedLevels||[]).includes(levelNo)) return tg.showAlert && tg.showAlert('Already claimed');
-  current.ae = (current.ae||0) + reward; current.claimedLevels = current.claimedLevels || []; current.claimedLevels.push(levelNo);
-  enqueuePending(reward, 0, null, levelNo); writeLocal(current, window.__aether_pending);
-  computeLevel(); updateUI(); updateLevelProgressUI();
-  if (Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
-  if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
-  }
-  /* ----------------- airdrop toggle ----------------- */
+/* ----------------- airdrop toggle ----------------- */
 function toggleAirdropSection(){ if ((current.refs||[]).length >= 3){ document.getElementById('airdrop-locked').style.display='none'; document.getElementById('airdrop-content').style.display='block'; } else { document.getElementById('airdrop-locked').style.display='block'; document.getElementById('airdrop-content').style.display='none'; } }
 
 /* ----------------- wallet helpers ----------------- */
@@ -656,10 +638,6 @@ async function resetDailyAdsIfNeeded(){ const today = new Date().toDateString();
 /* ----------------- start app ----------------- */
 initApp();
 
-/* ----------------- helper ----------------- */
-function closeWelcome(){ /* not used */ }
-
 </script>
 </body>
 </html>
-  
