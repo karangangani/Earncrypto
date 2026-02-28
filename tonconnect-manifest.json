@@ -1,7 +1,7 @@
 {
-  "url": "https://aethermine",
-  "name": "Aether",
-  "iconUrl": "https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg",
-  "termsOfUseUrl": "https://karangangani.github.io/Earncrypto/terms.html",
-  "privacyPolicyUrl": "https://karangangani.github.io/Earncrypto/privacy.html"
+  "url": "https://aether-production.github.io/app",
+  "name": "AETHER",
+  "iconUrl": "https://raw.githubusercontent.com/aether-production/app/main/logo.png",
+  "termsOfUseUrl": "https://aether-production.github.io/app/terms.html",
+  "privacyPolicyUrl": "https://aether-production.github.io/app/privacy.html"
 }
