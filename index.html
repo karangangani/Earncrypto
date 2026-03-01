@@ -110,6 +110,10 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
           </div>
         </div>
 
+        <p class="small" style="margin-top:10px">Follow us on Telegram and X .</p>
+      </div>
+    </div>
+
     <!-- EARN -->
     <div id="tasks" class="section">
       <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">100</span> Ae)</button>
@@ -244,7 +248,8 @@ function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
   if(addClaim) window.__aether_pending.claimed.push(addClaim);
   writeLocal(current, window.__aether_pending);
 }
-  /* ---------------- Flush pending to Firestore ---------------- */
+
+/* ---------------- Flush pending to Firestore ---------------- */
 async function flushPending(force=false){
   try{
     window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
@@ -319,8 +324,7 @@ function showFallbackAdModal(seconds = 20){
     cancel.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
   });
 }
-
-/* ================== UI helpers (ensure defined before init) ================== */
+  /* ================== UI helpers (ensure defined before init) ================== */
 function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
 function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.ae || 0);
@@ -339,7 +343,6 @@ function openTab(tabId, ev){
   if (tabId === 'referral'){ loadRefList(); /* leaderboard removed to save reads */ }
   if (tabId === 'airdrop') toggleAirdropSection();
 }
-
 /* ---------------- Level logic ---------------- */
 function computeLevel(){
   const refsCount = (current.refs || []).length;
@@ -450,7 +453,8 @@ async function initApp(){
 
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
-  // TON connect
+
+    // TON connect
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
