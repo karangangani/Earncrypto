@@ -21,45 +21,15 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-/* ================= STYLES ================= */
-/* Theme variables (dark default) */
 :root{
-  --bg-start: #0c0c0c;
-  --bg-end: #1a1a2e;
-  --card:#0f0f23;
-  --accent:#00d38a;
-  --text:#ffffff;
-  --muted:#a0a8b0;
-  --border: rgba(0,211,138,0.22);
-  --glow: 0 0 20px rgba(0,211,138,0.35);
+  --bg-start:#0c0c0c; --bg-end:#1a1a2e; --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.22); --glow:0 0 20px rgba(0,211,138,0.35);
 }
-
-/* Light theme override */
-:root.light {
-  --bg-start: #f6f8fa;
-  --bg-end: #e9eef2;
-  --card: #ffffff;
-  --accent: #007aef;
-  --text: #0b1320;
-  --muted: #5b6770;
-  --border: rgba(0,122,239,0.12);
-  --glow: 0 0 12px rgba(0,122,239,0.08);
-}
+:root.light{ --bg-start:#f6f8fa; --bg-end:#e9eef2; --card:#fff; --accent:#007aef; --text:#0b1320; --muted:#5b6770; --border:rgba(0,122,239,0.12); --glow:0 0 12px rgba(0,122,239,0.08); }
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family: "Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
-  background: linear-gradient(135deg,var(--bg-start),var(--bg-end));
-  color:var(--muted);
-  min-height:100vh;
-  padding:14px;
-  overflow-x:hidden;
-  transition:background .3s, color .3s;
-}
+body{font-family:Segoe UI,Tahoma,Verdana,sans-serif;background:linear-gradient(135deg,var(--bg-start),var(--bg-end));color:var(--muted);min-height:100vh;padding:14px;overflow-x:hidden;transition:background .25s}
 .wrap{max-width:720px;margin:12px auto}
-.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;
-  background:linear-gradient(135deg, rgba(0,211,138,0.04), rgba(0,211,138,0.01));
-  border:1px solid var(--border);box-shadow:var(--glow)}
+.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:linear-gradient(135deg, rgba(0,211,138,0.04), rgba(0,211,138,0.01));border:1px solid var(--border);box-shadow:var(--glow)}
 .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:900;position:relative;box-shadow:var(--glow)}
 .logo::after{content:'Ae';font-size:24px;font-weight:900;color:var(--accent);text-shadow:var(--glow)}
 .user-dp{width:32px;height:32px;border-radius:50%;margin-left:8px;border:2px solid var(--accent)}
@@ -74,11 +44,10 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .tab{flex:1;padding:12px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:var(--muted);transition:all 0.3s;font-weight:600}
 .tab.active{background:rgba(0,211,138,0.14);color:var(--text);border-color:var(--accent);box-shadow:var(--glow)}
 .section{display:none;padding-top:12px}
-.section.active{display:block;animation:fadeIn .4s}
+.section.active{display:block;animation:fadeIn .35s}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.3s;box-shadow:0 4px 10px rgba(0,211,138,0.25)}
+.btn{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.2s;box-shadow:0 4px 10px rgba(0,211,138,0.22)}
 .btn.secondary{background:linear-gradient(135deg,#333,#555);color:#fff}
-.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
 .ref-box{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(0,211,138,0.03);border:1px solid var(--border)}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
@@ -89,121 +58,43 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
 .footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.06);border-radius:12px}
 
-/* Settings button */
-.gear { margin-left:auto; cursor:pointer; width:34px; height:34px; border-radius:8px; display:flex;align-items:center;justify-content:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); }
+/* channel + X buttons same size */
+.social-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.social-btn{flex:1;min-width:170px;display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));cursor:pointer}
+.social-btn .icon{width:20px;height:20px;display:inline-block}
+
+/* splash */
+#aether-splash{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%, rgba(0,255,170,0.06), transparent 10%), linear-gradient(135deg,#040812,#081018)}
+#splash-logo{width:110px;height:110px;border-radius:14px;background:url('https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg') center/cover;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+#splash-loader{width:46px;height:46px;border-radius:50%;margin:12px auto;border:4px solid rgba(255,255,255,0.06);border-top-color:var(--accent);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* settings modal */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:999998;background:rgba(0,0,0,0.6)}
+.modal .card{max-width:420px;width:92%;padding:18px;border-radius:12px;background:var(--card);border:1px solid var(--border);color:var(--muted)}
+.gear{margin-left:auto;cursor:pointer;width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);border:1px solid var(--border)}
 .gear svg{width:18px;height:18px;fill:var(--muted)}
-
-/* Modal */
-.modal { position: fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:99999; background: rgba(0,0,0,0.6); }
-.modal .card { max-width:420px; width:92%; padding:18px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--muted) }
-
-/* Splash styles are inserted by splash HTML later */
 </style>
 </head>
 <body>
-<!-- ========== SPLASH (ADDED) ========== -->
-<div id="aether-splash" style="position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%, rgba(0,255,170,0.06), transparent 10%), linear-gradient(135deg,#040812,#081018);">
+<!-- SPLASH -->
+<div id="aether-splash" aria-hidden="true">
   <canvas id="aether-bg-canvas" style="position:absolute;inset:0"></canvas>
   <div style="position:relative;z-index:2;text-align:center;color:#c8f9ea;padding:20px">
     <div style="width:140px;height:140px;margin:0 auto 12px;border-radius:18px;background:#0a1620;display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
-      <div id="splash-logo" style="width:110px;height:110px;border-radius:14px;background:url('https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg') center/cover;"></div>
+      <div id="splash-logo"></div>
     </div>
     <h2 style="color:var(--accent);margin:0;font-weight:800">Welcome to <span style="color:#fff">AETHER</span></h2>
     <p style="color:#bfeee0;margin-top:6px">Official • Earn • Airdrop — Phase 1</p>
     <div style="margin-top:12px">
-      <div id="splash-loader" style="width:56px;height:56px;border-radius:50%;margin:0 auto;border:4px solid rgba(255,255,255,0.08);border-top-color:var(--accent);animation:spin 1s linear infinite"></div>
+      <div id="splash-loader"></div>
       <div id="splash-text" style="margin-top:10px;color:#bfeee0;font-size:13px">Initializing...</div>
     </div>
+    <div style="margin-top:14px;color:#bfeee0;font-size:12px">Tap to continue</div>
   </div>
 </div>
 
-<script>
-/* =========== SPLASH ANIMATION + SOUND =========== */
-(function(){
-  const canvas = document.getElementById('aether-bg-canvas');
-  const ctx = canvas.getContext('2d');
-  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
-  addEventListener('resize', resize); resize();
-
-  const particles = [];
-  for(let i=0;i<80;i++){
-    particles.push({
-      x: Math.random()*canvas.width,
-      y: Math.random()*canvas.height,
-      r: 0.6 + Math.random()*1.8,
-      dx: (Math.random()-0.5)*0.4,
-      dy: (Math.random()-0.5)*0.4,
-      a: 0.05 + Math.random()*0.2
-    });
-  }
-
-  function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    particles.forEach(p=>{
-      ctx.beginPath();
-      ctx.fillStyle = `rgba(0,255,170,${p.a})`;
-      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fill();
-      p.x += p.dx; p.y += p.dy;
-      if(p.x<0||p.x>canvas.width) p.dx *= -1;
-      if(p.y<0||p.y>canvas.height) p.dy *= -1;
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-
-  // Play a soft click/chime using WebAudio (will only play if browser allows)
-  function playChime(){
-    try{
-      const ac = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ac.createOscillator();
-      const g = ac.createGain();
-      o.type = 'sine';
-      o.frequency.value = 480;
-      g.gain.value = 0.0001;
-      o.connect(g);
-      g.connect(ac.destination);
-      const now = ac.currentTime;
-      // ramp up/down
-      g.gain.linearRampToValueAtTime(0.02, now + 0.02);
-      o.start(now);
-      g.gain.linearRampToValueAtTime(0.0, now + 0.45);
-      o.stop(now + 0.5);
-      // close audio context after short time
-      setTimeout(()=>{ try{ ac.close(); }catch(e){} }, 800);
-    }catch(e){}
-  }
-
-  // Auto-hide splash after 3.2s (or faster if user taps)
-  const splash = document.getElementById('aether-splash');
-  let hideTimeout = setTimeout(hideSplash, 3200);
-
-  // If user interacts (tap) — stop splash early and let chime play if enabled
-  splash.addEventListener('click', ()=>{ hideSplash(); });
-
-  // We will check saved user settings for sound; if sound enabled, play chime on showing
-  try{
-    const st = JSON.parse(localStorage.getItem('aether_state_v6')||'{}');
-    const soundOn = st && st.settings && st.settings.sound === false ? false : true; // default true
-    if (soundOn) setTimeout(()=>playChime(), 220); // small delay
-  }catch(e){ setTimeout(()=>playChime(), 220); }
-
-  function hideSplash(){
-    if (!splash) return;
-    splash.style.transition = 'opacity .45s ease, transform .45s ease';
-    splash.style.opacity = '0';
-    splash.style.pointerEvents = 'none';
-    clearTimeout(hideTimeout);
-    setTimeout(()=>{ splash.remove(); }, 600);
-  }
-
-  // ensure splash removed if page is already interacted with/ready
-  document.addEventListener('DOMContentLoaded', ()=>{ /* kept for compatibility */ });
-
-})();
-</script>
-
-<!-- ========== APP UI ========== -->
+<!-- APP -->
 <div class="wrap" id="app-root" style="position:relative;z-index:1">
   <div class="header">
     <div class="logo"></div>
@@ -212,10 +103,8 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       <h1>AETHER — Earn & Airdrop</h1>
       <div id="userLine" class="sub">Loading...</div>
     </div>
-
-    <!-- Settings gear -->
-    <div class="gear" id="openSettings" title="Settings (theme & sound)">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8.4A3.6 3.6 0 1 0 12 15.6a3.6 3.6 0 0 0 0-7.2zM19.4 12.9l1.5-1.1-1-1.7-1.8.3a7.9 7.9 0 0 0-1-.6l-.3-1.9h-2.1l-.3 1.9c-.3.1-.6.2-1 .3l-1.8-.4-1 1.7 1.5 1.1c-.1.3-.1.6-.1.9s0 .6.1.9l-1.5 1.1 1 1.7 1.8-.3c.3.3.6.5 1 .6l.3 1.9h2.1l.3-1.9c.3-.1.7-.2 1-.3l1.8.4 1-1.7-1.5-1.1c.1-.3.1-.6.1-.9s0-.6-.1-.9z" fill="currentColor"/></svg>
+    <div class="gear" id="openSettings" title="Settings">
+      <svg viewBox="0 0 24 24"><path d="M12 8.4A3.6 3.6 0 1 0 12 15.6 3.6 3.6 0 0 0 12 8.4zM19.4 12.9l1.5-1.1-1-1.7-1.8.3a7.9 7.9 0 0 0-1-.6l-.3-1.9h-2.1l-.3 1.9c-.3.1-.6.2-1 .3l-1.8-.4-1 1.7 1.5 1.1c-.1.3-.1.6-.1.9s0 .6.1.9l-1.5 1.1 1 1.7 1.8-.3c.3.3.6.5 1 .6l.3 1.9h2.1l.3-1.9c.3-.1.7-.2 1-.3l1.8.4 1-1.7-1.5-1.1c.1-.3.1-.6.1-.9s0-.6-.1-.9z"/></svg>
     </div>
   </div>
 
@@ -231,26 +120,23 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       <div class="tab" onclick="openTab('tasks', event)">Earn</div>
       <div class="tab" onclick="openTab('referral', event)">Invite</div>
       <div class="tab" onclick="openTab('airdrop', event)">Airdrop</div>
-      </div>
-       <!-- HOME -->
+    </div>
+
+    <!-- HOME -->
     <div id="home" class="section active">
       <div class="ref-box">
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <div style="flex:1;min-width:180px">
-            <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">⭐ Official Channel</h3>
-            <button id="openChannel" class="btn secondary" style="width:100%;padding:10px;font-size:14px">Join @Aetherofficialchannel</button>
+        <div class="social-row">
+          <div id="openChannel" class="social-btn" title="Join Telegram channel">
+            <div class="icon" style="background:url('https://telegram.org/img/t_logo.svg') center/contain no-repeat"></div>
+            <div style="font-weight:700">Join @Aetherofficialchannel</div>
           </div>
 
-          <div style="width:180px;min-width:140px">
-            <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">Follow on X</h3>
-            <button id="followXBtn" class="x-follow primary" title="Follow us on X (Twitter)">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 3c-.8.35-1.7.58-2.6.69a4.48 4.48 0 0 0 1.96-2.48c-.86.51-1.8.87-2.8 1.07A4.48 4.48 0 0 0 16.5 2c-2.5 0-4.5 2.05-4.5 4.58 0 .36.04.71.12 1.05C8.1 7.55 4.3 5.7 1.7 2.48c-.4.68-.6 1.47-.6 2.32 0 1.6.82 3.02 2.06 3.85-.76-.03-1.47-.24-2.09-.57v.06c0 2.25 1.6 4.13 3.73 4.55-.39.11-.8.16-1.22.16-.3 0-.6-.03-.88-.08.6 1.94 2.35 3.35 4.42 3.39A9.04 9.04 0 0 1 1 19.54a12.8 12.8 0 0 0 6.92 2.03c8.3 0 12.85-6.8 12.85-12.7v-.58A8.94 8.94 0 0 0 23 3z"/></svg>
-              <span style="font-size:14px">Follow @Aetherofficia97</span>
-            </button>
+          <div id="followXBtn" class="social-btn" title="Follow on X">
+            <div class="icon" style="background:url('https://raw.githubusercontent.com/karanrajani/icons/main/x.svg') center/contain no-repeat"></div>
+            <div style="font-weight:700">Follow @Aetherofficia97</div>
           </div>
         </div>
-
-        <p class="small" style="margin-top:10px">Follow us on Telegram and X.</p>
+        <p class="small" style="margin-top:10px">Follow our official channels to get updates & airdrop news.</p>
       </div>
     </div>
 
@@ -298,14 +184,13 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
         <p class="small" id="walletStatus" style="margin-top:16px">Not Connected</p>
       </div>
     </div>
+ </div>
 
-  </div>
-
-  <div class="footer">© AETHER •  Project 2026</div>
+  <div class="footer">© AETHER • Project 2026</div>
 </div>
 
 <!-- SETTINGS MODAL -->
-<div id="settingsModal" class="modal">
+<div id="settingsModal" class="modal" aria-hidden="true">
   <div class="card">
     <h3 style="color:var(--accent)">Settings</h3>
     <div style="margin-top:10px">
@@ -345,12 +230,11 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "405204250643",
   appId: "1:405204250643:web:8841299bceb46f6752cfe6"
 };
-
 const STATE_KEY = 'aether_state_v6';
 const PENDING_KEY = 'aether_pending_v6';
-const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12h window
-const ADS_WINDOW_LIMIT = 50;  // up to 50 ads in 12h
-const DAILY_AD_LIMIT = 50;    // daily cap (kept same)
+const ADS_WINDOW_MS = 12 * 60 * 60 * 1000;
+const ADS_WINDOW_LIMIT = 50;
+const DAILY_AD_LIMIT = 50;
 const FLUSH_THRESHOLD_AE = 3000;
 const FLUSH_INTERVAL_MS = 2 * 60 * 1000;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
@@ -360,15 +244,13 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-/* ========== Telegram WebApp ========== */
+/* ========== Telegram ========== */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : { ready:()=>{}, initDataUnsafe:{} };
 try { tg.ready(); tg.expand && tg.expand(); } catch(e){}
 
-/* ========== App state ========== */
+/* ========== State ========== */
 let userDocId = null;
 let tonUI = null;
-
-/* current structure includes settings so we persist theme & sound */
 let current = {
   username: '',
   ae: 0,
@@ -385,237 +267,66 @@ let current = {
   multiplierAe: 1,
   giftChosen: false,
   lastSaveTime: Date.now(),
-  // ADS WINDOW fields (persisted) to reliably limit 50 per 12h even cross sessions
   adsWindowStart: Date.now(),
   adsWindowCount: 0,
-  // settings
-  settings: {
-    theme: 'dark',      // 'dark' or 'light'
-    sound: true,        // ui & splash sounds
-    voice: false        // button voice
-  }
-};
-
+  settings: { theme: 'dark', sound: true, voice: false }
+  };
 window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
-/* ---------------- Local storage helpers ---------------- */
-function readLocal(){
-  try{
-    return {
-      state: JSON.parse(localStorage.getItem(STATE_KEY) || 'null') || {},
-      pending: JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 }
-    };
-  }catch(e){ return { state:{}, pending:{ aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 } }; }
-}
-function writeLocal(stateObj, pendingObj){
-  try{
-    if(stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
-    if(pendingObj) localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
-  }catch(e){ console.warn('local write failed', e); }
-}
+/* ---------------- Local helpers ---------------- */
+function readLocal(){ try{ return { state: JSON.parse(localStorage.getItem(STATE_KEY) || 'null') || {}, pending: JSON.parse(localStorage.getItem(PENDING_KEY) || 'null') || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 } }; }catch(e){ return { state:{}, pending:{ aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 } }; } }
+function writeLocal(stateObj, pendingObj){ try{ if(stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj)); if(pendingObj) localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj)); }catch(e){ console.warn('local write failed', e); } }
+(function initLocal(){ const { state, pending } = readLocal(); if (state && Object.keys(state).length) Object.assign(current, state); window.__aether_pending = pending || window.__aether_pending; applyThemeFromState(); })();
 
-/* init from local (merge) */
-(function initLocal(){
-  const { state, pending } = readLocal();
-  if (state && Object.keys(state).length) {
-    // merge persisted state into current safely
-    Object.assign(current, state);
-    if (state.settings) current.settings = Object.assign(current.settings || {}, state.settings);
-  }
-  window.__aether_pending = pending || window.__aether_pending;
-  applyThemeFromState();
-})();
-
-/* ================== UTIL: play short click (if voice enabled) =============== */
-function playClick(){
+/* ================= SPLASH logic ================= */
+const splash = document.getElementById('aether-splash');
+function hideSplashNow(){
   try{
-    const s = current.settings && current.settings.sound !== false;
-    const v = current.settings && current.settings.voice === true;
-    if (!s) return;
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ac.createOscillator();
-    const g = ac.createGain();
-    o.type = 'triangle';
-    o.frequency.value = v ? 600 : 420;
-    g.gain.value = 0.0001;
-    o.connect(g);
-    g.connect(ac.destination);
-    const now = ac.currentTime;
-    g.gain.linearRampToValueAtTime(0.02, now + 0.01);
-    o.start(now);
-    g.gain.linearRampToValueAtTime(0.0, now + 0.12);
-    o.stop(now + 0.14);
-    setTimeout(()=>{ try{ ac.close(); }catch(e){} }, 300);
+    if(!splash) return;
+    splash.style.transition = 'opacity .35s ease, transform .35s ease';
+    splash.style.opacity = '0';
+    splash.style.pointerEvents = 'none';
+    setTimeout(()=>{ if (splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 500);
   }catch(e){}
 }
+// fallback: remove splash after 6s in case init fails
+const splashFallback = setTimeout(()=>{ hideSplashNow(); }, 6000);
+// small background particle canvas (visual only)
+(function(){ const c=document.getElementById('aether-bg-canvas'); if(!c) return; const ctx=c.getContext('2d'); function r(){ c.width=innerWidth; c.height=innerHeight; } r(); addEventListener('resize', r); const ps=[]; for(let i=0;i<80;i++) ps.push({x:Math.random()*c.width,y:Math.random()*c.height,r:0.6+Math.random()*1.8,dx:(Math.random()-0.5)*0.4,dy:(Math.random()-0.5)*0.4,a:0.04+Math.random()*0.2}); function draw(){ ctx.clearRect(0,0,c.width,c.height); ps.forEach(p=>{ ctx.beginPath(); ctx.fillStyle=`rgba(0,255,170,${p.a})`; ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); p.x+=p.dx; p.y+=p.dy; if(p.x<0||p.x>c.width) p.dx*=-1; if(p.y<0||p.y>c.height) p.dy*=-1; }); requestAnimationFrame(draw); } draw(); })();
 
-/* ================ PENDING QUEUE HELPERS ================ */
-function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
-  window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
-  window.__aether_pending.aeDelta += Number(aeDelta||0);
-  window.__aether_pending.adsDelta += Number(adsDelta||0);
-  if(addRef) window.__aether_pending.refs.push(addRef);
-  if(addClaim) window.__aether_pending.claimed.push(addClaim);
-  writeLocal(current, window.__aether_pending);
-}
+/* ================= tiny ui-sound ================= */
+function playClick(){ try{ if(!current.settings || current.settings.sound===false) return; const ac=new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(), g=ac.createGain(); o.type='triangle'; o.frequency.value = current.settings.voice?620:420; g.gain.value=0.0001; o.connect(g); g.connect(ac.destination); const now=ac.currentTime; g.gain.linearRampToValueAtTime(0.02, now+0.01); o.start(now); g.gain.linearRampToValueAtTime(0, now+0.12); o.stop(now+0.14); setTimeout(()=>{ try{ ac.close(); }catch(e){} }, 300);}catch(e){} }
 
-/* ================ FLUSH TO FIRESTORE ================ */
-async function flushPending(force=false){
-  try{
-    window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
-    const p = window.__aether_pending;
-    const now = Date.now();
-    const shouldFlush = force || Math.abs(p.aeDelta || 0) >= FLUSH_THRESHOLD_AE || (now - (p.lastFlush || 0)) > (24*60*60*1000);
-    if (!shouldFlush) return;
-    const updates = {};
-    if (p.aeDelta) updates.ae = firebase.firestore.FieldValue.increment(p.aeDelta);
-    if (p.adsDelta) { updates.totalAds = firebase.firestore.FieldValue.increment(p.adsDelta); updates.adsToday = firebase.firestore.FieldValue.increment(p.adsDelta); }
-    if (p.refs && p.refs.length) updates.refs = firebase.firestore.FieldValue.arrayUnion(...p.refs);
-    if (p.claimed && p.claimed.length) updates.claimedLevels = firebase.firestore.FieldValue.arrayUnion(...p.claimed);
-    updates.lastSaveTime = now;
-    await db.collection('users').doc(userDocId).update(updates);
-    window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now };
-    writeLocal(current, window.__aether_pending);
-    const fresh = await db.collection('users').doc(userDocId).get();
-    if (fresh.exists) { Object.assign(current, fresh.data()); writeLocal(current, window.__aether_pending); updateUI(); }
-  }catch(e){ console.warn('flush pending error', e); throw e; }
-}
-
-/* periodic flush & hooks */
+/* ================= PENDING helpers ================= */
+function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){ window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 }; window.__aether_pending.aeDelta += Number(aeDelta||0); window.__aether_pending.adsDelta += Number(adsDelta||0); if(addRef) window.__aether_pending.refs.push(addRef); if(addClaim) window.__aether_pending.claimed.push(addClaim); writeLocal(current, window.__aether_pending); }
+async function flushPending(force=false){ try{ window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 }; const p=window.__aether_pending; const now=Date.now(); const shouldFlush = force || Math.abs(p.aeDelta||0)>=FLUSH_THRESHOLD_AE || (now-(p.lastFlush||0)) > (24*60*60*1000); if(!shouldFlush) return; const updates={}; if(p.aeDelta) updates.ae = firebase.firestore.FieldValue.increment(p.aeDelta); if(p.adsDelta){ updates.totalAds = firebase.firestore.FieldValue.increment(p.adsDelta); updates.adsToday = firebase.firestore.FieldValue.increment(p.adsDelta); } if(p.refs && p.refs.length) updates.refs = firebase.firestore.FieldValue.arrayUnion(...p.refs); if(p.claimed && p.claimed.length) updates.claimedLevels = firebase.firestore.FieldValue.arrayUnion(...p.claimed); updates.lastSaveTime = now; await db.collection('users').doc(userDocId).update(updates); window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now }; writeLocal(current, window.__aether_pending); const fresh = await db.collection('users').doc(userDocId).get(); if(fresh.exists){ Object.assign(current, fresh.data()); writeLocal(current, window.__aether_pending); updateUI(); } }catch(e){ console.warn('flush pending error', e); } }
 setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
-document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
-window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending);}catch(e){} });
-  /* ================== AD HELPER (robust) ================== */
-function showAdNormalized(timeoutMs = 30000){
-  return new Promise((resolve) => {
-    const timer = setTimeout(()=>{ resolve({ completed: false, reason:'timeout' }); }, timeoutMs);
-    try{
-      if (window.show_10192178 && typeof window.show_10192178 === 'function'){
-        const maybe = window.show_10192178('');
-        if (maybe && typeof maybe.then === 'function'){
-          maybe.then(res => { clearTimeout(timer); if(res && typeof res === 'object' && ('completed' in res)) resolve({completed: !!res.completed}); else resolve({completed:true}); }).catch(err=>{ clearTimeout(timer); resolve({completed:false, reason: err && err.message}); });
-          return;
-        }
-      }
-    }catch(e){}
-    try{
-      if (window.libtl && typeof window.libtl.show === 'function'){
-        window.libtl.show({ zone:'10192178', onComplete: ()=>{ clearTimeout(timer); resolve({completed:true}); }, onClose:(watched)=>{ clearTimeout(timer); resolve({completed: !!watched}); }, onError: ()=>{ clearTimeout(timer); resolve({completed:false}); } });
-        return;
-      }
-    }catch(e){}
-    const handler = (ev) => { clearTimeout(timer); try{ const ok = !!(ev.detail && (ev.detail.completed || ev.detail.success)); resolve({completed: ok}); } catch(e){ resolve({completed:false}); } window.removeEventListener('libtl_ad_result', handler); };
-    window.addEventListener('libtl_ad_result', handler);
-    try{ if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); }catch(e){}
-  });
-}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
+window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending); }catch(e){} });
 
-/* fallback short modal (if SDK down) */
-function showFallbackAdModal(seconds = 20){
-  return new Promise((resolve) => {
-    let modal = document.getElementById('fallback-ad-modal');
-    if (!modal){
-      modal = document.createElement('div'); modal.id='fallback-ad-modal';
-      Object.assign(modal.style,{position:'fixed',left:0,right:0,top:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.6)',zIndex:99999});
-      modal.innerHTML = `<div style="width:90%;max-width:420px;background:#0f1724;padding:18px;border-radius:12px;color:#fff;text-align:center;border:1px solid rgba(0,211,138,0.15)">
-        <h3 style="color:#00d38a">Short flow for reward</h3>
-        <p style="color:#d0d6db">Ad provider temporarily unavailable. Wait <span id="fallback-count">${seconds}</span>s to get the reward, or Cancel.</p>
-        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-          <button id="fallback-cancel" style="padding:10px 14px;border-radius:8px;border:none;background:#333;color:#fff;cursor:pointer">Cancel</button>
-        </div></div>`;
-      document.body.appendChild(modal);
-    }
-    modal.style.display='flex';
-    const countEl = modal.querySelector('#fallback-count'); const cancel = modal.querySelector('#fallback-cancel');
-    let rem = seconds; countEl.innerText = rem;
-    const iv = setInterval(()=>{ rem--; countEl.innerText = rem; if(rem<=0){ clearInterval(iv); modal.style.display='none'; resolve({completed:true}); } },1000);
-    cancel.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
-  });
-}
-
+/* ================== AD helpers (unchanged logic but robust window) ================== */
+function showAdNormalized(timeoutMs=30000){ return new Promise((resolve)=>{ const timer=setTimeout(()=>resolve({completed:false,reason:'timeout'}), timeoutMs); try{ if(window.show_10192178 && typeof window.show_10192178==='function'){ const maybe=window.show_10192178(''); if(maybe && typeof maybe.then==='function'){ maybe.then(res=>{ clearTimeout(timer); if(res&&typeof res==='object' && ('completed' in res)) resolve({completed:!!res.completed}); else resolve({completed:true}); }).catch(err=>{ clearTimeout(timer); resolve({completed:false,reason:err&&err.message}); }); return; } } }catch(e){} try{ if(window.libtl && typeof window.libtl.show==='function'){ window.libtl.show({ zone:'10192178', onComplete: ()=>{ clearTimeout(timer); resolve({completed:true}); }, onClose:(watched)=>{ clearTimeout(timer); resolve({completed:!!watched}); }, onError: ()=>{ clearTimeout(timer); resolve({completed:false}); } }); return; } }catch(e){} const handler=(ev)=>{ clearTimeout(timer); try{ const ok=!!(ev.detail && (ev.detail.completed||ev.detail.success)); resolve({completed:ok}); }catch(e){ resolve({completed:false}); } window.removeEventListener('libtl_ad_result', handler); }; window.addEventListener('libtl_ad_result', handler); try{ if(window.show_10192178 && typeof window.show_10192178==='function') window.show_10192178(''); }catch(e){} }); }
+function showFallbackAdModal(seconds=20){ return new Promise((resolve)=>{ let modal=document.getElementById('fallback-ad-modal'); if(!modal){ modal=document.createElement('div'); modal.id='fallback-ad-modal'; Object.assign(modal.style,{position:'fixed',left:0,right:0,top:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.6)',zIndex:99999}); modal.innerHTML=`<div style="width:90%;max-width:420px;background:#0f1724;padding:18px;border-radius:12px;color:#fff;text-align:center;border:1px solid rgba(0,211,138,0.15)"><h3 style="color:#00d38a">Short flow for reward</h3><p style="color:#d0d6db">Ad provider temporarily unavailable. Wait <span id="fallback-count">${seconds}</span>s to get the reward, or Cancel.</p><div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><button id="fallback-cancel" style="padding:10px 14px;border-radius:8px;border:none;background:#333;color:#fff;cursor:pointer">Cancel</button></div></div>`; document.body.appendChild(modal); } modal.style.display='flex'; const countEl=modal.querySelector('#fallback-count'); const cancel=modal.querySelector('#fallback-cancel'); let rem=seconds; countEl.innerText=rem; const iv=setInterval(()=>{ rem--; countEl.innerText=rem; if(rem<=0){ clearInterval(iv); modal.style.display='none'; resolve({completed:true}); } },1000); cancel.onclick=()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); }; }); }
 /* ================== UI helpers ================== */
 function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
-function updateUI(){
-  document.getElementById('points').innerText = Math.floor(current.ae || 0);
-  document.getElementById('refs').innerText = (current.refs || []).length;
-  document.getElementById('level').innerText = current.level || 0;
-  document.getElementById('levelDisplay').innerText = current.level || 0;
-  document.getElementById('totalAds').innerText = current.totalAds || 0;
-  updateAdReward();
-  updateWalletButtons();
-}
-function openTab(tabId, ev){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
-  if (tabId === 'referral'){ loadRefList(); /* leaderboard removed to save reads */ }
-  if (tabId === 'airdrop') toggleAirdropSection();
-}
+function updateUI(){ document.getElementById('points').innerText = Math.floor(current.ae || 0); document.getElementById('refs').innerText = (current.refs || []).length; document.getElementById('level').innerText = current.level || 0; document.getElementById('levelDisplay').innerText = current.level || 0; document.getElementById('totalAds').innerText = current.totalAds || 0; updateAdReward(); updateWalletButtons(); }
+function openTab(tabId, ev){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(tabId).classList.add('active'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); if(ev && ev.currentTarget) ev.currentTarget.classList.add('active'); if(tabId==='referral') loadRefList(); if(tabId==='airdrop') toggleAirdropSection(); }
 
-/* ---------------- Level logic ---------------- */
-function computeLevel(){
-  const refsCount = (current.refs || []).length;
-  const adsCount = current.totalAds || 0;
-  current.level = Math.min(refsCount, adsCount);
-  if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
-}
+/* level */
+function computeLevel(){ const refsCount=(current.refs||[]).length; const adsCount=current.totalAds||0; current.level = Math.min(refsCount, adsCount); if(!Number.isFinite(current.level) || current.level<0) current.level=0; }
 
-/* ----------------- refs (DEFINE BEFORE initApp) ----------------- */
-function loadRefList(){
-  const list = document.getElementById('refList');
-  if(!list) return;
-  list.innerHTML='';
-  (current.refs||[]).forEach(r=>{
-    const li = document.createElement('li');
-    li.className='ref-item';
-    li.innerText = `User ID: ${r}`;
-    list.appendChild(li);
-  });
-}
+/* refs list */
+function loadRefList(){ const list=document.getElementById('refList'); if(!list) return; list.innerHTML=''; (current.refs||[]).forEach(r=>{ const li=document.createElement('li'); li.className='ref-item'; li.innerText=`User ID: ${r}`; list.appendChild(li); }); }
 
-/* ----------------- levels & claim ----------------- */
-let levelsRendered = 0;
-function renderLevelsChunk(max){
-  const container = document.getElementById('levelsList');
-  const start = levelsRendered + 1;
-  const end = levelsRendered + max;
-  for (let i=start;i<=end;i++){
-    const refsNeeded = i; const adsNeeded = i; const reward = 500 * i;
-    const el = document.createElement('div'); el.className='level';
-    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
-      <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
-      <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
-      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
-    container.appendChild(el);
-    document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
-  }
-  levelsRendered = end; updateLevelProgressUI();
-}
-function updateLevelProgressUI(){
-  const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
-  for (let i=1;i<=levelsRendered;i++){
-    const btn = document.getElementById(`claim_${i}`); if(!btn) continue;
-    const claimed = (current.claimedLevels || []).includes(i);
-    const canClaim = !claimed && refsCount >= i && adsDone >= i;
-    btn.disabled = !canClaim; btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
-  }
-}
-async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
-  const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
-  if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert && tg.showAlert('Requirements not met');
-  if ((current.claimedLevels||[]).includes(levelNo)) return tg.showAlert && tg.showAlert('Already claimed');
-  current.ae = (current.ae||0) + reward; current.claimedLevels = current.claimedLevels || []; current.claimedLevels.push(levelNo);
-  enqueuePending(reward, 0, null, levelNo); writeLocal(current, window.__aether_pending);
-  computeLevel(); updateUI(); updateLevelProgressUI();
-  if (Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
-  if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
-}
+/* levels rendering */
+let levelsRendered=0;
+function renderLevelsChunk(max){ const container=document.getElementById('levelsList'); const start=levelsRendered+1; const end=levelsRendered+max; for(let i=start;i<=end;i++){ const refsNeeded=i; const adsNeeded=i; const reward=500*i; const el=document.createElement('div'); el.className='level'; el.innerHTML=`<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div><div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div><div class="small" style="margin-top:8px">Reward: ${reward} Ae</div><div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`; container.appendChild(el); document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); }); } levelsRendered=end; updateLevelProgressUI(); }
+function updateLevelProgressUI(){ const refsCount=(current.refs||[]).length; const adsDone=current.totalAds||0; for(let i=1;i<=levelsRendered;i++){ const btn=document.getElementById(`claim_${i}`); if(!btn) continue; const claimed=(current.claimedLevels||[]).includes(i); const canClaim = !claimed && refsCount>=i && adsDone>=i; btn.disabled = !canClaim; btn.innerText = claimed ? 'Claimed ✓' : 'Claim'; } }
+async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){ const refsCount=(current.refs||[]).length; const adsDone=current.totalAds||0; if(refsCount<refsNeeded||adsDone<adsNeeded) return tg.showAlert && tg.showAlert('Requirements not met'); if((current.claimedLevels||[]).includes(levelNo)) return tg.showAlert && tg.showAlert('Already claimed'); current.ae=(current.ae||0)+reward; current.claimedLevels=current.claimedLevels||[]; current.claimedLevels.push(levelNo); enqueuePending(reward,0,null,levelNo); writeLocal(current, window.__aether_pending); computeLevel(); updateUI(); updateLevelProgressUI(); if(Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true); if(tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`); }
 
-/* ----------------- init app ----------------- */
+/* initApp */
 const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
-
 async function initApp(){
   try{
     await auth.signInAnonymously();
@@ -631,31 +342,26 @@ async function initApp(){
       try{ await docRef.set(current); } catch(e){ console.warn('create failed', e); }
     } else {
       Object.assign(current, doc.data());
-      // ensure adsWindow* fields exist
-      if (!current.adsWindowStart) current.adsWindowStart = Date.now();
-      if (typeof current.adsWindowCount !== 'number') current.adsWindowCount = 0;
-      if (!current.settings) current.settings = { theme:'dark', sound:true, voice:false };
+      if(!current.adsWindowStart) current.adsWindowStart = Date.now();
+      if(typeof current.adsWindowCount !== 'number') current.adsWindowCount = 0;
+      if(!current.settings) current.settings = { theme:'dark', sound:true, voice:false };
     }
-
-    // apply theme & settings from current
     applyThemeFromState();
-    // UI
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
     document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
 
-    // realtime update (merge server and reapply pending visually)
     docRef.onSnapshot(snap => {
-      if (!snap.exists) return;
+      if(!snap.exists) return;
       const server = snap.data();
       Object.assign(current, server);
-      // reapply pending visual deltas
       if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
       if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
       computeLevel(); updateUI(); updateLevelProgressUI(); updateAdReward(); updateWalletButtons(); toggleAirdropSection();
     });
 
     // UI hooks
-    document.getElementById('openChannel').onclick = ()=>{ playClick(); if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
+    document.getElementById('openChannel').onclick = ()=>{ playClick(); if(tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
+    document.getElementById('followXBtn').onclick = ()=>{ playClick(); const X_URL = 'https://x.com/Aetherofficia97'; try{ window.open(X_URL, '_blank', 'noopener,noreferrer'); }catch(e){ location.href = X_URL; } };
     document.getElementById('copyRef').onclick = copyRefHandler;
     document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
     document.getElementById('watchAd').onclick = watchAdHandler;
@@ -663,28 +369,28 @@ async function initApp(){
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
 
-    // TON connect (same as before)
+    // TON connect
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
-      if (wallet && wallet.account && wallet.account.address) {
-        await trySaveTonWallet(wallet.account.address);
-      } else {
-        try{ await docRef.update({ tonWallet: '' }); } catch(e){}
-        current.tonWallet = '';
-        updateUI(); updateWalletButtons();
-      }
+      if (wallet && wallet.account && wallet.account.address) { await trySaveTonWallet(wallet.account.address); } else { try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); }
     });
     document.getElementById('connectTon').onclick = ()=>{ playClick(); tonUI.connectWallet(); };
-    document.getElementById('disconnectTon').onclick = async ()=>{ playClick(); try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
+    document.getElementById('disconnectTon').onclick = async ()=>{ playClick(); try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if(tg.showAlert) tg.showAlert('Wallet disconnected!'); };
 
     if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
 
     renderLevelsChunk(20);
-    await resetDailyAdsIfNeeded(); // daily reset (keeps previous behavior)
+    await resetDailyAdsIfNeeded();
     updateUI(); updateAdReward();
     loadRefList();
 
-    // recover stuck button when user returns from ad (focus)
+    // settings modal
+    document.getElementById('openSettings').addEventListener('click', ()=>{ playClick(); openSettingsModal(); });
+    document.getElementById('closeSettings').addEventListener('click', ()=>{ playClick(); closeSettingsModal(); });
+    document.getElementById('saveSettings').addEventListener('click', ()=>{ playClick(); saveSettingsModal(); });
+    populateSettingsControls();
+
+    // focus recovery
     window.addEventListener('focus', () => {
       const btn = document.getElementById('watchAd');
       if (!btn) return;
@@ -696,233 +402,46 @@ async function initApp(){
       }
     });
 
-    // follow X button hook
-    document.getElementById('followXBtn')?.addEventListener('click', ()=> {
-      playClick();
-      const X_URL = 'https://x.com/Aetherofficia97';
-      try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; }
-    });
-
-    // Settings UI hookup
-    document.getElementById('openSettings').addEventListener('click', ()=>{ playClick(); openSettingsModal(); });
-    document.getElementById('closeSettings').addEventListener('click', ()=>{ playClick(); closeSettingsModal(); });
-    document.getElementById('saveSettings').addEventListener('click', ()=>{ playClick(); saveSettingsModal(); });
-
-    // load initial settings into modal controls
-    populateSettingsControls();
-
-    // periodic small save & flush
+    // periodic save small state + flush attempt
     setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false); }catch(e){} }, 60*1000);
 
+    // INIT DONE -> hide splash now and clear fallback
+    clearTimeout(splashFallback);
+    hideSplashNow();
   }catch(e){
     console.error('initApp err', e);
-    if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e));
+    try{ if(tg.showAlert) tg.showAlert('Init error: ' + (e.message||e)); }catch(e){}
+    // ensure user sees UI even on error
+    clearTimeout(splashFallback);
+    hideSplashNow();
   }
-/* ----------------- SETTINGS helpers ----------------- */
+}
+
+/* SETTINGS helpers */
 function openSettingsModal(){ document.getElementById('settingsModal').style.display='flex'; populateSettingsControls(); }
 function closeSettingsModal(){ document.getElementById('settingsModal').style.display='none'; }
-function populateSettingsControls(){
-  const theme = (current.settings && current.settings.theme) || 'dark';
-  const sound = (current.settings && current.settings.sound) !== false;
-  const voice = (current.settings && current.settings.voice) === true;
-  document.getElementById('themeSelect').value = theme;
-  document.getElementById('soundToggle').checked = sound;
-  document.getElementById('voiceToggle').checked = voice;
-}
-function saveSettingsModal(){
-  const theme = document.getElementById('themeSelect').value;
-  const sound = document.getElementById('soundToggle').checked;
-  const voice = document.getElementById('voiceToggle').checked;
-  current.settings = current.settings || {};
-  current.settings.theme = theme;
-  current.settings.sound = !!sound;
-  current.settings.voice = !!voice;
-  applyThemeFromState();
-  writeLocal(current, window.__aether_pending);
-  closeSettingsModal();
-  if (tg.showAlert) tg.showAlert('Settings saved.');
-}
-function applyThemeFromState(){
-  try{
-    const root = document.documentElement;
-    if (current.settings && current.settings.theme === 'light') root.classList.add('light'), root.style.transition='background .25s';
-    else root.classList.remove('light');
-  }catch(e){}
-}
+function populateSettingsControls(){ const theme=(current.settings&&current.settings.theme)||'dark'; document.getElementById('themeSelect').value = theme; document.getElementById('soundToggle').checked = (current.settings && current.settings.sound) !== false; document.getElementById('voiceToggle').checked = (current.settings && current.settings.voice) === true; }
+function saveSettingsModal(){ const theme = document.getElementById('themeSelect').value; const sound = document.getElementById('soundToggle').checked; const voice = document.getElementById('voiceToggle').checked; current.settings = current.settings || {}; current.settings.theme = theme; current.settings.sound = !!sound; current.settings.voice = !!voice; applyThemeFromState(); writeLocal(current, window.__aether_pending); closeSettingsModal(); if(tg.showAlert) tg.showAlert('Settings saved.'); }
+function applyThemeFromState(){ try{ const root=document.documentElement; if(current.settings && current.settings.theme==='light') root.classList.add('light'); else root.classList.remove('light'); }catch(e){} }
 
-/* ================ saveSmallState ================= */
-async function saveSmallState(){
-  try{
-    const small = {
-      tonWallet: current.tonWallet||'',
-      lastResetDate: current.lastResetDate||new Date().toDateString(),
-      lastSaveTime: Date.now(),
-      username: current.username||'',
-      adsWindowStart: current.adsWindowStart || Date.now(),
-      adsWindowCount: current.adsWindowCount || 0,
-      settings: current.settings || {}
-    };
-    await db.collection('users').doc(userDocId).set(small, { merge: true });
-    // persist whole current locally
-    writeLocal(current, window.__aether_pending);
-  }catch(e){
-    writeLocal(current, window.__aether_pending);
-  }
-}
+/* save small state */
+async function saveSmallState(){ try{ const small = { tonWallet: current.tonWallet||'', lastResetDate: current.lastResetDate||new Date().toDateString(), lastSaveTime: Date.now(), username: current.username||'', adsWindowStart: current.adsWindowStart||Date.now(), adsWindowCount: current.adsWindowCount||0, settings: current.settings||{} }; await db.collection('users').doc(userDocId).set(small, { merge: true }); writeLocal(current, window.__aether_pending); }catch(e){ writeLocal(current, window.__aether_pending); } }
 
-/* ================ AD WINDOW: reliable reset ================= */
-/*
-  Fix: store adsWindowStart & adsWindowCount directly on `current` and persist.
-  When user tries to watch an ad, check:
-    - if now - current.adsWindowStart >= ADS_WINDOW_MS -> reset adsWindowCount & adsWindowStart
-    - if current.adsWindowCount >= ADS_WINDOW_LIMIT -> block
-  This avoids using ephemeral local.state and ensures correct reset across sessions.
-*/
-async function resetAdsWindowIfNeeded(){
-  const now = Date.now();
-  if (!current.adsWindowStart) current.adsWindowStart = now;
-  if (now - (current.adsWindowStart || 0) >= ADS_WINDOW_MS){
-    current.adsWindowStart = now;
-    current.adsWindowCount = 0;
-    // persist small
-    try{ await saveSmallState(); }catch(e){}
-  }
-}
+/* ads-window reset */
+async function resetAdsWindowIfNeeded(){ const now = Date.now(); if(!current.adsWindowStart) current.adsWindowStart = now; if(now - (current.adsWindowStart||0) >= ADS_WINDOW_MS){ current.adsWindowStart = now; current.adsWindowCount = 0; try{ await saveSmallState(); }catch(e){} } }
 
-/* ----------------- watchAd handler (updated) ----------------- */
+/* watch ad handler */
 async function watchAdHandler(){
   await resetDailyAdsIfNeeded();
   await resetAdsWindowIfNeeded();
-
   const now = Date.now();
-  if ((current.adsToday || 0) >= DAILY_AD_LIMIT) { if (tg.showAlert) tg.showAlert(`Daily limit reached (${DAILY_AD_LIMIT})`); return; }
-  if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT) { if (tg.showAlert) tg.showAlert(`12h window limit reached (${ADS_WINDOW_LIMIT})`); return; }
-
+  if((current.adsToday||0) >= DAILY_AD_LIMIT){ if(tg.showAlert) tg.showAlert(`Daily limit reached (${DAILY_AD_LIMIT})`); return; }
+  if((current.adsWindowCount||0) >= ADS_WINDOW_LIMIT){ if(tg.showAlert) tg.showAlert(`12h window limit reached (${ADS_WINDOW_LIMIT})`); return; }
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
   const originalText = btn.innerText || `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
-
-  const prevAe = current.ae || 0;
-  const prevTotalAds = current.totalAds || 0;
-
+  const prevAe = current.ae || 0, prevTotalAds = current.totalAds || 0;
   try{
     const res = await showAdNormalized(30000);
     let completed = !!(res && res.completed);
-
-    if (!completed){
-      // small grace for external SDK callbacks
-      await new Promise(r=>setTimeout(r, 1200));
-      completed = (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds;
-    }
-
-    if (!completed){
-      // fallback short modal
-      const fb = await showFallbackAdModal(18);
-      if (!fb || !fb.completed) { if (tg.showAlert) tg.showAlert('Ad not completed.'); btn.disabled=false; btn.innerText = originalText; return; }
-    }
-
-    // success — credit locally + enqueue + try immediate write
-    const reward = 100 * (current.multiplierAds || 1);
-    current.ae = (current.ae || 0) + reward;
-    current.totalAds = (current.totalAds || 0) + 1;
-    current.adsToday = (current.adsToday || 0) + 1;
-    current.lastAdTime = now;
-
-    // update persistent window counters
-    current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-    // ensure adsWindowStart exists
-    if (!current.adsWindowStart) current.adsWindowStart = now;
-
-    enqueuePending(reward, 1, null, null);
-    writeLocal(current, window.__aether_pending);
-
-    // try immediate server update (best-effort)
-    try{
-      await db.collection('users').doc(userDocId).update({
-        ae: firebase.firestore.FieldValue.increment(reward),
-        totalAds: firebase.firestore.FieldValue.increment(1),
-        adsToday: firebase.firestore.FieldValue.increment(1),
-        lastAdTime: now,
-        lastSaveTime: Date.now(),
-        adsWindowStart: current.adsWindowStart,
-        adsWindowCount: current.adsWindowCount
-      });
-      try{ await flushPending(false); } catch(e){}
-    }catch(writeErr){
-      console.warn('immediate write failed, pending queued', writeErr);
-    }
-
-    computeLevel(); updateUI(); updateAdReward();
-    playClick();
-
-    // cooldown random 10-30s
-    const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
-    btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
-    setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
-
-    if (tg.showAlert) tg.showAlert(`You get ${reward} Ae!`);
-  }catch(err){
-    console.warn('watchAdHandler err', err);
-    if ((current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds){
-      computeLevel(); updateUI(); updateAdReward();
-      btn.disabled=false; btn.innerText = originalText;
-      if (tg.showAlert) tg.showAlert(`You get ${(current.ae||0)-prevAe} Ae!`);
-      return;
-    }
-    if (tg.showAlert) tg.showAlert('Ad failed. Try again later.');
-    btn.disabled=false; btn.innerText = originalText;
-  }
-}
-
-/* ----------------- referral handling ----------------- */
-async function handleReferralParam(param){
-  try{
-    const referrerId = param.replace('ref_','');
-    if (!referrerId || referrerId === userDocId) return;
-    if (current.referredBy) return;
-    const rDoc = await db.collection('users').doc(referrerId).get();
-    if (!rDoc.exists) return;
-    await db.collection('users').doc(referrerId).update({
-      refs: firebase.firestore.FieldValue.arrayUnion(userDocId),
-      ae: firebase.firestore.FieldValue.increment(5000)
-    });
-    current.referredBy = referrerId;
-    current.ae = (current.ae||0) + 5000;
-    enqueuePending(5000, 0, null, null);
-    writeLocal(current, window.__aether_pending);
-    await saveSmallState();
-    if (tg.showAlert) tg.showAlert('Referral success! +5000 Ae!');
-    loadRefList();
-  }catch(e){ console.warn('handleReferral err', e); }
-}
-
-function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>{ if (tg.showAlert) tg.showAlert('Copied!'); }).catch(()=>{ if (tg.showAlert) tg.showAlert('Copy failed'); }); }
-
-/* ----------------- airdrop toggle ----------------- */
-function toggleAirdropSection(){ if ((current.refs||[]).length >= 3){ document.getElementById('airdrop-locked').style.display='none'; document.getElementById('airdrop-content').style.display='block'; } else { document.getElementById('airdrop-locked').style.display='block'; document.getElementById('airdrop-content').style.display='none'; } }
-
-/* ----------------- wallet helpers ----------------- */
-function updateWalletButtons(){ const connected = !!(current.tonWallet); document.getElementById('connectTon').style.display = connected ? 'none' : 'inline-block'; document.getElementById('disconnectTon').style.display = connected ? 'inline-block' : 'none'; document.getElementById('walletStatus').innerText = connected ? `Connected: ${current.tonWallet.slice(0,6)}...${current.tonWallet.slice(-4)}` : 'Not Connected'; }
-async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet connected!'); enqueuePending(0,0,null,null); await saveSmallState(); }
-
-/* ----------------- daily reset ----------------- */
-async function resetDailyAdsIfNeeded(){ 
-  const today = new Date().toDateString(); 
-  if (current.lastResetDate !== today){
-    current.adsToday = 0; 
-    current.lastResetDate = today; 
-    await saveSmallState(); 
-  } 
-}
-
-/* ----------------- start app ----------------- */
-initApp();
-
-/* ----------------- helper (optional) ----------------- */
-function checkLevel10Gift(){ /* reserved for future */ }
-
-</script>
-</body>
-</html>
-  
-  
+    if(!completed){ await new Promise(r=>setTimeout(r,1200)); completed = (current.
