@@ -21,59 +21,201 @@
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-:root{ --bg:linear-gradient(135deg,#0c0c0c,#1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
+/* ================= STYLES ================= */
+/* Theme variables (dark default) */
+:root{
+  --bg-start: #0c0c0c;
+  --bg-end: #1a1a2e;
+  --card:#0f0f23;
+  --accent:#00d38a;
+  --text:#ffffff;
+  --muted:#a0a8b0;
+  --border: rgba(0,211,138,0.22);
+  --glow: 0 0 20px rgba(0,211,138,0.35);
+}
+
+/* Light theme override */
+:root.light {
+  --bg-start: #f6f8fa;
+  --bg-end: #e9eef2;
+  --card: #ffffff;
+  --accent: #007aef;
+  --text: #0b1320;
+  --muted: #5b6770;
+  --border: rgba(0,122,239,0.12);
+  --glow: 0 0 12px rgba(0,122,239,0.08);
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--muted);min-height:100vh;padding:14px;overflow-x:hidden}
+body{
+  font-family: "Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+  background: linear-gradient(135deg,var(--bg-start),var(--bg-end));
+  color:var(--muted);
+  min-height:100vh;
+  padding:14px;
+  overflow-x:hidden;
+  transition:background .3s, color .3s;
+}
 .wrap{max-width:720px;margin:12px auto}
-.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:linear-gradient(135deg, rgba(0,211,138,0.06), rgba(0,211,138,0.02));border:1px solid var(--border);box-shadow:var(--glow)}
+.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;
+  background:linear-gradient(135deg, rgba(0,211,138,0.04), rgba(0,211,138,0.01));
+  border:1px solid var(--border);box-shadow:var(--glow)}
 .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:900;position:relative;box-shadow:var(--glow)}
 .logo::after{content:'Ae';font-size:24px;font-weight:900;color:var(--accent);text-shadow:var(--glow)}
 .user-dp{width:32px;height:32px;border-radius:50%;margin-left:8px;border:2px solid var(--accent)}
 h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 .sub{color:var(--muted);font-size:13px}
-.card{background:var(--card);padding:18px;border-radius:16px;margin-top:12px;border:1px solid rgba(255,255,255,0.05);box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.card{background:var(--card);padding:18px;border-radius:16px;margin-top:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 4px 20px rgba(0,0,0,0.25)}
 .stats{display:flex;gap:10px}
-.stat{flex:1;padding:14px;background:rgba(0,211,138,0.06);border-radius:12px;text-align:center;transition:all 0.3s}
+.stat{flex:1;padding:14px;background:rgba(0,211,138,0.04);border-radius:12px;text-align:center;transition:all 0.3s}
 .v{font-weight:900;color:var(--text);font-size:20px}
 .l{font-size:11px;color:var(--muted)}
 .tabs{display:flex;gap:8px;margin-top:12px}
-.tab{flex:1;padding:12px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.05);cursor:pointer;color:var(--muted);transition:all 0.3s;font-weight:600}
-.tab.active{background:rgba(0,211,138,0.2);color:var(--text);border-color:var(--accent);box-shadow:var(--glow)}
+.tab{flex:1;padding:12px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:var(--muted);transition:all 0.3s;font-weight:600}
+.tab.active{background:rgba(0,211,138,0.14);color:var(--text);border-color:var(--accent);box-shadow:var(--glow)}
 .section{display:none;padding-top:12px}
-.section.active{display:block;animation:fadeIn 0.5s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.3s;box-shadow:0 4px 10px rgba(0,211,138,0.3)}
+.section.active{display:block;animation:fadeIn .4s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.3s;box-shadow:0 4px 10px rgba(0,211,138,0.25)}
 .btn.secondary{background:linear-gradient(135deg,#333,#555);color:#fff}
 .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
-.ref-box{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(0,211,138,0.04);border:1px solid var(--border)}
+.ref-box{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(0,211,138,0.03);border:1px solid var(--border)}
 .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
 .level{padding:12px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);transition:all 0.3s}
 .claimBtn{background:linear-gradient(135deg,var(--accent),#00a877);color:#001;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;width:100%;margin-top:10px;transition:all 0.3s}
 .claimBtn:disabled{background:#333;color:#666;cursor:not-allowed}
 .ref-list{list-style:none;padding:0}
 .ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
-.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:12px}
-.modal { position: fixed; inset: 0; display:none; align-items:center; justify-content:center; z-index:99999; background: rgba(0,0,0,0.6); }
-.modal .card { max-width:520px; width:92%; padding:18px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--muted) }
-#warn{color:#ffcc66;text-align:center;margin-top:8px}
+.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.06);border-radius:12px}
 
-/* --- X button styling --- */
-.x-follow { display:flex; gap:8px; align-items:center; justify-content:center; padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer; border:none; }
-.x-follow svg { width:18px; height:18px; display:block; }
-.x-follow.primary { background: linear-gradient(135deg,#1DA1F2,#00a4ff); color:#001; box-shadow:0 6px 18px rgba(0,164,255,0.12); }
-.x-follow.primary:active { transform: translateY(1px); }
+/* Settings button */
+.gear { margin-left:auto; cursor:pointer; width:34px; height:34px; border-radius:8px; display:flex;align-items:center;justify-content:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); }
+.gear svg{width:18px;height:18px;fill:var(--muted)}
 
+/* Modal */
+.modal { position: fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:99999; background: rgba(0,0,0,0.6); }
+.modal .card { max-width:420px; width:92%; padding:18px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--muted) }
+
+/* Splash styles are inserted by splash HTML later */
 </style>
 </head>
 <body>
-<div class="wrap">
+<!-- ========== SPLASH (ADDED) ========== -->
+<div id="aether-splash" style="position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%, rgba(0,255,170,0.06), transparent 10%), linear-gradient(135deg,#040812,#081018);">
+  <canvas id="aether-bg-canvas" style="position:absolute;inset:0"></canvas>
+  <div style="position:relative;z-index:2;text-align:center;color:#c8f9ea;padding:20px">
+    <div style="width:140px;height:140px;margin:0 auto 12px;border-radius:18px;background:#0a1620;display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <div id="splash-logo" style="width:110px;height:110px;border-radius:14px;background:url('https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg') center/cover;"></div>
+    </div>
+    <h2 style="color:var(--accent);margin:0;font-weight:800">Welcome to <span style="color:#fff">AETHER</span></h2>
+    <p style="color:#bfeee0;margin-top:6px">Official • Earn • Airdrop — Phase 1</p>
+    <div style="margin-top:12px">
+      <div id="splash-loader" style="width:56px;height:56px;border-radius:50%;margin:0 auto;border:4px solid rgba(255,255,255,0.08);border-top-color:var(--accent);animation:spin 1s linear infinite"></div>
+      <div id="splash-text" style="margin-top:10px;color:#bfeee0;font-size:13px">Initializing...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========== SPLASH ANIMATION + SOUND =========== */
+(function(){
+  const canvas = document.getElementById('aether-bg-canvas');
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  addEventListener('resize', resize); resize();
+
+  const particles = [];
+  for(let i=0;i<80;i++){
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: 0.6 + Math.random()*1.8,
+      dx: (Math.random()-0.5)*0.4,
+      dy: (Math.random()-0.5)*0.4,
+      a: 0.05 + Math.random()*0.2
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(0,255,170,${p.a})`;
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+      p.x += p.dx; p.y += p.dy;
+      if(p.x<0||p.x>canvas.width) p.dx *= -1;
+      if(p.y<0||p.y>canvas.height) p.dy *= -1;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Play a soft click/chime using WebAudio (will only play if browser allows)
+  function playChime(){
+    try{
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.value = 480;
+      g.gain.value = 0.0001;
+      o.connect(g);
+      g.connect(ac.destination);
+      const now = ac.currentTime;
+      // ramp up/down
+      g.gain.linearRampToValueAtTime(0.02, now + 0.02);
+      o.start(now);
+      g.gain.linearRampToValueAtTime(0.0, now + 0.45);
+      o.stop(now + 0.5);
+      // close audio context after short time
+      setTimeout(()=>{ try{ ac.close(); }catch(e){} }, 800);
+    }catch(e){}
+  }
+
+  // Auto-hide splash after 3.2s (or faster if user taps)
+  const splash = document.getElementById('aether-splash');
+  let hideTimeout = setTimeout(hideSplash, 3200);
+
+  // If user interacts (tap) — stop splash early and let chime play if enabled
+  splash.addEventListener('click', ()=>{ hideSplash(); });
+
+  // We will check saved user settings for sound; if sound enabled, play chime on showing
+  try{
+    const st = JSON.parse(localStorage.getItem('aether_state_v6')||'{}');
+    const soundOn = st && st.settings && st.settings.sound === false ? false : true; // default true
+    if (soundOn) setTimeout(()=>playChime(), 220); // small delay
+  }catch(e){ setTimeout(()=>playChime(), 220); }
+
+  function hideSplash(){
+    if (!splash) return;
+    splash.style.transition = 'opacity .45s ease, transform .45s ease';
+    splash.style.opacity = '0';
+    splash.style.pointerEvents = 'none';
+    clearTimeout(hideTimeout);
+    setTimeout(()=>{ splash.remove(); }, 600);
+  }
+
+  // ensure splash removed if page is already interacted with/ready
+  document.addEventListener('DOMContentLoaded', ()=>{ /* kept for compatibility */ });
+
+})();
+</script>
+
+<!-- ========== APP UI ========== -->
+<div class="wrap" id="app-root" style="position:relative;z-index:1">
   <div class="header">
     <div class="logo"></div>
     <img id="user-dp" class="user-dp" src="" alt="User DP" style="display:none">
     <div>
       <h1>AETHER — Earn & Airdrop</h1>
       <div id="userLine" class="sub">Loading...</div>
+    </div>
+
+    <!-- Settings gear -->
+    <div class="gear" id="openSettings" title="Settings (theme & sound)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8.4A3.6 3.6 0 1 0 12 15.6a3.6 3.6 0 0 0 0-7.2zM19.4 12.9l1.5-1.1-1-1.7-1.8.3a7.9 7.9 0 0 0-1-.6l-.3-1.9h-2.1l-.3 1.9c-.3.1-.6.2-1 .3l-1.8-.4-1 1.7 1.5 1.1c-.1.3-.1.6-.1.9s0 .6.1.9l-1.5 1.1 1 1.7 1.8-.3c.3.3.6.5 1 .6l.3 1.9h2.1l.3-1.9c.3-.1.7-.2 1-.3l1.8.4 1-1.7-1.5-1.1c.1-.3.1-.6.1-.9s0-.6-.1-.9z" fill="currentColor"/></svg>
     </div>
   </div>
 
@@ -89,9 +231,8 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
       <div class="tab" onclick="openTab('tasks', event)">Earn</div>
       <div class="tab" onclick="openTab('referral', event)">Invite</div>
       <div class="tab" onclick="openTab('airdrop', event)">Airdrop</div>
-    </div>
-
-    <!-- HOME -->
+      </div>
+       <!-- HOME -->
     <div id="home" class="section active">
       <div class="ref-box">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
@@ -103,14 +244,13 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
           <div style="width:180px;min-width:140px">
             <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">Follow on X</h3>
             <button id="followXBtn" class="x-follow primary" title="Follow us on X (Twitter)">
-              <!-- X icon -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 3c-.8.35-1.7.58-2.6.69a4.48 4.48 0 0 0 1.96-2.48c-.86.51-1.8.87-2.8 1.07A4.48 4.48 0 0 0 16.5 2c-2.5 0-4.5 2.05-4.5 4.58 0 .36.04.71.12 1.05C8.1 7.55 4.3 5.7 1.7 2.48c-.4.68-.6 1.47-.6 2.32 0 1.6.82 3.02 2.06 3.85-.76-.03-1.47-.24-2.09-.57v.06c0 2.25 1.6 4.13 3.73 4.55-.39.11-.8.16-1.22.16-.3 0-.6-.03-.88-.08.6 1.94 2.35 3.35 4.42 3.39A9.04 9.04 0 0 1 1 19.54a12.8 12.8 0 0 0 6.92 2.03c8.3 0 12.85-6.8 12.85-12.7v-.58A8.94 8.94 0 0 0 23 3z"/></svg>
               <span style="font-size:14px">Follow @Aetherofficia97</span>
             </button>
           </div>
         </div>
 
-        <p class="small" style="margin-top:10px">Follow us on Telegram and X .</p>
+        <p class="small" style="margin-top:10px">Follow us on Telegram and X.</p>
       </div>
     </div>
 
@@ -164,6 +304,37 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
   <div class="footer">© AETHER •  Project 2026</div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal">
+  <div class="card">
+    <h3 style="color:var(--accent)">Settings</h3>
+    <div style="margin-top:10px">
+      <label style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">
+        <span>Theme</span>
+        <select id="themeSelect" style="padding:8px;border-radius:6px">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </label>
+
+      <label style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">
+        <span>Sound (UI & Splash)</span>
+        <input id="soundToggle" type="checkbox" />
+      </label>
+
+      <label style="display:flex;justify-content:space-between;align-items:center;margin:8px 0">
+        <span>Button Click Voice</span>
+        <input id="voiceToggle" type="checkbox" />
+      </label>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="closeSettings" class="btn secondary" style="flex:1">Close</button>
+        <button id="saveSettings" class="btn" style="flex:1">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ================== CONFIG ================== */
 const FIREBASE_CONFIG = {
@@ -177,23 +348,27 @@ const FIREBASE_CONFIG = {
 
 const STATE_KEY = 'aether_state_v6';
 const PENDING_KEY = 'aether_pending_v6';
-const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12h
-const ADS_WINDOW_LIMIT = 50;  // changed to 50
-const DAILY_AD_LIMIT = 50;    // changed to 50
+const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12h window
+const ADS_WINDOW_LIMIT = 50;  // up to 50 ads in 12h
+const DAILY_AD_LIMIT = 50;    // daily cap (kept same)
 const FLUSH_THRESHOLD_AE = 3000;
 const FLUSH_INTERVAL_MS = 2 * 60 * 1000;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
+/* ========== Firebase init ========== */
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+/* ========== Telegram WebApp ========== */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : { ready:()=>{}, initDataUnsafe:{} };
 try { tg.ready(); tg.expand && tg.expand(); } catch(e){}
 
-const tgUser = tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : {};
+/* ========== App state ========== */
 let userDocId = null;
+let tonUI = null;
 
+/* current structure includes settings so we persist theme & sound */
 let current = {
   username: '',
   ae: 0,
@@ -210,8 +385,15 @@ let current = {
   multiplierAe: 1,
   giftChosen: false,
   lastSaveTime: Date.now(),
+  // ADS WINDOW fields (persisted) to reliably limit 50 per 12h even cross sessions
   adsWindowStart: Date.now(),
-  adsWindowCount: 0
+  adsWindowCount: 0,
+  // settings
+  settings: {
+    theme: 'dark',      // 'dark' or 'light'
+    sound: true,        // ui & splash sounds
+    voice: false        // button voice
+  }
 };
 
 window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
@@ -232,14 +414,42 @@ function writeLocal(stateObj, pendingObj){
   }catch(e){ console.warn('local write failed', e); }
 }
 
-/* init from local */
+/* init from local (merge) */
 (function initLocal(){
   const { state, pending } = readLocal();
-  if (state && Object.keys(state).length) Object.assign(current, state);
+  if (state && Object.keys(state).length) {
+    // merge persisted state into current safely
+    Object.assign(current, state);
+    if (state.settings) current.settings = Object.assign(current.settings || {}, state.settings);
+  }
   window.__aether_pending = pending || window.__aether_pending;
+  applyThemeFromState();
 })();
 
-/* ---------------- Pending queue helpers ---------------- */
+/* ================== UTIL: play short click (if voice enabled) =============== */
+function playClick(){
+  try{
+    const s = current.settings && current.settings.sound !== false;
+    const v = current.settings && current.settings.voice === true;
+    if (!s) return;
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = 'triangle';
+    o.frequency.value = v ? 600 : 420;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ac.destination);
+    const now = ac.currentTime;
+    g.gain.linearRampToValueAtTime(0.02, now + 0.01);
+    o.start(now);
+    g.gain.linearRampToValueAtTime(0.0, now + 0.12);
+    o.stop(now + 0.14);
+    setTimeout(()=>{ try{ ac.close(); }catch(e){} }, 300);
+  }catch(e){}
+}
+
+/* ================ PENDING QUEUE HELPERS ================ */
 function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
   window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
   window.__aether_pending.aeDelta += Number(aeDelta||0);
@@ -249,7 +459,7 @@ function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
   writeLocal(current, window.__aether_pending);
 }
 
-/* ---------------- Flush pending to Firestore ---------------- */
+/* ================ FLUSH TO FIRESTORE ================ */
 async function flushPending(force=false){
   try{
     window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
@@ -267,17 +477,16 @@ async function flushPending(force=false){
     window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now };
     writeLocal(current, window.__aether_pending);
     const fresh = await db.collection('users').doc(userDocId).get();
-    if (fresh.exists) { Object.assign(current, fresh.data()); if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae += window.__aether_pending.aeDelta; writeLocal(current, window.__aether_pending); updateUI(); }
+    if (fresh.exists) { Object.assign(current, fresh.data()); writeLocal(current, window.__aether_pending); updateUI(); }
   }catch(e){ console.warn('flush pending error', e); throw e; }
 }
 
-/* periodic flush & online hooks */
+/* periodic flush & hooks */
 setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
 document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
 window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending);}catch(e){} });
-
-/* ================== AD HELPER (robust) ================== */
+  /* ================== AD HELPER (robust) ================== */
 function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
     const timer = setTimeout(()=>{ resolve({ completed: false, reason:'timeout' }); }, timeoutMs);
@@ -324,7 +533,8 @@ function showFallbackAdModal(seconds = 20){
     cancel.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
   });
 }
-  /* ================== UI helpers (ensure defined before init) ================== */
+
+/* ================== UI helpers ================== */
 function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
 function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.ae || 0);
@@ -343,6 +553,7 @@ function openTab(tabId, ev){
   if (tabId === 'referral'){ loadRefList(); /* leaderboard removed to save reads */ }
   if (tabId === 'airdrop') toggleAirdropSection();
 }
+
 /* ---------------- Level logic ---------------- */
 function computeLevel(){
   const refsCount = (current.refs || []).length;
@@ -364,7 +575,7 @@ function loadRefList(){
   });
 }
 
-/* ----------------- levels & claim (keep before init) ----------------- */
+/* ----------------- levels & claim ----------------- */
 let levelsRendered = 0;
 function renderLevelsChunk(max){
   const container = document.getElementById('levelsList');
@@ -404,7 +615,6 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
 
 /* ----------------- init app ----------------- */
 const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
-let tonUI = null;
 
 async function initApp(){
   try{
@@ -415,23 +625,21 @@ async function initApp(){
     const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
     const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
+
     if (!doc.exists){
       current.username = username;
       try{ await docRef.set(current); } catch(e){ console.warn('create failed', e); }
     } else {
       Object.assign(current, doc.data());
+      // ensure adsWindow* fields exist
+      if (!current.adsWindowStart) current.adsWindowStart = Date.now();
+      if (typeof current.adsWindowCount !== 'number') current.adsWindowCount = 0;
+      if (!current.settings) current.settings = { theme:'dark', sound:true, voice:false };
     }
 
-    try{
-      if (window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta || (window.__aether_pending.refs && window.__aether_pending.refs.length))) {
-        await flushPending(true);
-      } else {
-        const fresh = await docRef.get();
-        if (fresh.exists) Object.assign(current, fresh.data());
-      }
-    }catch(e){ console.warn('initial flush failed', e); }
-
-    computeLevel();
+    // apply theme & settings from current
+    applyThemeFromState();
+    // UI
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
     document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
 
@@ -440,13 +648,14 @@ async function initApp(){
       if (!snap.exists) return;
       const server = snap.data();
       Object.assign(current, server);
+      // reapply pending visual deltas
       if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
       if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
-      computeLevel(); updateUI(); updateLevelProgressUI(); updateAdReward(); updateWalletButtons(); toggleAirdropSection(); checkLevel10Gift();
+      computeLevel(); updateUI(); updateLevelProgressUI(); updateAdReward(); updateWalletButtons(); toggleAirdropSection();
     });
 
     // UI hooks
-    document.getElementById('openChannel').onclick = ()=>{ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
+    document.getElementById('openChannel').onclick = ()=>{ playClick(); if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
     document.getElementById('copyRef').onclick = copyRefHandler;
     document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
     document.getElementById('watchAd').onclick = watchAdHandler;
@@ -454,7 +663,7 @@ async function initApp(){
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
 
-    // TON connect
+    // TON connect (same as before)
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
@@ -465,13 +674,13 @@ async function initApp(){
         updateUI(); updateWalletButtons();
       }
     });
-    document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
-    document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
+    document.getElementById('connectTon').onclick = ()=>{ playClick(); tonUI.connectWallet(); };
+    document.getElementById('disconnectTon').onclick = async ()=>{ playClick(); try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
 
     if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
 
     renderLevelsChunk(20);
-    await resetDailyAdsIfNeeded();
+    await resetDailyAdsIfNeeded(); // daily reset (keeps previous behavior)
     updateUI(); updateAdReward();
     loadRefList();
 
@@ -479,7 +688,6 @@ async function initApp(){
     window.addEventListener('focus', () => {
       const btn = document.getElementById('watchAd');
       if (!btn) return;
-      const local = readLocal();
       if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta)) ||
           (current.lastAdTime && (Date.now() - (current.lastAdTime || 0) < 60000))) {
         btn.disabled = false;
@@ -490,42 +698,105 @@ async function initApp(){
 
     // follow X button hook
     document.getElementById('followXBtn')?.addEventListener('click', ()=> {
+      playClick();
       const X_URL = 'https://x.com/Aetherofficia97';
       try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; }
     });
 
-    // periodic save small state + flush attempt
+    // Settings UI hookup
+    document.getElementById('openSettings').addEventListener('click', ()=>{ playClick(); openSettingsModal(); });
+    document.getElementById('closeSettings').addEventListener('click', ()=>{ playClick(); closeSettingsModal(); });
+    document.getElementById('saveSettings').addEventListener('click', ()=>{ playClick(); saveSettingsModal(); });
+
+    // load initial settings into modal controls
+    populateSettingsControls();
+
+    // periodic small save & flush
     setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false); }catch(e){} }, 60*1000);
 
   }catch(e){
     console.error('initApp err', e);
     if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e));
   }
+/* ----------------- SETTINGS helpers ----------------- */
+function openSettingsModal(){ document.getElementById('settingsModal').style.display='flex'; populateSettingsControls(); }
+function closeSettingsModal(){ document.getElementById('settingsModal').style.display='none'; }
+function populateSettingsControls(){
+  const theme = (current.settings && current.settings.theme) || 'dark';
+  const sound = (current.settings && current.settings.sound) !== false;
+  const voice = (current.settings && current.settings.voice) === true;
+  document.getElementById('themeSelect').value = theme;
+  document.getElementById('soundToggle').checked = sound;
+  document.getElementById('voiceToggle').checked = voice;
+}
+function saveSettingsModal(){
+  const theme = document.getElementById('themeSelect').value;
+  const sound = document.getElementById('soundToggle').checked;
+  const voice = document.getElementById('voiceToggle').checked;
+  current.settings = current.settings || {};
+  current.settings.theme = theme;
+  current.settings.sound = !!sound;
+  current.settings.voice = !!voice;
+  applyThemeFromState();
+  writeLocal(current, window.__aether_pending);
+  closeSettingsModal();
+  if (tg.showAlert) tg.showAlert('Settings saved.');
+}
+function applyThemeFromState(){
+  try{
+    const root = document.documentElement;
+    if (current.settings && current.settings.theme === 'light') root.classList.add('light'), root.style.transition='background .25s';
+    else root.classList.remove('light');
+  }catch(e){}
 }
 
-/* ----------------- save small state ----------------- */
+/* ================ saveSmallState ================= */
 async function saveSmallState(){
   try{
-    const small = { tonWallet: current.tonWallet||'', lastResetDate: current.lastResetDate||new Date().toDateString(), lastSaveTime: Date.now(), username: current.username||'' };
+    const small = {
+      tonWallet: current.tonWallet||'',
+      lastResetDate: current.lastResetDate||new Date().toDateString(),
+      lastSaveTime: Date.now(),
+      username: current.username||'',
+      adsWindowStart: current.adsWindowStart || Date.now(),
+      adsWindowCount: current.adsWindowCount || 0,
+      settings: current.settings || {}
+    };
     await db.collection('users').doc(userDocId).set(small, { merge: true });
+    // persist whole current locally
     writeLocal(current, window.__aether_pending);
   }catch(e){
     writeLocal(current, window.__aether_pending);
   }
 }
 
-/* ----------------- watchAd handler ----------------- */
+/* ================ AD WINDOW: reliable reset ================= */
+/*
+  Fix: store adsWindowStart & adsWindowCount directly on `current` and persist.
+  When user tries to watch an ad, check:
+    - if now - current.adsWindowStart >= ADS_WINDOW_MS -> reset adsWindowCount & adsWindowStart
+    - if current.adsWindowCount >= ADS_WINDOW_LIMIT -> block
+  This avoids using ephemeral local.state and ensures correct reset across sessions.
+*/
+async function resetAdsWindowIfNeeded(){
+  const now = Date.now();
+  if (!current.adsWindowStart) current.adsWindowStart = now;
+  if (now - (current.adsWindowStart || 0) >= ADS_WINDOW_MS){
+    current.adsWindowStart = now;
+    current.adsWindowCount = 0;
+    // persist small
+    try{ await saveSmallState(); }catch(e){}
+  }
+}
+
+/* ----------------- watchAd handler (updated) ----------------- */
 async function watchAdHandler(){
   await resetDailyAdsIfNeeded();
-  const now = Date.now();
-  const local = readLocal();
-  const s = local.state || {};
-  const windowStart = s.adsWindowStart || current.adsWindowStart || now;
-  let windowCount = s.adsWindowCount || current.adsWindowCount || 0;
-  if (now - windowStart >= ADS_WINDOW_MS) { s.adsWindowStart = now; windowCount = 0; }
+  await resetAdsWindowIfNeeded();
 
+  const now = Date.now();
   if ((current.adsToday || 0) >= DAILY_AD_LIMIT) { if (tg.showAlert) tg.showAlert(`Daily limit reached (${DAILY_AD_LIMIT})`); return; }
-  if (windowCount >= ADS_WINDOW_LIMIT) { if (tg.showAlert) tg.showAlert(`12h window limit reached (${ADS_WINDOW_LIMIT})`); return; }
+  if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT) { if (tg.showAlert) tg.showAlert(`12h window limit reached (${ADS_WINDOW_LIMIT})`); return; }
 
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
@@ -557,12 +828,10 @@ async function watchAdHandler(){
     current.adsToday = (current.adsToday || 0) + 1;
     current.lastAdTime = now;
 
-    // update local window
-    s.adsWindowStart = s.adsWindowStart || now;
-    windowCount++;
-    s.adsWindowCount = windowCount;
-    current.adsWindowStart = s.adsWindowStart;
-    current.adsWindowCount = s.adsWindowCount;
+    // update persistent window counters
+    current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+    // ensure adsWindowStart exists
+    if (!current.adsWindowStart) current.adsWindowStart = now;
 
     enqueuePending(reward, 1, null, null);
     writeLocal(current, window.__aether_pending);
@@ -574,7 +843,9 @@ async function watchAdHandler(){
         totalAds: firebase.firestore.FieldValue.increment(1),
         adsToday: firebase.firestore.FieldValue.increment(1),
         lastAdTime: now,
-        lastSaveTime: Date.now()
+        lastSaveTime: Date.now(),
+        adsWindowStart: current.adsWindowStart,
+        adsWindowCount: current.adsWindowCount
       });
       try{ await flushPending(false); } catch(e){}
     }catch(writeErr){
@@ -582,6 +853,7 @@ async function watchAdHandler(){
     }
 
     computeLevel(); updateUI(); updateAdReward();
+    playClick();
 
     // cooldown random 10-30s
     const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
@@ -623,7 +895,8 @@ async function handleReferralParam(param){
     loadRefList();
   }catch(e){ console.warn('handleReferral err', e); }
 }
-function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); }
+
+function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>{ if (tg.showAlert) tg.showAlert('Copied!'); }).catch(()=>{ if (tg.showAlert) tg.showAlert('Copy failed'); }); }
 
 /* ----------------- airdrop toggle ----------------- */
 function toggleAirdropSection(){ if ((current.refs||[]).length >= 3){ document.getElementById('airdrop-locked').style.display='none'; document.getElementById('airdrop-content').style.display='block'; } else { document.getElementById('airdrop-locked').style.display='block'; document.getElementById('airdrop-content').style.display='none'; } }
@@ -633,11 +906,23 @@ function updateWalletButtons(){ const connected = !!(current.tonWallet); documen
 async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet connected!'); enqueuePending(0,0,null,null); await saveSmallState(); }
 
 /* ----------------- daily reset ----------------- */
-async function resetDailyAdsIfNeeded(){ const today = new Date().toDateString(); if (current.lastResetDate !== today){ current.adsToday = 0; current.lastResetDate = today; await saveSmallState(); } }
+async function resetDailyAdsIfNeeded(){ 
+  const today = new Date().toDateString(); 
+  if (current.lastResetDate !== today){
+    current.adsToday = 0; 
+    current.lastResetDate = today; 
+    await saveSmallState(); 
+  } 
+}
 
 /* ----------------- start app ----------------- */
 initApp();
 
+/* ----------------- helper (optional) ----------------- */
+function checkLevel10Gift(){ /* reserved for future */ }
+
 </script>
 </body>
 </html>
+  
+  
