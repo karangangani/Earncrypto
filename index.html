@@ -23,6 +23,7 @@
 <style>
 :root{ --bg:linear-gradient(135deg,#0c0c0c,#1a1a2e); --card:#0f0f23; --accent:#00d38a; --text:#fff; --muted:#a0a8b0; --border:rgba(0,211,138,0.3); --glow:0 0 20px rgba(0,211,138,0.5); }
 *{box-sizing:border-box;margin:0;padding:0}
+html,body,height{height:100%}
 body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--muted);min-height:100vh;padding:14px;overflow-x:hidden}
 .wrap{max-width:720px;margin:12px auto}
 .header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:linear-gradient(135deg, rgba(0,211,138,0.06), rgba(0,211,138,0.02));border:1px solid var(--border);box-shadow:var(--glow)}
@@ -59,34 +60,41 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 #warn{color:#ffcc66;text-align:center;margin-top:8px}
 
 /* splash */
-#aether-splash{position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.8), rgba(0,0,0,0.9));color:#cfffe8}
-#splash-inner{width:220px;text-align:center}
-#splash-logo{width:96px;height:96px;margin:0 auto;border-radius:12px;background:url('https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg') center/cover;box-shadow:0 12px 36px rgba(0,0,0,0.6)}
-#splash-loader{height:8px;background:rgba(255,255,255,0.06);border-radius:8px;margin-top:14px;overflow:hidden}
-#splash-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#00a877);transition:width 0.4s ease}
-#splash-text{margin-top:12px;color:#e6fff6;font-size:13px}
+#splash {
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:999999;
+  background: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(0,0,0,0.98));
+  color:#fff; flex-direction:column; gap:18px;
+}
+.splash-card { text-align:center; }
+.splash-logo { width:110px; height:110px; border-radius:20px; background:url('https://raw.githubusercontent.com/karangangani/Earncrypto/main/aether_logo.png') center/cover no-repeat; margin:0 auto 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
+.splash-h1 { color:var(--accent); font-size:28px; font-weight:900; letter-spacing:1px; margin-bottom:6px; }
+.splash-sub { color:var(--muted); font-size:14px; margin-bottom:12px; }
+.progressbar { width:260px; height:10px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden; margin:0 auto;}
+.progress-inner { height:100%; width:0; background:linear-gradient(90deg,#00e7a1,#00a877); border-radius:999px; transition:width 600ms ease; box-shadow:0 6px 20px rgba(0,211,138,0.12) }
+.splash-error { color:#ff9b9b; font-size:13px; margin-top:6px; }
 
 /* X button styling */
-.x-follow { display:flex; gap:8px; align-items:center; justify-content:center; padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer; border:none; }
-.x-follow svg { width:18px; height:18px; display:block; }
-.x-follow.primary { background: linear-gradient(135deg,#1DA1F2,#00a4ff); color:#001; box-shadow:0 6px 18px rgba(0,164,255,0.12); }
-.x-follow.primary:active { transform: translateY(1px); }
-
+.x-follow { display:flex; gap:8px; align-items:center; justify-content:center; padding:8px 10px; border-radius:8px; font-weight:800; cursor:pointer; border:none; background:transparent; color:var(--muted) }
+.x-follow svg { width:16px; height:16px; display:block; }
 </style>
 </head>
 <body>
 
-<!-- SPLASH -->
-<div id="aether-splash" aria-hidden="false">
-  <div id="splash-inner">
-    <div id="splash-logo" role="img" aria-label="Aether logo"></div>
-    <h2 style="color:var(--accent);margin:10px 0 4px 0;font-weight:800">Welcome to AETHER</h2>
-    <div id="splash-text">Loading app — please wait</div>
-    <div id="splash-loader"><div id="splash-bar"></div></div>
+<!-- SPLASH (shows until init success) -->
+<div id="splash">
+  <div class="splash-card">
+    <div class="splash-logo" aria-hidden="true"></div>
+    <div class="splash-h1">Welcome to AETHER</div>
+    <div class="splash-sub">Loading app — please wait</div>
+    <div class="progressbar"><div id="progressInner" class="progress-inner"></div></div>
+    <div id="splashError" class="splash-error" style="display:none"></div>
+    <div style="margin-top:10px">
+      <button id="splashRetry" class="btn secondary" style="display:none">Retry</button>
+    </div>
   </div>
 </div>
 
-<div class="wrap" id="app-root" style="opacity:0">
+<div class="wrap" id="appRoot" style="display:none">
   <div class="header">
     <div class="logo"></div>
     <img id="user-dp" class="user-dp" src="" alt="User DP" style="display:none">
@@ -121,15 +129,15 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
 
           <div style="width:180px;min-width:140px">
             <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">Follow on X</h3>
-            <button id="followXBtn" class="x-follow primary" title="Follow us on X (Twitter)">
-              <!-- X icon -->
+            <button id="followXBtn" class="x-follow" title="Follow us on X (Twitter)">
+              <!-- small X icon -->
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 3c-.8.35-1.7.58-2.6.69a4.48 4.48 0 0 0 1.96-2.48c-.86.51-1.8.87-2.8 1.07A4.48 4.48 0 0 0 16.5 2c-2.5 0-4.5 2.05-4.5 4.58 0 .36.04.71.12 1.05C8.1 7.55 4.3 5.7 1.7 2.48c-.4.68-.6 1.47-.6 2.32 0 1.6.82 3.02 2.06 3.85-.76-.03-1.47-.24-2.09-.57v.06c0 2.25 1.6 4.13 3.73 4.55-.39.11-.8.16-1.22.16-.3 0-.6-.03-.88-.08.6 1.94 2.35 3.35 4.42 3.39A9.04 9.04 0 0 1 1 19.54a12.8 12.8 0 0 0 6.92 2.03c8.3 0 12.85-6.8 12.85-12.7v-.58A8.94 8.94 0 0 0 23 3z"/></svg>
-              <span style="font-size:14px">Follow @Aetherofficia97</span>
+              <span style="font-size:13px">Aetherofficia97</span>
             </button>
           </div>
         </div>
 
-        <p class="small" style="margin-top:10px">Follow us on Telegram and X .</p>
+        <p class="small" style="margin-top:10px">Follow us on Telegram and X.</p>
       </div>
     </div>
 
@@ -197,20 +205,24 @@ const FIREBASE_CONFIG = {
 const STATE_KEY = 'aether_state_v6';
 const PENDING_KEY = 'aether_pending_v6';
 const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12h
-const ADS_WINDOW_LIMIT = 50;  // changed to 50
-const DAILY_AD_LIMIT = 50;    // changed to 50
+const ADS_WINDOW_LIMIT = 50;
+const DAILY_AD_LIMIT = 50;
 const FLUSH_THRESHOLD_AE = 3000;
 const FLUSH_INTERVAL_MS = 2 * 60 * 1000;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
 
+/* firebase init */
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+/* telegram webapp */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : { ready:()=>{}, initDataUnsafe:{} };
 try { tg.ready(); tg.expand && tg.expand(); } catch(e){}
 
+/* app state */
 let userDocId = null;
+let tonUI = null;
 
 let current = {
   username: '',
@@ -256,7 +268,8 @@ function writeLocal(stateObj, pendingObj){
   if (state && Object.keys(state).length) Object.assign(current, state);
   window.__aether_pending = pending || window.__aether_pending;
 })();
-  /* ---------------- Pending queue helpers ---------------- */
+
+/* ---------------- Pending queue helpers ---------------- */
 function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
   window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
   window.__aether_pending.aeDelta += Number(aeDelta||0);
@@ -285,17 +298,16 @@ async function flushPending(force=false){
     writeLocal(current, window.__aether_pending);
     const fresh = await db.collection('users').doc(userDocId).get();
     if (fresh.exists) { Object.assign(current, fresh.data()); if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae += window.__aether_pending.aeDelta; writeLocal(current, window.__aether_pending); updateUI(); }
-  }catch(e){ console.warn('flush pending error', e); /* don't throw to avoid stopping app */ }
+  }catch(e){ console.warn('flush pending error', e); throw e; }
 }
 
-/* periodic flush & online hooks */
+/* periodic flush & visibility hooks */
 setInterval(()=>{ flushPending(false).catch(()=>{}); }, FLUSH_INTERVAL_MS);
 window.addEventListener('online', ()=>flushPending(true).catch(()=>{}));
 document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='hidden') flushPending(true).catch(()=>{}); });
 window.addEventListener('beforeunload', ()=>{ try{ writeLocal(current, window.__aether_pending);}catch(e){} });
 
 /* ================== AD HELPER (robust) ================== */
-/* unchanged showAdNormalized & fallback modal */
 function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
     const timer = setTimeout(()=>{ resolve({ completed: false, reason:'timeout' }); }, timeoutMs);
@@ -319,6 +331,7 @@ function showAdNormalized(timeoutMs = 30000){
     try{ if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); }catch(e){}
   });
 }
+
 function showFallbackAdModal(seconds = 20){
   return new Promise((resolve) => {
     let modal = document.getElementById('fallback-ad-modal');
@@ -340,8 +353,7 @@ function showFallbackAdModal(seconds = 20){
     cancel.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
   });
 }
-
-/* ================== UI helpers (ensure defined before init) ================== */
+/* ================== UI helpers ================== */
 function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
 function updateUI(){
   document.getElementById('points').innerText = Math.floor(current.ae || 0);
@@ -351,18 +363,16 @@ function updateUI(){
   document.getElementById('totalAds').innerText = current.totalAds || 0;
   updateAdReward();
   updateWalletButtons();
-  // reveal app after UI ready (splash removed in init)
-  const root = document.getElementById('app-root');
-  if (root) root.style.opacity = 1;
 }
 function openTab(tabId, ev){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
-  if (tabId === 'referral'){ loadRefList(); /* leaderboard removed to save reads */ }
+  if (tabId === 'referral'){ loadRefList(); }
   if (tabId === 'airdrop') toggleAirdropSection();
 }
+
 /* ---------------- Level logic ---------------- */
 function computeLevel(){
   const refsCount = (current.refs || []).length;
@@ -371,7 +381,10 @@ function computeLevel(){
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
 
-/* ----------------- refs (DEFINE BEFORE initApp) ----------------- */
+/* stub that was missing and caused init to fail earlier */
+function checkLevel10Gift(){ /* optional: add logic later */ }
+
+/* ----------------- refs ----------------- */
 function loadRefList(){
   const list = document.getElementById('refList');
   if(!list) return;
@@ -384,7 +397,7 @@ function loadRefList(){
   });
 }
 
-/* ----------------- levels & claim (keep before init) ----------------- */
+/* ----------------- levels & claim ----------------- */
 let levelsRendered = 0;
 function renderLevelsChunk(max){
   const container = document.getElementById('levelsList');
@@ -422,155 +435,10 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
 }
 
-/* ----------------- Ads-window reset helpers ----------------- */
-/* Call this at init and before each ad attempt to ensure 12h window logic */
-async function resetAdsWindowIfNeeded(){
-  try{
-    const now = Date.now();
-    if (!current.adsWindowStart) { current.adsWindowStart = now; current.adsWindowCount = 0; writeLocal(current, window.__aether_pending); await saveSmallState(); return; }
-    if (now - (current.adsWindowStart || 0) >= ADS_WINDOW_MS){
-      // reset window
-      current.adsWindowStart = now;
-      current.adsWindowCount = 0;
-      writeLocal(current, window.__aether_pending);
-      // also persist to server small fields (best-effort)
-      try{ await db.collection('users').doc(userDocId).set({ adsWindowStart: current.adsWindowStart, adsWindowCount: current.adsWindowCount }, { merge:true }); }catch(e){}
-    }
-  }catch(e){ console.warn('resetAdsWindowIfNeeded error', e); }
-}
-
-/* ----------------- init app ----------------- */
-const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
-let tonUI = null;
-
-async function initApp(){
-  try{
-    // animate splash bar a bit
-    const splashBar = document.getElementById('splash-bar');
-    let bar = 0;
-    const barIv = setInterval(()=>{ bar = Math.min(98, bar + Math.random()*8); if(splashBar) splashBar.style.width = bar + '%'; }, 350);
-
-    await auth.signInAnonymously();
-    const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
-    userDocId = tgId;
-    window.__aether_pending = readLocal().pending || window.__aether_pending;
-    const docRef = db.collection('users').doc(userDocId);
-    const doc = await docRef.get();
-    const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
-    if (!doc.exists){
-      current.username = username;
-      try{ await docRef.set(current); } catch(e){ console.warn('create failed', e); }
-    } else {
-      Object.assign(current, doc.data());
-      // ensure adsWindow fields exist
-      if (!current.adsWindowStart) current.adsWindowStart = Date.now();
-      if (typeof current.adsWindowCount !== 'number') current.adsWindowCount = 0;
-    }
-
-    // try to flush pending (if any)
-    try{
-      if (window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta || (window.__aether_pending.refs && window.__aether_pending.refs.length))) {
-        await flushPending(true);
-      } else {
-        const fresh = await docRef.get();
-        if (fresh.exists) Object.assign(current, fresh.data());
-      }
-    }catch(e){ console.warn('initial flush failed', e); }
-
-    // enforce ads-window reset at startup
-    await resetAdsWindowIfNeeded();
-
-    computeLevel();
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
-    document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
-
-    // realtime update (merge server and reapply pending visually)
-    docRef.onSnapshot(snap => {
-      if (!snap.exists) return;
-      const server = snap.data();
-      Object.assign(current, server);
-      if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
-      if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
-      computeLevel(); updateUI(); updateLevelProgressUI(); updateAdReward(); updateWalletButtons(); toggleAirdropSection();
-    });
-
-    // UI hooks
-   document.getElementById('openChannel').onclick = ()=>{ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
-    document.getElementById('copyRef').onclick = copyRefHandler;
-    document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
-    document.getElementById('watchAd').onclick = watchAdHandler;
-
-    const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
-    document.getElementById('myRef').innerText = refLink;
-
-    // TON connect
-    tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
-    tonUI.onStatusChange(async (wallet) => {
-      if (wallet && wallet.account && wallet.account.address) {
-        await trySaveTonWallet(wallet.account.address);
-      } else {
-        try{ await docRef.update({ tonWallet: '' }); } catch(e){}
-        current.tonWallet = '';
-        updateUI(); updateWalletButtons();
-      }
-    });
-    document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
-    document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
-
-    if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
-
-    renderLevelsChunk(20);
-    await resetDailyAdsIfNeeded();
-    updateUI(); updateAdReward();
-    loadRefList();
-
-    // recover stuck button when user returns from ad (focus)
-    window.addEventListener('focus', () => {
-      const btn = document.getElementById('watchAd');
-      if (!btn) return;
-      const local = readLocal();
-      if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta)) ||
-          (current.lastAdTime && (Date.now() - (current.lastAdTime || 0) < 60000))) {
-        btn.disabled = false;
-        btn.innerText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
-        try { flushPending(false).catch(()=>{}); } catch(e){}
-      }
-    });
-
-    // follow X button hook
-    document.getElementById('followXBtn')?.addEventListener('click', ()=> {
-      const X_URL = 'https://x.com/Aetherofficia97';
-      try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; }
-    });
-
-    // periodic save small state + flush attempt
-    setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false); }catch(e){} }, 60*1000);
-
-    // finish splash animation and remove
-    clearInterval(barIv);
-    const splashBar = document.getElementById('splash-bar'); if (splashBar) splashBar.style.width = '100%';
-    setTimeout(()=>{ const s = document.getElementById('aether-splash'); if(s) s.remove(); document.getElementById('app-root').style.opacity = 1; }, 450);
-  }catch(e){
-    console.error('initApp err', e);
-    try{ if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e)); }catch(e){}
-    // make sure splash doesn't block forever
-    const splash = document.getElementById('aether-splash'); if(splash) setTimeout(()=>splash.remove(), 3000);
-    document.getElementById('app-root').style.opacity = 1;
-  }
-}
-
 /* ----------------- save small state ----------------- */
 async function saveSmallState(){
   try{
-    const small = {
-      tonWallet: current.tonWallet||'',
-      lastResetDate: current.lastResetDate||new Date().toDateString(),
-      lastSaveTime: Date.now(),
-      username: current.username||'',
-      // persist ads-window so server & other sessions see same window
-      adsWindowStart: current.adsWindowStart || Date.now(),
-      adsWindowCount: current.adsWindowCount || 0
-    };
+    const small = { tonWallet: current.tonWallet||'', lastResetDate: current.lastResetDate||new Date().toDateString(), lastSaveTime: Date.now(), username: current.username||'', adsWindowStart: current.adsWindowStart||Date.now(), adsWindowCount: current.adsWindowCount||0 };
     await db.collection('users').doc(userDocId).set(small, { merge: true });
     writeLocal(current, window.__aether_pending);
   }catch(e){
@@ -578,10 +446,27 @@ async function saveSmallState(){
   }
 }
 
-/* ----------------- watchAd handler (fixed window logic) ----------------- */
+/* ----------------- ad-window helpers (fixes) ----------------- */
+/* ensure ads window resets after 12h reliably and state is persisted */
+function isAdsWindowExpired(){
+  const start = Number(current.adsWindowStart || 0);
+  if (!start) return true;
+  return (Date.now() - start) >= ADS_WINDOW_MS;
+}
+async function resetAdsWindowIfNeeded(){
+  if (isAdsWindowExpired()){
+    current.adsWindowStart = Date.now();
+    current.adsWindowCount = 0;
+    // keep daily counters separate: do not reset totalAds (that's lifetime)
+    try{ await saveSmallState(); }catch(e){ writeLocal(current, window.__aether_pending); }
+  }
+}
+
+/* ----------------- watchAd handler (uses current.* consistently) ----------------- */
 async function watchAdHandler(){
   await resetDailyAdsIfNeeded();
-  await resetAdsWindowIfNeeded();   // <-- ensure window is up-to-date
+  await resetAdsWindowIfNeeded();
+
   const now = Date.now();
 
   if ((current.adsToday || 0) >= DAILY_AD_LIMIT) { if (tg.showAlert) tg.showAlert(`Daily limit reached (${DAILY_AD_LIMIT})`); return; }
@@ -617,14 +502,14 @@ async function watchAdHandler(){
     current.adsToday = (current.adsToday || 0) + 1;
     current.lastAdTime = now;
 
-    // update local window (single source: current)
-    if (!current.adsWindowStart) current.adsWindowStart = now;
+    // update local window (persist in current)
+    current.adsWindowStart = current.adsWindowStart || now;
     current.adsWindowCount = (current.adsWindowCount || 0) + 1;
 
     enqueuePending(reward, 1, null, null);
     writeLocal(current, window.__aether_pending);
 
-    // try immediate server update (best-effort) and save ads window fields too
+    // try immediate server update (best-effort)
     try{
       await db.collection('users').doc(userDocId).update({
         ae: firebase.firestore.FieldValue.increment(reward),
@@ -694,7 +579,150 @@ async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); upd
 /* ----------------- daily reset ----------------- */
 async function resetDailyAdsIfNeeded(){ const today = new Date().toDateString(); if (current.lastResetDate !== today){ current.adsToday = 0; current.lastResetDate = today; await saveSmallState(); } }
 
-/* ----------------- start app ----------------- */
+/* ----------------- init app ----------------- */
+const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
+
+/* utility: show/hide splash and update progress */
+function setProgress(percent){
+  const el = document.getElementById('progressInner');
+  if (el) el.style.width = Math.max(0, Math.min(100, percent)) + '%';
+}
+function showSplashError(msg){
+  document.getElementById('splashError').innerText = msg || 'Init failed';
+  document.getElementById('splashError').style.display = 'block';
+  document.getElementById('splashRetry').style.display = 'inline-block';
+}
+function hideSplash(){
+  const s = document.getElementById('splash'); if (s) s.style.display = 'none';
+  document.getElementById('appRoot').style.display = 'block';
+}
+
+/* retry handler */
+document.getElementById('splashRetry').addEventListener('click', ()=>{ document.getElementById('splashError').style.display='none'; document.getElementById('splashRetry').style.display='none'; setProgress(10); initApp(); });
+
+async function initApp(){
+  try{
+    setProgress(10);
+    await auth.signInAnonymously();
+    setProgress(25);
+
+    const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
+    userDocId = tgId;
+    window.__aether_pending = readLocal().pending || window.__aether_pending;
+    const docRef = db.collection('users').doc(userDocId);
+
+    // fetch or create doc
+    const doc = await docRef.get();
+    const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
+    if (!doc.exists){
+      current.username = username;
+      try{ await docRef.set(current); } catch(e){ console.warn('create failed', e); }
+    } else {
+      Object.assign(current, doc.data());
+    }
+
+    setProgress(45);
+
+    // apply pending if any (best-effort)
+    try{
+      if (window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta || (window.__aether_pending.refs && window.__aether_pending.refs.length))) {
+        await flushPending(true);
+      } else {
+        const fresh = await docRef.get();
+        if (fresh.exists) Object.assign(current, fresh.data());
+      }
+    }catch(e){ console.warn('initial flush failed', e); }
+
+    // ensure ads window persisted or reset if expired
+    if (!current.adsWindowStart) current.adsWindowStart = Date.now();
+    if (!current.adsWindowCount) current.adsWindowCount = 0;
+    await resetAdsWindowIfNeeded();
+
+    computeLevel();
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
+    document.getElementById('userLine').innerText = `${current.username || username} • ID: ${userDocId}`;
+
+    setProgress(60);
+
+    // realtime update
+    docRef.onSnapshot(snap => {
+      if (!snap.exists) return;
+      const server = snap.data();
+      Object.assign(current, server);
+      if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
+      if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
+      computeLevel(); updateUI(); updateLevelProgressUI(); updateAdReward(); updateWalletButtons(); toggleAirdropSection(); checkLevel10Gift();
+    });
+
+    // UI hooks
+    document.getElementById('openChannel').onclick = ()=>{ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
+    document.getElementById('copyRef').onclick = copyRefHandler;
+    document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
+    document.getElementById('watchAd').onclick = watchAdHandler;
+
+    const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
+    document.getElementById('myRef').innerText = refLink;
+
+    setProgress(75);
+
+    // TON connect
+    tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
+    tonUI.onStatusChange(async (wallet) => {
+      if (wallet && wallet.account && wallet.account.address) {
+        await trySaveTonWallet(wallet.account.address);
+      } else {
+        try{ await docRef.update({ tonWallet: '' }); } catch(e){}
+        current.tonWallet = '';
+        updateUI(); updateWalletButtons();
+      }
+    });
+    document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
+    document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
+
+    if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
+
+    renderLevelsChunk(20);
+    await resetDailyAdsIfNeeded();
+    updateUI(); updateAdReward();
+    loadRefList();
+
+    // follow X small click
+    document.getElementById('followXBtn')?.addEventListener('click', ()=> {
+      const X_URL = 'https://x.com/Aetherofficia97';
+      try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; }
+    });
+
+    // recover stuck button when user returns from ad (focus)
+    window.addEventListener('focus', () => {
+      const btn = document.getElementById('watchAd');
+      if (!btn) return;
+      if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta)) ||
+          (current.lastAdTime && (Date.now() - (current.lastAdTime || 0) < 60000))) {
+        btn.disabled = false;
+        btn.innerText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
+        try { flushPending(false).catch(()=>{}); } catch(e){}
+      }
+    });
+
+    // periodic save small state + flush attempt
+    setInterval(async ()=>{ try{ await saveSmallState(); await flushPending(false); }catch(e){} }, 60*1000);
+
+    setProgress(100);
+    // hide splash and reveal app
+    setTimeout(()=>{ hideSplash(); }, 350);
+
+  }catch(e){
+    console.error('initApp err', e);
+    // show readable message on splash so user can retry
+    showSplashError(String(e && e.message ? e.message : e));
+    // ensure developer console also has it
+    if (tg.showAlert) try { tg.showAlert('Init error: ' + (e.message || e)); } catch(_) {}
+  }
+}
+
+/* start app */
+setProgress(2);
 initApp();
 
 </script>
