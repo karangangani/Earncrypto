@@ -1,237 +1,328 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>AETHER — Earn & Airdrop (Stable v6)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>AETHER — Earn & Airdrop (Stable v7)</title>
 
-<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-<!-- TON connect UI -->
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.css"/>
 
-<!-- Ad SDK (kept) -->
 <script src='//libtl.com/sdk.js' data-zone='10192178' data-sdk='show_10192178'></script>
 
 <style>
-:root{
-  --bg-dark: linear-gradient(135deg,#0c0c0c,#1a1a2e);
-  --bg-light: linear-gradient(135deg,#f6f7fb,#e7f7f2);
-  --card-dark:#0f0f23;
-  --card-light:#ffffff;
-  --accent:#00d38a;
-  --text-dark:#fff;
-  --text-light:#111;
-  --muted-dark:#a0a8b0;
-  --muted-light:#6b7280;
-  --border:rgba(0,211,138,0.24);
-  --glow:0 0 20px rgba(0,211,138,0.25);
+/* ================== NEXT-LEVEL THEME SYSTEM ================== */
+:root {
+  /* Light Theme Variables */
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --accent: #00d38a;
+  --accent-hover: #00b878;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: rgba(0, 211, 138, 0.15);
+  --card-border: rgba(0, 0, 0, 0.04);
+  --glow: 0 8px 24px rgba(0, 211, 138, 0.15);
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+  --btn-text: #002211;
+  --modal-bg: rgba(0,0,0,0.35);
 }
-html.light { --bg: var(--bg-light); --card: var(--card-light); --text: var(--text-light); --muted: var(--muted-light); --logo-filter: none; }
-html.dark  { --bg: var(--bg-dark);  --card: var(--card-dark);  --text: var(--text-dark);  --muted: var(--muted-dark); --logo-filter: drop-shadow(0 6px 18px rgba(0,211,138,0.12)); }
 
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--muted);min-height:100vh;padding:14px;overflow-x:hidden}
+[data-theme="dark"] {
+  /* Premium Dark Theme Variables */
+  --bg: #0b101e;
+  --card: #161d2d;
+  --accent: #00e696;
+  --accent-hover: #00c480;
+  --text: #f3f4f6;
+  --muted: #9ca3af;
+  --border: rgba(0, 230, 150, 0.12);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --glow: 0 0 25px rgba(0, 230, 150, 0.15);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --btn-text: #002211;
+  --modal-bg: rgba(0,0,0,0.7);
+}
+
+*{box-sizing:border-box;margin:0;padding:0; -webkit-tap-highlight-color: transparent;}
+html,body{height:100%;}
+body{
+  font-family: 'Inter', Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--muted);
+  min-height: 100vh;
+  padding: 14px;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
 .wrap{max-width:720px;margin:12px auto}
-.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:16px;background:linear-gradient(135deg, rgba(0,211,138,0.04), rgba(0,211,138,0.01));border:1px solid var(--border);box-shadow:var(--glow)}
-.logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;color:var(--text);font-weight:900;position:relative;box-shadow:var(--glow); transform-style:preserve-3d;}
-.logo img{width:54px;height:54px;border-radius:12px;object-fit:cover;filter:var(--logo-filter)}
-.user-dp{width:32px;height:32px;border-radius:50%;margin-left:8px;border:2px solid var(--accent)}
-h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:700}
-.sub{color:var(--muted);font-size:13px}
-.card{background:var(--card);padding:18px;border-radius:16px;margin-top:12px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 6px 24px rgba(0,0,0,0.25)}
-.stats{display:flex;gap:10px}
-.stat{flex:1;padding:14px;background:rgba(0,211,138,0.04);border-radius:12px;text-align:center;transition:all 0.3s}
-.v{font-weight:900;color:var(--text);font-size:20px}
-.l{font-size:11px;color:var(--muted)}
-.tabs{display:flex;gap:8px;margin-top:12px}
-.tab{flex:1;padding:12px;border-radius:12px;text-align:center;background:transparent;border:1px solid rgba(255,255,255,0.04);cursor:pointer;color:var(--muted);transition:all 0.3s;font-weight:600}
-.tab.active{background:rgba(0,211,138,0.12);color:var(--text);border-color:var(--accent);box-shadow:var(--glow)}
-.section{display:none;padding-top:12px}
-.section.active{display:block;animation:fadeIn 0.5s}
-@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--accent),#00a877);color:#001;font-weight:800;cursor:pointer;margin-top:8px;transition:all 0.3s;box-shadow:0 4px 10px rgba(0,211,138,0.18)}
-.btn.secondary{background:linear-gradient(135deg,#333,#555);color:#fff}
-.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.small{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
-.ref-box{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(0,211,138,0.03);border:1px solid var(--border)}
-.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
-.level{padding:12px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);transition:all 0.3s}
-.claimBtn{background:linear-gradient(135deg,var(--accent),#00a877);color:#001;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;width:100%;margin-top:10px;transition:all 0.3s}
-.claimBtn:disabled{background:#333;color:#666;cursor:not-allowed}
-.ref-list{list-style:none;padding:0}
-.ref-item{padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;margin-bottom:8px}
-.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;padding:10px;background:rgba(0,0,0,0.08);border-radius:12px}
-.modal { position: fixed; inset: 0; display:none; align-items:center; justify-content:center; z-index:99999; background: rgba(0,0,0,0.6); }
-.modal .card { max-width:520px; width:92%; padding:18px; border-radius:12px; background:var(--card); border:1px solid var(--border); color:var(--muted) }
-#warn{color:#ffcc66;text-align:center;margin-top:8px}
 
-/* splash */
-#splash { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:100000; background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.6)); flex-direction:column; color:#fff; }
-.splash-logo { width:150px; height:150px; border-radius:18px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; transform-style:preserve-3d; animation: splashPop 1200ms ease; background:linear-gradient(135deg,#071017,#0f2540); box-shadow:0 12px 40px rgba(0,0,0,0.6);}
-@keyframes splashPop { 0% { transform: translateY(20px) scale(.9) rotateX(15deg); opacity:0 } 60% { transform: translateY(-6px) scale(1.03) rotateX(0deg); opacity:1 } 100% { transform: translateY(0) scale(1) rotateX(0deg); } }
-.splash-text { font-weight:800; font-size:18px; margin-bottom:12px }
-.loading-ring { width:48px; height:48px; border-radius:50%; border:4px solid rgba(255,255,255,0.08); border-top-color:var(--accent); animation: spin 1s linear infinite; }
+/* HEADER & LOGO */
+.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow); transition: all 0.3s ease;}
+.logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#071017,#0f2540);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.2); cursor:pointer; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);}
+.logo:active{transform: scale(0.9);}
+.logo img{width:88%;height:88%;border-radius:12px;object-fit:cover}
+.user-dp{width:34px;height:34px;border-radius:50%;margin-left:8px;border:2px solid var(--accent);box-shadow: 0 0 10px rgba(0,211,138,0.3);}
+h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spacing:-0.5px;}
+.sub{color:var(--muted);font-size:13px; font-weight:500;}
+
+/* CARDS & STATS */
+.card{background:var(--card);padding:20px;border-radius:20px;margin-top:14px;border:1px solid var(--card-border);box-shadow:var(--shadow); transition: all 0.3s ease;}
+.stats{display:flex;gap:12px}
+.stat{flex:1;padding:16px 10px;background:rgba(0, 230, 150, 0.06);border-radius:16px;text-align:center;border:1px solid var(--border); transition: transform 0.2s;}
+.v{font-weight:900;color:var(--text);font-size:22px; margin-bottom: 2px;}
+.l{font-size:12px;color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;}
+
+/* TABS */
+.tabs{display:flex;gap:10px;margin-top:16px}
+.tab{flex:1;padding:12px;border-radius:14px;text-align:center;background:transparent;border:1px solid var(--card-border);cursor:pointer;color:var(--muted);transition:all 0.2s ease;font-weight:700;font-size:14px;}
+.tab.active{background:var(--accent);color:var(--btn-text);border-color:var(--accent);box-shadow:var(--glow); transform:translateY(-2px);}
+
+.section{display:none;padding-top:16px}
+.section.active{display:block;animation:fadeIn 0.4s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ================= BUTTON UPGRADES (Scale + Animations) ================= */
+.btn{width:100%;padding:16px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:var(--btn-text);font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);box-shadow:var(--glow); text-transform:uppercase; letter-spacing:0.5px;}
+.btn.secondary{background:rgba(128,128,128,0.1);color:var(--text);border:1px solid var(--card-border);box-shadow:none;}
+.btn:active{transform:scale(0.95);box-shadow:none;}
+.btn:disabled{opacity:0.6;cursor:not-allowed;transform:scale(1);box-shadow:none; filter:grayscale(0.5);}
+
+.small{font-size:13px;color:var(--muted);margin-top:10px;text-align:center;font-weight:500;}
+.ref-box{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--border);box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);}
+
+/* LEVELS */
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px}
+.level{padding:16px;border-radius:16px;background:var(--card);border:1px solid var(--card-border);transition:all 0.3s;box-shadow:var(--shadow);}
+.level:hover{border-color:var(--accent); transform:translateY(-2px);}
+.claimBtn{background:linear-gradient(135deg,var(--accent),var(--accent-hover));color:var(--btn-text);padding:12px;border-radius:12px;border:none;cursor:pointer;font-weight:800;width:100%;margin-top:12px;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); text-transform:uppercase;}
+.claimBtn:active{transform:scale(0.95);}
+.claimBtn:disabled{background:rgba(128,128,128,0.1);color:var(--muted);cursor:not-allowed;transform:none;}
+
+.ref-list{list-style:none;padding:0; margin-top:10px;}
+.ref-item{padding:14px;background:var(--card);border-radius:12px;margin-bottom:10px;border:1px solid var(--card-border); font-weight:600; color:var(--text);}
+.footer{margin-top:24px;text-align:center;color:var(--muted);font-size:13px;padding:14px;background:var(--card);border-radius:16px; font-weight:600; border:1px solid var(--card-border);}
+
+/* MODALS */
+.modal { position: fixed; inset: 0; display:none; align-items:center; justify-content:center; z-index:99999; background: var(--modal-bg); backdrop-filter: blur(4px); transition: background 0.3s;}
+.modal .card { max-width:480px; width:90%; padding:24px; border-radius:24px; background:var(--card); border:1px solid var(--border); color:var(--muted); box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+@keyframes popIn { 0% { opacity:0; transform: scale(0.8); } 100% { opacity:1; transform: scale(1); } }
+#warn{color:#ff5555;text-align:center;margin-top:10px; font-weight:600;}
+
+/* SPLASH SCREEN */
+#splash { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100000; background: var(--bg); flex-direction:column; color:var(--text); }
+.splash-logo { width:160px; height:160px; border-radius:24px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; transform-style:preserve-3d; animation: splashPop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); background:linear-gradient(135deg,#071017,#0f2540); box-shadow:0 15px 50px rgba(0,0,0,0.4);}
+@keyframes splashPop { 0% { transform: translateY(30px) scale(0.8) rotateX(15deg); opacity:0 } 50% { transform: translateY(-10px) scale(1.05) rotateX(-5deg); opacity:1 } 100% { transform: translateY(0) scale(1) rotateX(0deg); } }
+.splash-text { font-weight:900; font-size:22px; margin-bottom:16px; letter-spacing:1px; color:var(--text); }
+.loading-ring { width:54px; height:54px; border-radius:50%; border:4px solid var(--card-border); border-top-color:var(--accent); animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* settings gear */
-.gear { margin-left:auto; cursor:pointer; padding:6px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); }
-.setting-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; }
-.toggle { width:46px;height:26px;border-radius:16px;background:#222;position:relative;cursor:pointer; }
-.toggle .knob { position:absolute; top:3px; left:3px; width:20px; height:20px;border-radius:50%; background:#fff; transition:all .18s; }
-.toggle.on { background:linear-gradient(135deg,var(--accent),#00a877); }
-.toggle.on .knob{ left:23px; }
-
-/* small x button */
-.x-follow { display:inline-flex; gap:8px; align-items:center; justify-content:center; padding:6px 10px; border-radius:8px; font-weight:700; cursor:pointer; border:none; }
-.x-follow svg { width:16px; height:16px; display:block; }
-.x-follow.primary { background: linear-gradient(135deg,#1DA1F2,#00a4ff); color:#001; box-shadow:0 6px 18px rgba(0,164,255,0.08); }
+/* SETTINGS GEAR */
+.gear { margin-left:auto; cursor:pointer; padding:10px; border-radius:12px; display:inline-flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--card-border); color:var(--text); transition: all 0.2s; }
+.gear:active { transform: scale(0.9); }
+.setting-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; font-weight:600; color:var(--text); }
+.toggle { width:52px;height:28px;border-radius:20px;background:var(--bg);border: 1px solid var(--card-border); position:relative;cursor:pointer; transition:all 0.3s;}
+.toggle .knob { position:absolute; top:3px; left:4px; width:20px; height:20px;border-radius:50%; background:var(--muted); transition:all .3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+.toggle.on { background:var(--accent); border-color:var(--accent);}
+.toggle.on .knob{ left:26px; background:#fff;}
 
 /* responsive */
-@media (max-width:480px){ .wrap{padding:10px} .splash-logo{width:120px;height:120px} }
+@media (max-width:480px){ .wrap{padding:8px} .splash-logo{width:130px;height:130px} .card{padding:16px;} }
 </style>
 </head>
 <body>
-<!-- SPLASH -->
-<div id="splash" style="display:none">
+<div id="splash">
   <div class="splash-logo" id="splashLogo">
-    <!-- use same icon URL or fallback -->
-    <img id="splashImg" src="https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg" alt="Ae" style="width:86%;height:86%;border-radius:12px;object-fit:cover">
+    <img id="splashImg" src="https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg" alt="Ae" style="width:86%;height:86%;border-radius:16px;object-fit:cover">
   </div>
-  <div class="splash-text">Welcome to AETHER</div>
+  <div class="splash-text">AETHER MINING</div>
   <div class="loading-ring"></div>
-  <div style="margin-top:12px;color:rgba(255,255,255,0.8);font-size:13px">Loading — preparing your rewards</div>
+  <div style="margin-top:16px;color:var(--muted);font-size:14px;font-weight:600;">Connecting to blockchain...</div>
 </div>
-<div class="wrap">
+
+<div class="wrap" id="appWrap" style="display:none">
   <div class="header">
-    <div class="logo"><img id="logoImg" src="https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg" alt="Ae"></div>
+    <div class="logo" onclick="playClick()"><img id="logoImg" src="https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg" alt="Ae"></div>
     <img id="user-dp" class="user-dp" src="" alt="User DP" style="display:none">
     <div>
-      <h1>AETHER — Earn & Airdrop</h1>
+      <h1>AETHER</h1>
       <div id="userLine" class="sub">Loading...</div>
     </div>
 
-    <div class="gear" id="openSettings" title="Settings">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 2.3 17.88l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.27-.39 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 6.7 2.3l.06.06c.43.43 1 .62 1.6.49.5-.11 1-.36 1-1.06V1a2 2 0 1 1 4 0v.09c0 .7.55.95 1 .06.59.13 1.17-.06 1.6-.49l.06-.06A2 2 0 1 1 21.7 6.12l-.06.06c-.43.43-.62 1-.49 1.6.11.5.36 1 1.06 1H23a2 2 0 1 1 0 4h-.09c-.7 0-1.27.39-1.51 1z"/></svg>
+    <div class="gear" id="openSettings" title="Settings" onclick="playClick(); document.getElementById('settingsModal').style.display='flex'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 2.3 17.88l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.27-.39 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 6.7 2.3l.06.06c.43.43 1 .62 1.6.49.5-.11 1-.36 1-1.06V1a2 2 0 1 1 4 0v.09c0 .7.55.95 1 .06.59.13 1.17-.06 1.6-.49l.06-.06A2 2 0 1 1 21.7 6.12l-.06.06c-.43.43-.62 1-.49 1.6.11.5.36 1 1.06 1H23a2 2 0 1 1 0 4h-.09c-.7 0-1.27.39-1.51 1z"/></svg>
     </div>
   </div>
 
   <div class="card">
     <div class="stats">
-      <div class="stat"><div class="v" id="points">0</div><div class="l">Ae</div></div>
+      <div class="stat"><div class="v" id="points">0</div><div class="l">Ae Earned</div></div>
       <div class="stat"><div class="v" id="refs">0</div><div class="l">Referrals</div></div>
       <div class="stat"><div class="v" id="level">0</div><div class="l">Level</div></div>
     </div>
 
-    <div class="tabs">
-      <div class="tab active" onclick="openTab('home', event)">Home</div>
-      <div class="tab" onclick="openTab('tasks', event)">Earn</div>
-      <div class="tab" onclick="openTab('referral', event)">Invite</div>
-      <div class="tab" onclick="openTab('airdrop', event)">Airdrop</div>
+    <div class="tabs" role="tablist">
+      <div class="tab active" onclick="openTab('home', event); playClick()">Home</div>
+      <div class="tab" onclick="openTab('tasks', event); playClick()">Earn</div>
+      <div class="tab" onclick="openTab('referral', event); playClick()">Invite</div>
+      <div class="tab" onclick="openTab('airdrop', event); playClick()">Airdrop</div>
     </div>
 
-    <!-- HOME -->
     <div id="home" class="section active">
       <div class="ref-box">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <div style="flex:1;min-width:160px">
-            <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">⭐ Official Channel</h3>
-            <button id="openChannel" class="btn secondary" style="width:100%;padding:10px;font-size:14px">Join @Aetherofficialchannel</button>
+            <h3 style="color:var(--accent);margin:0 0 8px 0;font-size:15px">⭐ Official Channel</h3>
+            <button id="openChannel" class="btn secondary" style="width:100%;padding:12px;font-size:14px" onclick="playClick(); openChannel()">Join @Aetherofficialchannel</button>
           </div>
 
           <div style="width:160px;min-width:120px">
-            <h3 style="color:var(--accent);margin:0 0 6px 0;font-size:14px">Follow on X</h3>
-            <button id="followXBtn" class="x-follow primary" title="Follow us on X (Twitter)">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23 3c-.8.35-1.7.58-2.6.69a4.48 4.48 0 0 0 1.96-2.48c-.86.51-1.8.87-2.8 1.07A4.48 4.48 0 0 0 16.5 2c-2.5 0-4.5 2.05-4.5 4.58 0 .36.04.71.12 1.05C8.1 7.55 4.3 5.7 1.7 2.48c-.4.68-.6 1.47-.6 2.32 0 1.6.82 3.02 2.06 3.85-.76-.03-1.47-.24-2.09-.57v.06c0 2.25 1.6 4.13 3.73 4.55-.39.11-.8.16-1.22.16-.3 0-.6-.03-.88-.08.6 1.94 2.35 3.35 4.42 3.39A9.04 9.04 0 0 1 1 19.54a12.8 12.8 0 0 0 6.92 2.03c8.3 0 12.85-6.8 12.85-12.7v-.58A8.94 8.94 0 0 0 23 3z"/></svg>
-              <span style="font-size:13px">Follow @Aetherofficia97</span>
+            <h3 style="color:var(--accent);margin:0 0 8px 0;font-size:15px">Follow on X</h3>
+            <button id="followXBtn" class="btn secondary x-follow" style="padding:12px; display:flex; align-items:center; justify-content:center;" onclick="playClick(); followX()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:18px;height:18px;margin-right:8px"><path d="M23 3c-.8.35-1.7.58-2.6.69a4.48 4.48 0 0 0 1.96-2.48c-.86.51-1.8.87-2.8 1.07A4.48 4.48 0 0 0 16.5 2c-2.5 0-4.5 2.05-4.5 4.58 0 .36.04.71.12 1.05C8.1 7.55 4.3 5.7 1.7 2.48c-.4.68-.6 1.47-.6 2.32 0 1.6.82 3.02 2.06 3.85-.76-.03-1.47-.24-2.09-.57v.06c0 2.25 1.6 4.13 3.73 4.55-.39.11-.8.16-1.22.16-.3 0-.6-.03-.88-.08.6 1.94 2.35 3.35 4.42 3.39A9.04 9.04 0 0 1 1 19.54a12.8 12.8 0 0 0 6.92 2.03c8.3 0 12.85-6.8 12.85-12.7v-.58A8.94 8.94 0 0 0 23 3z"/></svg>
+              <span style="font-size:13px; font-weight:700;">@Aetherofficia97</span>
             </button>
           </div>
         </div>
-
-        <p class="small" style="margin-top:10px">Follow us on Telegram and X.</p>
       </div>
     </div>
 
-    <!-- EARN -->
     <div id="tasks" class="section">
-      <button id="watchAd" class="btn">Watch Ad (+<span id="adReward">100</span> Ae)</button>
-      <p class="small" style="margin-top:8px">Level: <span id="levelDisplay">0</span> • Ads Watched (total): <span id="totalAds">0</span></p>
+      <button id="watchAd" class="btn" style="padding:18px; font-size:16px;" onclick="playClick(); watchAdHandler()">Watch Ad (+<span id="adReward">100</span> Ae)</button>
+      <p class="small" style="margin-top:12px">Ads watched this cycle: <span id="adsCycleCount" style="color:var(--text); font-weight:700;">0/50</span></p>
+      <p class="small">Level: <span id="levelDisplay" style="color:var(--text); font-weight:700;">0</span> • Total Ads: <span id="totalAds" style="color:var(--text); font-weight:700;">0</span></p>
       <div id="warn"></div>
 
-      <div class="small" style="margin-top:20px;font-weight:600;color:var(--accent)">Level Rewards</div>
+      <div class="small" style="margin-top:24px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-size:14px;">Mining Level Rewards</div>
       <div id="levelsList" class="levels"></div>
-      <div style="text-align:center;margin-top:16px">
-        <button id="showAllLevels" class="btn secondary">Load More Levels</button>
+      <div style="text-align:center;margin-top:20px">
+        <button id="showAllLevels" class="btn secondary" onclick="playClick(); renderLevelsChunk(50)">Load More Levels</button>
       </div>
     </div>
 
-    <!-- INVITE -->
     <div id="referral" class="section">
-      <div style="text-align:center;padding:20px">
-        <h3 style="color:var(--accent);font-size:20px">Invite Friends & Earn</h3>
-        <p style="margin-bottom:20px">Each referral = +5000 Ae for both!</p>
+      <div style="text-align:center;padding:10px">
+        <h3 style="color:var(--text);font-size:22px; font-weight:900;">Recruit Miners</h3>
+        <p style="margin-bottom:20px; color:var(--accent); font-weight:600;">+5000 Ae for both of you!</p>
         <div class="ref-box">
-          <div id="myRef">Generating...</div>
-          <button id="copyRef" class="btn">COPY LINK</button>
+          <div id="myRef" style="font-family:monospace; font-size:13px; word-break:break-all; padding:8px; background:var(--card); border-radius:8px; color:var(--text);">Generating...</div>
+          <button id="copyRef" class="btn" onclick="playClick(); copyRefHandler()">COPY INVITE LINK</button>
         </div>
-        <h3 style="color:var(--accent);font-size:20px;margin-top:20px">Your Referrals</h3>
+        <h3 style="color:var(--text);font-size:18px;margin-top:24px; font-weight:800; text-align:left;">Your Squad</h3>
         <ul id="refList" class="ref-list"></ul>
       </div>
     </div>
 
-    <!-- AIRDROP -->
     <div id="airdrop" class="section">
-      <div id="airdrop-locked" style="display:none;text-align:center;padding:20px;color:#ff5555">
-        <h3>Airdrop Locked</h3>
-        <p>Invite 3 friends to unlock!</p>
+      <div id="airdrop-locked" style="display:none;text-align:center;padding:30px; border-radius:16px; background:rgba(255,85,85,0.1); border:1px solid rgba(255,85,85,0.2);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ff5555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <h3 style="color:#ff5555; font-size:20px; font-weight:800;">Airdrop Locked</h3>
+        <p style="color:var(--text); font-weight:600; margin-top:8px;">Invite 3 friends to unlock!</p>
       </div>
-      <div id="airdrop-content" style="display:none;text-align:center;padding:20px">
-        <h3 style="color:var(--accent);font-size:22px">Airdrop Ready</h3>
-        <p>Connect your TON wallet to claim.</p>
+      <div id="airdrop-content" class="" style="display:none;text-align:center;padding:20px">
+        <h3 style="color:var(--accent);font-size:24px; font-weight:900;">Airdrop Ready</h3>
+        <p style="margin-bottom:20px; font-weight:500;">Connect your TON wallet to receive allocations.</p>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-          <button id="connectTon" class="btn">Connect TON Wallet</button>
-          <button id="disconnectTon" class="btn secondary" style="display:none">Disconnect Wallet</button>
+          <button id="connectTon" class="btn" onclick="playClick(); tonConnect()">Connect TON Wallet</button>
+          <button id="disconnectTon" class="btn secondary" style="display:none" onclick="playClick(); disconnectTon()">Disconnect Wallet</button>
           <div id="tonBtnRoot"></div>
         </div>
-        <p class="small" id="walletStatus" style="margin-top:16px">Not Connected</p>
+        <div id="walletStatus" style="margin-top:20px; padding:12px; border-radius:12px; background:var(--bg); border:1px solid var(--border); font-family:monospace; font-weight:700; color:var(--text);">Not Connected</div>
       </div>
     </div>
 
   </div>
 
-  <div class="footer">© AETHER • Project 2026</div>
+  <div class="footer">© AETHER MINING • v7 Next-Gen</div>
 </div>
 
-<!-- Settings Modal -->
 <div id="settingsModal" class="modal">
   <div class="card">
-    <h2 style="color:var(--accent)">Settings</h2>
-    <div class="setting-row"><div>Theme</div>
+    <h2 style="color:var(--text); font-size:22px; font-weight:900; margin-bottom:16px;">System Settings</h2>
+    
+    <div class="setting-row">
+      <div>Interface Theme</div>
       <div style="display:flex;gap:8px">
-        <button id="themeLight" class="btn secondary" style="padding:8px 10px">Light</button>
-        <button id="themeDark" class="btn" style="padding:8px 10px">Dark</button>
+        <button id="themeLight" class="btn secondary" style="padding:10px 14px; margin:0; font-size:13px;">Light</button>
+        <button id="themeDark" class="btn" style="padding:10px 14px; margin:0; font-size:13px;">Dark</button>
       </div>
     </div>
-    <div class="setting-row" style="margin-top:10px"><div>Button sound</div>
+    
+    <div class="setting-row" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border);">
+      <div> Sound</div>
       <div id="soundToggle" class="toggle"><div class="knob"></div></div>
     </div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-      <button id="closeSettings" class="btn secondary">Close</button>
+    
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:24px">
+      <button id="closeSettings" class="btn secondary" onclick="playClick(); document.getElementById('settingsModal').style.display='none'">Save & Close</button>
     </div>
   </div>
 </div>
 
-<!-- optional audio -->
-<audio id="splashAudio" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
-
 <script>
+/* ================== WEB AUDIO API (PREMIUM SOUND) ================== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playPremiumClick() {
+  try {
+    if (localStorage.getItem('aether_sound') !== '1') return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    // Synthesize a very satisfying, latency-free gaming "pop/tick"
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    // Frequency drop creates a pop feel
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+    
+    // Volume envelope
+    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+  } catch(e) {}
+}
+
+// Replace the old playClick with our new premium sound
+function playClick(){
+  playPremiumClick();
+}
+
+/* ================== THEME SYSTEM UPDATES ================== */
+function applyTheme(theme) {
+  localStorage.setItem('aether_theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  const lightBtn = document.getElementById('themeLight');
+  const darkBtn = document.getElementById('themeDark');
+  
+  if(theme === 'dark') {
+    darkBtn.className = 'btn';
+    lightBtn.className = 'btn secondary';
+  } else {
+    lightBtn.className = 'btn';
+    darkBtn.className = 'btn secondary';
+  }
+}
+
+function initTheme(){
+  // Default to dark for a better Web3 gaming aesthetic
+  const saved = localStorage.getItem('aether_theme') || 'dark';
+  applyTheme(saved);
+}
+  document.getElementById('themeLight').onclick = ()=>{ playClick(); applyTheme('light'); };
+document.getElementById('themeDark').onclick = ()=>{ playClick(); applyTheme('dark'); };
+
+
 /* ================== CONFIG ================== */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBRMiyuGkjDFfZE9tqgzGVWJalw_6Cypz4",
@@ -244,9 +335,9 @@ const FIREBASE_CONFIG = {
 
 const STATE_KEY = 'aether_state_v6';
 const PENDING_KEY = 'aether_pending_v6';
+// STRICT 12-HOUR LIMITS
 const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
-const ADS_WINDOW_LIMIT = 50;  // per 12h window
-const DAILY_AD_LIMIT = 50;    // for UI (kept same)
+const ADS_WINDOW_LIMIT = 50;  // Maximum ads allowed per 12 hours
 const FLUSH_THRESHOLD_AE = 3000;
 const FLUSH_INTERVAL_MS = 2 * 60 * 1000;
 const TON_MANIFEST = 'https://karangangani.github.io/Earncrypto/tonconnect-manifest.json';
@@ -259,29 +350,14 @@ const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : 
 try { tg.ready(); tg.expand && tg.expand(); } catch(e){}
 
 let userDocId = null;
-
 /* --------------- app state -------------- */
 let current = {
-  username: '',
-  ae: 0,
-  refs: [],
-  referredBy: '',
-  level: 0,
-  adsToday: 0,
-  totalAds: 0,
-  claimedLevels: [],
-  tonWallet: '',
-  lastAdTime: 0,
-  lastResetDate: new Date().toDateString(),
-  multiplierAds: 1,
-  multiplierAe: 1,
-  giftChosen: false,
-  lastSaveTime: Date.now(),
-  // ads window state:
-  adsWindowStart: Date.now(), // timestamp
-  adsWindowCount: 0
+  username: '', ae: 0, refs: [], referredBy: '', level: 0, adsToday: 0, totalAds: 0,
+  claimedLevels: [], tonWallet: '', lastAdTime: 0, 
+  lastResetDate: new Date().toDateString(), lastResetTimestamp: Date.now(),
+  multiplierAds: 1, multiplierAe: 1, giftChosen: false, lastSaveTime: Date.now(),
+  adsWindowStart: Date.now(), adsWindowCount: 0
 };
-
 window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
 
 /* ---------------- Local storage helpers ---------------- */
@@ -297,14 +373,21 @@ function writeLocal(stateObj, pendingObj){
   try{
     if(stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
     if(pendingObj) localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
-  }catch(e){ console.warn('local write failed', e); }
+  }catch(e){}
 }
 
 /* init from local */
 (function initLocal(){
-  const { state, pending } = readLocal();
-  if (state && Object.keys(state).length) Object.assign(current, state);
-  window.__aether_pending = pending || window.__aether_pending;
+  try{
+    const stored = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+    const state = stored.state || stored || {};
+    if (state && Object.keys(state).length) {
+      if (state.adsWindowStart) state.adsWindowStart = Number(state.adsWindowStart);
+      if (state.lastResetTimestamp) state.lastResetTimestamp = Number(state.lastResetTimestamp);
+      Object.assign(current, state);
+    }
+    window.__aether_pending = JSON.parse(localStorage.getItem(PENDING_KEY) || '{}') || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
+  }catch(e){}
 })();
 
 /* ---------------- Pending queue helpers ---------------- */
@@ -320,7 +403,6 @@ function enqueuePending(aeDelta=0, adsDelta=0, addRef=null, addClaim=null){
 /* ---------------- Flush pending to Firestore ---------------- */
 async function flushPending(force=false){
   try{
-    window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
     const p = window.__aether_pending;
     const now = Date.now();
     const shouldFlush = force || Math.abs(p.aeDelta || 0) >= FLUSH_THRESHOLD_AE || (now - (p.lastFlush || 0)) > (24*60*60*1000);
@@ -332,49 +414,57 @@ async function flushPending(force=false){
     if (p.claimed && p.claimed.length) updates.claimedLevels = firebase.firestore.FieldValue.arrayUnion(...p.claimed);
     updates.lastSaveTime = now;
     await db.collection('users').doc(userDocId).update(updates);
-        writeLocal(current, window.__aether_pending);
+    window.__aether_pending = { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush: now };
+    writeLocal(current, window.__aether_pending);
+    
     const fresh = await db.collection('users').doc(userDocId).get();
-    if (fresh.exists) { Object.assign(current, fresh.data()); if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae += window.__aether_pending.aeDelta; writeLocal(current, window.__aether_pending); updateUI(); }
-  }catch(e){ console.warn('flush pending error', e); throw e; }
+    if (fresh.exists) { 
+      Object.assign(current, fresh.data()); 
+      if (window.__aether_pending.aeDelta) current.ae += window.__aether_pending.aeDelta; 
+      writeLocal(current, window.__aether_pending); 
+      updateUI(); 
+    }
+  }catch(e){}
 }
-/* ---------------- Save small state (now includes adsWindow) ---------------- */
+
 async function saveSmallState(){
   try{
     const small = {
       tonWallet: current.tonWallet||'',
-      lastResetDate: current.lastResetDate||new Date().toDateString(),
+      lastResetTimestamp: current.lastResetTimestamp || Date.now(),
       lastSaveTime: Date.now(),
       username: current.username||'',
-      adsWindowStart: current.adsWindowStart || Date.now(),
-      adsWindowCount: current.adsWindowCount || 0
+      adsWindowStart: Number(current.adsWindowStart || Date.now()),
+      adsWindowCount: Number(current.adsWindowCount || 0)
     };
+    small.lastResetDate = new Date(small.lastResetTimestamp).toDateString();
     await db.collection('users').doc(userDocId).set(small, { merge: true });
     writeLocal(current, window.__aether_pending);
-  }catch(e){
-    writeLocal(current, window.__aether_pending);
-  }
+  }catch(e){}
 }
 
-/* ---------------- Ads window reset helper ---------------- */
+/* ================= FIXED 12-HOUR WINDOW LOGIC ================= */
 function resetAdsWindowIfNeededLocal(){
   try{
     const now = Date.now();
     const start = Number(current.adsWindowStart || 0);
+    
+    // Check if 12 hours have passed since the start of this window
     if (!start || (now - start) >= ADS_WINDOW_MS){
-      // reset locally
-      current.adsWindowStart = now;
-      current.adsWindowCount = 0;
-      // persist locally
+      current.adsWindowStart = now;      // Reset 12h timer
+      current.adsWindowCount = 0;        // Reset 12h count
+      current.adsToday = 0;              // Reset daily overlap safely
+      
+      if (!current.lastResetTimestamp) current.lastResetTimestamp = now;
       writeLocal(current, window.__aether_pending);
-      // save to server (best-effort)
       saveSmallState().catch(()=>{});
-      return true;
+      
+      return true; // Indicates a reset occurred
     }
     return false;
-  }catch(e){ console.warn('resetAdsWindowIfNeededLocal err', e); return false; }
+  }catch(e){ return false; }
 }
-
-/* ================== AD HELPER (unchanged but calls resetAdsWindowIfNeededLocal) ================== */
+/* ================== AD HELPER ================== */
 function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
     const timer = setTimeout(()=>{ resolve({ completed: false, reason:'timeout' }); }, timeoutMs);
@@ -382,7 +472,7 @@ function showAdNormalized(timeoutMs = 30000){
       if (window.show_10192178 && typeof window.show_10192178 === 'function'){
         const maybe = window.show_10192178('');
         if (maybe && typeof maybe.then === 'function'){
-          maybe.then(res => { clearTimeout(timer); if(res && typeof res === 'object' && ('completed' in res)) resolve({completed: !!res.completed}); else resolve({completed:true}); }).catch(err=>{ clearTimeout(timer); resolve({completed:false, reason: err && err.message}); });
+          maybe.then(res => { clearTimeout(timer); if(res && typeof res === 'object' && ('completed' in res)) resolve({completed: !!res.completed}); else resolve({completed:true}); }).catch(err=>{ clearTimeout(timer); resolve({completed:false}); });
           return;
         }
       }
@@ -397,19 +487,18 @@ function showAdNormalized(timeoutMs = 30000){
     window.addEventListener('libtl_ad_result', handler);
     try{ if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); }catch(e){}
   });
-}
-function showFallbackAdModal(seconds = 20){
+  }
+  function showFallbackAdModal(seconds = 20){
   return new Promise((resolve) => {
     let modal = document.getElementById('fallback-ad-modal');
     if (!modal){
       modal = document.createElement('div'); modal.id='fallback-ad-modal';
-      Object.assign(modal.style,{position:'fixed',left:0,right:0,top:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.6)',zIndex:99999});
-      modal.innerHTML = `<div style="width:90%;max-width:420px;background:#0f1724;padding:18px;border-radius:12px;color:#fff;text-align:center;border:1px solid rgba(0,211,138,0.15)">
-        <h3 style="color:#00d38a">Short flow for reward</h3>
-        <p style="color:#d0d6db">Ad provider temporarily unavailable. Wait <span id="fallback-count">${seconds}</span>s to get the reward, or Cancel.</p>
-        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-          <button id="fallback-cancel" style="padding:10px 14px;border-radius:8px;border:none;background:#333;color:#fff;cursor:pointer">Cancel</button>
-        </div></div>`;
+      Object.assign(modal.style,{position:'fixed',left:0,right:0,top:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.8)',zIndex:99999, backdropFilter:'blur(5px)'});
+      modal.innerHTML = `<div style="width:90%;max-width:400px;background:var(--card);padding:24px;border-radius:24px;color:var(--text);text-align:center;border:1px solid var(--accent);box-shadow: 0 10px 40px rgba(0,211,138,0.2);">
+        <h3 style="color:var(--accent); font-weight:900; font-size:20px; margin-bottom:10px;">Fallback Reward</h3>
+        <p style="color:var(--muted); font-weight:500;">Ad provider unavailable. Wait <span id="fallback-count" style="color:var(--text); font-weight:800; font-size:18px;">${seconds}</span>s for reward.</p>
+        <button id="fallback-cancel" class="btn secondary" style="margin-top:20px;">Cancel Mining</button>
+        </div>`;
       document.body.appendChild(modal);
     }
     modal.style.display='flex';
@@ -428,6 +517,11 @@ function updateUI(){
   document.getElementById('level').innerText = current.level || 0;
   document.getElementById('levelDisplay').innerText = current.level || 0;
   document.getElementById('totalAds').innerText = current.totalAds || 0;
+  
+  // Update Cycle UI
+  const cycleCount = current.adsWindowCount || 0;
+  document.getElementById('adsCycleCount').innerText = `${cycleCount}/${ADS_WINDOW_LIMIT}`;
+  
   updateAdReward();
   updateWalletButtons();
 }
@@ -440,7 +534,6 @@ function openTab(tabId, ev){
   if (tabId === 'airdrop') toggleAirdropSection();
 }
 
-/* ---------------- Level logic ---------------- */
 function computeLevel(){
   const refsCount = (current.refs || []).length;
   const adsCount = current.totalAds || 0;
@@ -448,35 +541,53 @@ function computeLevel(){
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
 
-/* ----------------- refs ----------------- */
-function loadRefList(){ const list = document.getElementById('refList'); if(!list) return; list.innerHTML=''; (current.refs||[]).forEach(r=>{ const li=document.createElement('li'); li.className='ref-item'; li.innerText=`User ID: ${r}`; list.appendChild(li); }); }
+function loadRefList(){ 
+  const list = document.getElementById('refList'); 
+  if(!list) return; 
+  list.innerHTML=''; 
+  const refs = current.refs || [];
+  if(refs.length === 0) {
+    list.innerHTML = '<div style="color:var(--muted); text-align:center; padding:10px;">No miners recruited yet.</div>';
+  } else {
+    refs.forEach(r=>{ 
+      const li=document.createElement('li'); 
+      li.className='ref-item'; 
+      li.innerText=`Miner ID: ${r.substring(0,8)}...`; 
+      list.appendChild(li); 
+    }); 
+  }
+}
 
-/* ----------------- watchAd handler (uses resetAdsWindowIfNeededLocal) ----------------- */
+/* ----------------- WatchAd Handler ----------------- */
 async function watchAdHandler(){
-  // ensure 12h window checked and reset if needed
+  // 1. Force a check to reset the window if 12 hours have passed.
   resetAdsWindowIfNeededLocal();
 
   const now = Date.now();
+  const start = Number(current.adsWindowStart || 0);
+  
+  // 2. Strict check against the 12-hour limit
   if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT){
-    if (tg.showAlert) tg.showAlert(`12h window limit reached (${ADS_WINDOW_LIMIT}). Come back later.`);
-    return;
-  }
-
-  if ((current.adsToday || 0) >= DAILY_AD_LIMIT){
-    if (tg.showAlert) tg.showAlert(`Daily limit reached (${DAILY_AD_LIMIT}).`);
+    const timePassedMs = now - start;
+    const timeLeftMs = ADS_WINDOW_MS - timePassedMs;
+    const hoursLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60));
+    
+    if (tg.showAlert) {
+      tg.showAlert(`Mining Cycle Complete! 🛑\nLimit: ${ADS_WINDOW_LIMIT}/${ADS_WINDOW_LIMIT}.\n\nNext cycle begins in approx ${hoursLeft} hours.`);
+    }
     return;
   }
 
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
-  const originalText = btn.innerText || `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
+  const originalText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
+  btn.innerText = "Loading Ad...";
   const prevAe = current.ae || 0;
   const prevTotalAds = current.totalAds || 0;
 
   try{
     const res = await showAdNormalized(30000);
     let completed = !!(res && res.completed);
-
     if (!completed){
       await new Promise(r=>setTimeout(r, 1200));
       completed = (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds;
@@ -484,7 +595,12 @@ async function watchAdHandler(){
 
     if (!completed){
       const fb = await showFallbackAdModal(18);
-      if (!fb || !fb.completed) { if (tg.showAlert) tg.showAlert('Ad not completed.'); btn.disabled=false; btn.innerText = originalText; return; }
+      if (!fb || !fb.completed) { 
+        if (tg.showAlert) tg.showAlert('Mining halted: Ad not completed.'); 
+        btn.disabled=false; 
+        btn.innerText = originalText; 
+        return; 
+      }
     }
 
     const reward = 100 * (current.multiplierAds || 1);
@@ -492,13 +608,15 @@ async function watchAdHandler(){
     current.totalAds = (current.totalAds || 0) + 1;
     current.adsToday = (current.adsToday || 0) + 1;
     current.lastAdTime = now;
+    
+    // Increment window count
     current.adsWindowCount = (current.adsWindowCount || 0) + 1;
     current.adsWindowStart = current.adsWindowStart || now;
 
     enqueuePending(reward, 1, null, null);
     writeLocal(current, window.__aether_pending);
 
-    // best-effort immediate update
+    // best-effort write
     try{
       await db.collection('users').doc(userDocId).update({
         ae: firebase.firestore.FieldValue.increment(reward),
@@ -511,26 +629,29 @@ async function watchAdHandler(){
       });
       try{ await flushPending(false); } catch(e){}
     }catch(writeErr){
-      console.warn('immediate write failed, pending queued', writeErr);
-      // still save small state async
       saveSmallState().catch(()=>{});
     }
 
-    computeLevel(); updateUI(); updateAdReward();
+    computeLevel(); updateUI();
 
-    const cooldown = 1000 * (10 + Math.floor(Math.random()*21));
-    btn.innerText = `Cooldown ${Math.round(cooldown/1000)}s...`;
+    // Visual button cooldown
+    const cooldown = 1000 * (10 + Math.floor(Math.random()*15));
+    btn.innerText = `Cooling down ${Math.round(cooldown/1000)}s...`;
+    
+    // Flash the points
+    const pts = document.getElementById('points');
+    pts.style.color = '#fff';
+    setTimeout(()=> { pts.style.color = 'var(--text)'; }, 300);
+
     setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
 
-    if (tg.showAlert) tg.showAlert(`You get ${reward} Ae!`);
   }catch(err){
-    console.warn('watchAdHandler err', err);
     btn.disabled=false; btn.innerText = originalText;
-    if (tg.showAlert) tg.showAlert('Ad failed. Try again later.');
+    if (tg.showAlert) tg.showAlert('Ad network timeout. Try again later.');
   }
-}
-/* ----------------- referral handling ----------------- */
-async function handleReferralParam(param){
+  }
+  
+  async function handleReferralParam(param){
   try{
     const referrerId = param.replace('ref_','');
     if (!referrerId || referrerId === userDocId) return;
@@ -546,86 +667,77 @@ async function handleReferralParam(param){
     enqueuePending(5000, 0, null, null);
     writeLocal(current, window.__aether_pending);
     await saveSmallState();
-    if (tg.showAlert) tg.showAlert('Referral success! +5000 Ae!');
+    if (tg.showAlert) tg.showAlert('Recruitment Success! +5000 Ae!');
     loadRefList();
-  }catch(e){ console.warn('handleReferral err', e); }
+  }catch(e){}
 }
 
-/* ----------------- wallet helpers ----------------- */
-function updateWalletButtons(){ const connected = !!(current.tonWallet); document.getElementById('connectTon').style.display = connected ? 'none' : 'inline-block'; document.getElementById('disconnectTon').style.display = connected ? 'inline-block' : 'none'; document.getElementById('walletStatus').innerText = connected ? `Connected: ${current.tonWallet.slice(0,6)}...${current.tonWallet.slice(-4)}` : 'Not Connected'; }
-async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet connected!'); enqueuePending(0,0,null,null); await saveSmallState(); }
+function updateWalletButtons(){ 
+  const connected = !!(current.tonWallet); 
+  document.getElementById('connectTon').style.display = connected ? 'none' : 'inline-block'; 
+  document.getElementById('disconnectTon').style.display = connected ? 'inline-block' : 'none'; 
+  
+  if(connected) {
+    document.getElementById('walletStatus').innerHTML = `Connected:<br><span style="color:var(--accent)">${current.tonWallet.slice(0,6)}...${current.tonWallet.slice(-4)}</span>`; 
+    document.getElementById('walletStatus').style.borderColor = 'var(--accent)';
+  } else {
+    document.getElementById('walletStatus').innerText = 'Not Connected';
+    document.getElementById('walletStatus').style.borderColor = 'var(--border)';
+  }
+}
 
-/* ----------------- daily reset ----------------- */
-async function resetDailyAdsIfNeeded(){
-  const today = new Date().toDateString();
-  if (current.lastResetDate !== today){
-    current.adsToday = 0;
-    current.lastResetDate = today;
-    await saveSmallState();
-  }
-  }
-  /* ----------------- init app ----------------- */
-const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
+async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Linked!'); enqueuePending(0,0,null,null); await saveSmallState(); }
+
 let tonUI = null;
-let splashPlayed = false;
 
-// UI: settings open/close + toggles
-document.getElementById('openSettings').onclick = ()=>{ document.getElementById('settingsModal').style.display='flex'; };
-document.getElementById('closeSettings').onclick = ()=>{ document.getElementById('settingsModal').style.display='none'; };
-
-function initTheme(){
-  const saved = (JSON.parse(localStorage.getItem(STATE_KEY) || '{}').theme) || localStorage.getItem('aether_theme') || 'dark';
-  document.documentElement.classList.remove('light','dark');
-  document.documentElement.classList.add(saved==='light' ? 'light' : 'dark');
-  localStorage.setItem('aether_theme', saved);
-}
-document.getElementById('themeLight').onclick = ()=>{ localStorage.setItem('aether_theme','light'); initTheme(); };
-document.getElementById('themeDark').onclick = ()=>{ localStorage.setItem('aether_theme','dark'); initTheme(); };
+function openChannel(){ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); }
+function followX(){ const X_URL = 'https://x.com/Aetherofficia97'; try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; } }
+function tonConnect(){ try{ tonUI.connectWallet(); }catch(e){ if (tg.showAlert) tg.showAlert('TON UI loading...'); } }
+async function disconnectTon(){ try{ await tonUI.disconnect(); }catch(e){} try{ await db.collection('users').doc(userDocId).update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Disconnected.'); }
 
 function initSoundToggle(){
   const enabled = localStorage.getItem('aether_sound') === '1';
   const el = document.getElementById('soundToggle');
   if(enabled) el.classList.add('on'); else el.classList.remove('on');
-  el.onclick = ()=>{ const now = !(el.classList.contains('on')); if(now) { el.classList.add('on'); localStorage.setItem('aether_sound','1'); } else { el.classList.remove('on'); localStorage.setItem('aether_sound','0'); } };
+  el.onclick = ()=>{ 
+    const now = !(el.classList.contains('on')); 
+    if(now) { 
+      el.classList.add('on'); 
+      localStorage.setItem('aether_sound','1'); 
+      playClick(); // Test the sound immediately
+    } else { 
+      el.classList.remove('on'); 
+      localStorage.setItem('aether_sound','0'); 
+    } 
+  };
 }
-
-/* splash show */
-function showSplashFor(ms=2000){
-  const splash = document.getElementById('splash');
-  const audio = document.getElementById('splashAudio');
-  splash.style.display = 'flex';
-  const soundEnabled = localStorage.getItem('aether_sound') === '1';
-  if (soundEnabled){ try{ audio.currentTime=0; audio.volume=0.6; audio.play().catch(()=>{}); }catch(e){} }
-  setTimeout(()=>{ splash.style.display='none'; }, ms);
-}
-
-/* main init */
+/* ----------------- realtime & init ----------------- */
 async function initApp(){
   try{
-    initTheme(); initSoundToggle();
-    // show splash (short) before other UI loads
     showSplashFor(1800);
-
+    initTheme();
+    initSoundToggle();
     await auth.signInAnonymously();
+    
     const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
     userDocId = tgId;
     window.__aether_pending = readLocal().pending || window.__aether_pending;
+    
     const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
-    const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'User';
+    const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'Miner';
+    
     if (!doc.exists){
       current.username = username;
-      try{ await docRef.set(current); } catch(e){ console.warn('create failed', e); }
+      try{ await docRef.set(current); } catch(e){}
     } else {
       Object.assign(current, doc.data());
-      // ensure adsWindowStart/Count exist
       if(!current.adsWindowStart) current.adsWindowStart = Date.now();
       if(typeof current.adsWindowCount !== 'number') current.adsWindowCount = 0;
     }
 
-    // apply local reset checks
+    // Force limit check on boot
     resetAdsWindowIfNeededLocal();
-    await resetDailyAdsIfNeeded();
 
     computeLevel();
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.photo_url){ const el=document.getElementById('user-dp'); el.src=tg.initDataUnsafe.user.photo_url; el.style.display='block'; }
@@ -634,47 +746,48 @@ async function initApp(){
     docRef.onSnapshot(snap => {
       if (!snap.exists) return;
       const server = snap.data();
-      // merge server + local
-      Object.assign(current, server);
+      try {
+        if (server.adsWindowStart) server.adsWindowStart = Number(server.adsWindowStart);
+        if (server.adsWindowCount) server.adsWindowCount = Number(server.adsWindowCount);
+      } catch(e){}
+      
+      if (server.adsWindowStart && (!current.adsWindowStart || server.adsWindowStart > current.adsWindowStart)) {
+        current.adsWindowStart = server.adsWindowStart;
+        current.adsWindowCount = typeof server.adsWindowCount === 'number' ? server.adsWindowCount : current.adsWindowCount;
+      } else {
+        current.adsWindowCount = current.adsWindowCount || server.adsWindowCount || 0;
+  }
+            Object.assign(current, server);
+      current.adsWindowStart = Number(current.adsWindowStart || Date.now());
+      current.adsWindowCount = Number(current.adsWindowCount || 0);
+
       if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
       if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
-      // protect undefined
-      current.adsWindowStart = current.adsWindowStart || Date.now();
-      current.adsWindowCount = current.adsWindowCount || 0;
-      computeLevel(); updateUI(); updateLevelProgressUI(); updateAdReward(); updateWalletButtons(); toggleAirdropSection();
+
+      computeLevel(); updateUI(); updateLevelProgressUI(); toggleAirdropSection();
       writeLocal(current, window.__aether_pending);
     });
-
-    // UI hooks
-    document.getElementById('openChannel').onclick = ()=>{ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); };
-    document.getElementById('copyRef').onclick = copyRefHandler;
-    document.getElementById('showAllLevels').onclick = ()=>renderLevelsChunk(50);
-    document.getElementById('watchAd').onclick = watchAdHandler;
-
+    const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
 
-    // TON connect
     tonUI = new TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST, buttonRootId: 'tonBtnRoot' });
     tonUI.onStatusChange(async (wallet) => {
       if (wallet && wallet.account && wallet.account.address) {
         await trySaveTonWallet(wallet.account.address);
       } else {
-        try{ await docRef.update({ tonWallet: '' }); } catch(e){}
+        try{ await db.collection('users').doc(userDocId).update({ tonWallet: '' }); } catch(e){}
         current.tonWallet = '';
-        updateUI(); updateWalletButtons();
+        updateUI();
       }
     });
-    document.getElementById('connectTon').onclick = ()=>tonUI.connectWallet();
-    document.getElementById('disconnectTon').onclick = async ()=>{ try{ await tonUI.disconnect(); }catch(e){} try{ await docRef.update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); updateWalletButtons(); if (tg.showAlert) tg.showAlert('Wallet disconnected!'); };
 
     if (startParam && startParam.startsWith('ref_')) await handleReferralParam(startParam);
 
     renderLevelsChunk(20);
-    updateUI(); updateAdReward();
+    updateUI();
     loadRefList();
 
-    // periodic checks: try flush + reset Ads window if needed
     setInterval(async ()=>{
       try{
         resetAdsWindowIfNeededLocal();
@@ -683,11 +796,9 @@ async function initApp(){
       }catch(e){}
     }, 60*1000);
 
-    // recover stuck button after returning from ad provider
     window.addEventListener('focus', () => {
       const btn = document.getElementById('watchAd');
       if (!btn) return;
-      const local = readLocal();
       if ((window.__aether_pending && (window.__aether_pending.aeDelta || window.__aether_pending.adsDelta)) ||
           (current.lastAdTime && (Date.now() - (current.lastAdTime || 0) < 60000))) {
         btn.disabled = false;
@@ -696,19 +807,12 @@ async function initApp(){
       }
     });
 
-    // X follow button
-    document.getElementById('followXBtn')?.addEventListener('click', ()=> {
-      const X_URL = 'https://x.com/Aetherofficia97';
-      try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; }
-    });
+    document.getElementById('appWrap').style.display = 'block';
 
   }catch(e){
-    console.error('initApp err', e);
-    if (tg.showAlert) tg.showAlert('Init error: ' + (e.message || e));
+    document.getElementById('appWrap').style.display = 'block';
   }
 }
-
-/* ----------------- levels & claims ----------------- */
 let levelsRendered = 0;
 function renderLevelsChunk(max){
   const container = document.getElementById('levelsList');
@@ -717,12 +821,12 @@ function renderLevelsChunk(max){
   for (let i=start;i<=end;i++){
     const refsNeeded = i; const adsNeeded = i; const reward = 500 * i;
     const el = document.createElement('div'); el.className='level';
-    el.innerHTML = `<div style="font-weight:800;color:var(--accent);font-size:16px">Level ${i}</div>
+    el.innerHTML = `<div style="font-weight:900;color:var(--text);font-size:18px">Level ${i}</div>
       <div class="small" style="margin-top:8px">Requires: ${refsNeeded} referral${refsNeeded>1?'s':''} & ${adsNeeded} ad${adsNeeded>1?'s':''}</div>
-      <div class="small" style="margin-top:8px">Reward: ${reward} Ae</div>
-      <div style="margin-top:10px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
+      <div style="margin-top:8px; font-weight:800; color:var(--accent); font-size:14px;">Reward: +${reward} Ae</div>
+      <div style="margin-top:12px"><button id="claim_${i}" class="claimBtn" disabled>Claim</button></div>`;
     container.appendChild(el);
-    document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ await claimLevel(i, refsNeeded, adsNeeded, reward); });
+    document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ playClick(); await claimLevel(i, refsNeeded, adsNeeded, reward); });
   }
   levelsRendered = end; updateLevelProgressUI();
 }
@@ -732,7 +836,9 @@ function updateLevelProgressUI(){
     const btn = document.getElementById(`claim_${i}`); if(!btn) continue;
     const claimed = (current.claimedLevels || []).includes(i);
     const canClaim = !claimed && refsCount >= i && adsDone >= i;
-    btn.disabled = !canClaim; btn.innerText = claimed ? 'Claimed ✓' : 'Claim';
+    btn.disabled = !canClaim; 
+    btn.innerText = claimed ? 'CLAIMED ✓' : 'CLAIM REWARD';
+    if(claimed) { btn.style.background = 'transparent'; btn.style.border = '1px solid var(--accent)'; btn.style.color = 'var(--accent)'; }
   }
 }
 async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
@@ -743,18 +849,24 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   enqueuePending(reward, 0, null, levelNo); writeLocal(current, window.__aether_pending);
   computeLevel(); updateUI(); updateLevelProgressUI();
   if (Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
-  if (tg.showAlert) tg.showAlert(`Level ${levelNo} claimed! +${reward} Ae!`);
+  if (tg.showAlert) tg.showAlert(`Level ${levelNo} Claimed! +${reward} Ae!`);
 }
 
-/* ----------------- copy ref ----------------- */
-function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>tg.showAlert && tg.showAlert('Copied!')).catch(()=>tg.showAlert && tg.showAlert('Copy failed')); }
+function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>{ if (tg.showAlert) tg.showAlert('Link Copied to Clipboard!'); }).catch(()=>{ if (tg.showAlert) tg.showAlert('Copy failed'); }); }
 
-/* ----------------- airdrop toggle ----------------- */
 function toggleAirdropSection(){ if ((current.refs||[]).length >= 3){ document.getElementById('airdrop-locked').style.display='none'; document.getElementById('airdrop-content').style.display='block'; } else { document.getElementById('airdrop-locked').style.display='block'; document.getElementById('airdrop-content').style.display='none'; } }
 
-/* ----------------- start app ----------------- */
+function showSplashFor(ms=1800){
+  const splash = document.getElementById('splash');
+  splash.style.display = 'flex';
+  const soundEnabled = localStorage.getItem('aether_sound') === '1';
+  if (soundEnabled){ setTimeout(()=> playClick(), 300); }
+  setTimeout(()=>{ splash.style.display='none'; }, ms);
+}
+
 initApp();
 
 </script>
 </body>
 </html>
+
