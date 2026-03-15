@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>AETHER — Earn & Airdrop (Stable v7)</title>
+<title>AETHER</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -62,7 +62,6 @@ body{
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 .wrap{max-width:720px;margin:12px auto}
-
 /* HEADER & LOGO */
 .header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow); transition: all 0.3s ease;}
 .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#071017,#0f2540);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.2); cursor:pointer; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);}
@@ -119,10 +118,10 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 #splash { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100000; background: var(--bg); flex-direction:column; color:var(--text); }
 .splash-logo { width:160px; height:160px; border-radius:24px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; transform-style:preserve-3d; animation: splashPop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); background:linear-gradient(135deg,#071017,#0f2540); box-shadow:0 15px 50px rgba(0,0,0,0.4);}
 @keyframes splashPop { 0% { transform: translateY(30px) scale(0.8) rotateX(15deg); opacity:0 } 50% { transform: translateY(-10px) scale(1.05) rotateX(-5deg); opacity:1 } 100% { transform: translateY(0) scale(1) rotateX(0deg); } }
+/* MODIFIED: Splash text simplified */
 .splash-text { font-weight:900; font-size:22px; margin-bottom:16px; letter-spacing:1px; color:var(--text); }
 .loading-ring { width:54px; height:54px; border-radius:50%; border:4px solid var(--card-border); border-top-color:var(--accent); animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 /* SETTINGS GEAR */
 .gear { margin-left:auto; cursor:pointer; padding:10px; border-radius:12px; display:inline-flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--card-border); color:var(--text); transition: all 0.2s; }
 .gear:active { transform: scale(0.9); }
@@ -131,6 +130,33 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 .toggle .knob { position:absolute; top:3px; left:4px; width:20px; height:20px;border-radius:50%; background:var(--muted); transition:all .3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
 .toggle.on { background:var(--accent); border-color:var(--accent);}
 .toggle.on .knob{ left:26px; background:#fff;}
+
+/* NEW: FAQ STYLES */
+.faq-section { margin-top: 24px; text-align: left; }
+.faq-item { background: var(--bg); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: all 0.3s ease; }
+.faq-question { padding: 14px; font-weight: 700; color: var(--text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; user-select: none;}
+.faq-icon { font-size: 18px; color: var(--accent); transition: transform 0.3s; font-weight: 900;}
+.faq-answer { padding: 0 14px; max-height: 0; opacity: 0; color: var(--muted); font-size: 13px; font-weight: 500; transition: all 0.3s ease; line-height: 1.5; }
+.faq-item.active .faq-answer { padding: 0 14px 14px 14px; max-height: 200px; opacity: 1; }
+.faq-item.active .faq-icon { transform: rotate(45deg); }
+
+/* NEW: REWARD POPUP STYLES */
+.reward-popup {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--accent);
+    box-shadow: 0 10px 30px rgba(0, 230, 150, 0.2);
+    border-radius: 16px; padding: 14px 20px;
+    z-index: 100000;
+    display: flex; align-items: center; gap: 12px;
+    animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.reward-popup.fade-out { animation: fadeOutUp 0.3s forwards; }
+.reward-content { display: flex; align-items: center; gap: 10px; }
+.reward-icon { font-size: 22px; }
+.reward-popup h3 { color: var(--accent); margin: 0; font-size: 15px; font-weight: 800; }
+@keyframes slideDown { 0% { top: -50px; opacity: 0; } 100% { top: 20px; opacity: 1; } }
+@keyframes fadeOutUp { 0% { top: 20px; opacity: 1; } 100% { top: -50px; opacity: 0; } }
 
 /* responsive */
 @media (max-width:480px){ .wrap{padding:8px} .splash-logo{width:130px;height:130px} .card{padding:16px;} }
@@ -141,7 +167,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
   <div class="splash-logo" id="splashLogo">
     <img id="splashImg" src="https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg" alt="Ae" style="width:86%;height:86%;border-radius:16px;object-fit:cover">
   </div>
-  <div class="splash-text">AETHER MINING</div>
+  <div class="splash-text">AETHER</div>
   <div class="loading-ring"></div>
   <div style="margin-top:16px;color:var(--muted);font-size:14px;font-weight:600;">Connecting to blockchain...</div>
 </div>
@@ -159,7 +185,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 2.3 17.88l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.27-.39 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 6.7 2.3l.06.06c.43.43 1 .62 1.6.49.5-.11 1-.36 1-1.06V1a2 2 0 1 1 4 0v.09c0 .7.55.95 1 .06.59.13 1.17-.06 1.6-.49l.06-.06A2 2 0 1 1 21.7 6.12l-.06.06c-.43.43-.62 1-.49 1.6.11.5.36 1 1.06 1H23a2 2 0 1 1 0 4h-.09c-.7 0-1.27.39-1.51 1z"/></svg>
     </div>
   </div>
-
   <div class="card">
     <div class="stats">
       <div class="stat"><div class="v" id="points">0</div><div class="l">Ae Earned</div></div>
@@ -191,11 +216,45 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="faq-section">
+        <h3 style="color:var(--text);font-size:18px;margin-bottom:12px;font-weight:800; padding-left:4px;">FAQ</h3>
+        
+        <div class="faq-item">
+          <div class="faq-question">What is AETHER?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">AETHER is a reward-based mining platform where users earn AE tokens by watching ads and inviting friends.</div>
+        </div>
+        
+        <div class="faq-item">
+          <div class="faq-question">How can I earn AE?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">You can earn AE by watching ads, inviting friends through referral links, and completing mining levels.</div>
+        </div>
+        
+        <div class="faq-item">
+          <div class="faq-question">How many ads can I watch?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Users can watch up to 50 ads every 12 hours. After the limit is reached, the ad counter resets automatically after 12 hours.</div>
+        </div>
+        
+        <div class="faq-item">
+          <div class="faq-question">How does the referral system work?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">When someone joins using your referral link, you receive rewards and your mining level increases.</div>
+        </div>
+        
+        <div class="faq-item">
+          <div class="faq-question">Why is my ad not loading?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Sometimes ads may not load due to network issues or ad network delays. Please try again later.</div>
+        </div>
+        
+        <div class="faq-item">
+          <div class="faq-question">When will withdrawals be available?<span class="faq-icon">+</span></div>
+          <div class="faq-answer">Withdrawals will be enabled in future updates when the AETHER ecosystem is fully launched.</div>
+        </div>
+      </div>
+      </div>
 
     <div id="tasks" class="section">
       <button id="watchAd" class="btn" style="padding:18px; font-size:16px;" onclick="playClick(); watchAdHandler()">Watch Ad (+<span id="adReward">100</span> Ae)</button>
-      <p class="small" style="margin-top:12px">Ads watched this cycle: <span id="adsCycleCount" style="color:var(--text); font-weight:700;">0/50</span></p>
+            <p class="small" style="margin-top:12px">Ads watched this cycle: <span id="adsCycleCount" style="color:var(--text); font-weight:700;">0/50</span></p>
       <p class="small">Level: <span id="levelDisplay" style="color:var(--text); font-weight:700;">0</span> • Total Ads: <span id="totalAds" style="color:var(--text); font-weight:700;">0</span></p>
       <div id="warn"></div>
 
@@ -239,7 +298,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 
   </div>
 
-  <div class="footer">© AETHER MINING • v7 Next-Gen</div>
+  <div class="footer">© AETHER</div>
 </div>
 
 <div id="settingsModal" class="modal">
@@ -255,8 +314,12 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
     </div>
     
     <div class="setting-row" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border);">
-      <div> Sound</div>
+      <div>Sound FX</div>
       <div id="soundToggle" class="toggle"><div class="knob"></div></div>
+    </div>
+    <div class="setting-row" style="margin-top:12px;">
+      <div>Background Music</div>
+      <div id="musicToggle" class="toggle"><div class="knob"></div></div>
     </div>
     
     <div style="display:flex;gap:10px;justify-content:center;margin-top:24px">
@@ -266,6 +329,48 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 </div>
 
 <script>
+/* ================== NEW: BACKGROUND MUSIC SYSTEM ================== */
+const bgMusic = new Audio('https://raw.githubusercontent.com/karangangani/Earncrypto/main/Digital_Bloom.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.25; // Soft volume as requested
+
+function initMusicToggle() {
+  const savedMusic = localStorage.getItem('aether_music');
+  const isEnabled = savedMusic === null ? true : savedMusic === '1'; // Default to ON
+  localStorage.setItem('aether_music', isEnabled ? '1' : '0');
+
+  const toggleEl = document.getElementById('musicToggle');
+  if(isEnabled) toggleEl.classList.add('on'); else toggleEl.classList.remove('on');
+
+  toggleEl.onclick = () => {
+    playClick();
+    const now = !(toggleEl.classList.contains('on'));
+    if(now) {
+      toggleEl.classList.add('on');
+      localStorage.setItem('aether_music', '1');
+      bgMusic.play().catch(e => console.log('Music play blocked:', e));
+    } else {
+      toggleEl.classList.remove('on');
+      localStorage.setItem('aether_music', '0');
+      bgMusic.pause();
+    }
+  };
+
+  // Autoplay handler (browsers block auto-play until interaction)
+  const tryAutoplay = () => {
+    if (localStorage.getItem('aether_music') === '1' && bgMusic.paused) {
+      bgMusic.play().catch(e => console.log('Autoplay waiting for interaction'));
+    }
+    document.body.removeEventListener('click', tryAutoplay);
+    document.body.removeEventListener('touchstart', tryAutoplay);
+  };
+  document.body.addEventListener('click', tryAutoplay);
+  document.body.addEventListener('touchstart', tryAutoplay);
+  
+  // Attempt immediate play
+  if(isEnabled) tryAutoplay();
+}
+
 /* ================== WEB AUDIO API (PREMIUM SOUND) ================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playPremiumClick() {
@@ -277,7 +382,6 @@ function playPremiumClick() {
     const gainNode = audioCtx.createGain();
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-    
     osc.type = 'sine';
     // Frequency drop creates a pop feel
     osc.frequency.setValueAtTime(800, audioCtx.currentTime);
@@ -292,7 +396,6 @@ function playPremiumClick() {
   } catch(e) {}
 }
 
-// Replace the old playClick with our new premium sound
 function playClick(){
   playPremiumClick();
 }
@@ -319,9 +422,42 @@ function initTheme(){
   const saved = localStorage.getItem('aether_theme') || 'dark';
   applyTheme(saved);
 }
-  document.getElementById('themeLight').onclick = ()=>{ playClick(); applyTheme('light'); };
+document.getElementById('themeLight').onclick = ()=>{ playClick(); applyTheme('light'); };
 document.getElementById('themeDark').onclick = ()=>{ playClick(); applyTheme('dark'); };
 
+
+/* ================== NEW: FAQ ACCORDION LOGIC ================== */
+document.querySelectorAll('.faq-question').forEach(item => {
+  item.addEventListener('click', () => {
+    playClick();
+    const parent = item.parentElement;
+    // Close all other open ones optionally
+    document.querySelectorAll('.faq-item').forEach(child => {
+      if(child !== parent) child.classList.remove('active');
+    });
+    parent.classList.toggle('active');
+  });
+});
+/* ================== NEW: REWARD POPUP LOGIC ================== */
+function showRewardPopup(amount) {
+  const popup = document.createElement('div');
+  popup.className = 'reward-popup';
+  popup.innerHTML = `
+      <div class="reward-content">
+          <div class="reward-icon">🎉</div>
+          <h3>${amount} AE Claimed Successfully</h3>
+      </div>
+  `;
+  document.body.appendChild(popup);
+  
+  // Play click sound slightly pitched up for success
+  if (localStorage.getItem('aether_sound') === '1') playPremiumClick();
+  
+  setTimeout(() => {
+      popup.classList.add('fade-out');
+      setTimeout(() => popup.remove(), 400);
+  }, 2500);
+}
 
 /* ================== CONFIG ================== */
 const FIREBASE_CONFIG = {
@@ -334,7 +470,7 @@ const FIREBASE_CONFIG = {
 };
 
 const STATE_KEY = 'aether_state_v6';
-const PENDING_KEY = 'aether_pending_v6';
+  const PENDING_KEY = 'aether_pending_v6';
 // STRICT 12-HOUR LIMITS
 const ADS_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 hours
 const ADS_WINDOW_LIMIT = 50;  // Maximum ads allowed per 12 hours
@@ -426,7 +562,6 @@ async function flushPending(force=false){
     }
   }catch(e){}
 }
-
 async function saveSmallState(){
   try{
     const small = {
@@ -487,8 +622,8 @@ function showAdNormalized(timeoutMs = 30000){
     window.addEventListener('libtl_ad_result', handler);
     try{ if (window.show_10192178 && typeof window.show_10192178 === 'function') window.show_10192178(''); }catch(e){}
   });
-  }
-  function showFallbackAdModal(seconds = 20){
+}
+function showFallbackAdModal(seconds = 20){
   return new Promise((resolve) => {
     let modal = document.getElementById('fallback-ad-modal');
     if (!modal){
@@ -507,8 +642,8 @@ function showAdNormalized(timeoutMs = 30000){
     const iv = setInterval(()=>{ rem--; countEl.innerText = rem; if(rem<=0){ clearInterval(iv); modal.style.display='none'; resolve({completed:true}); } },1000);
     cancel.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
   });
-}
-
+  }
+  
 /* ================== UI helpers ================== */
 function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
 function updateUI(){
@@ -540,7 +675,6 @@ function computeLevel(){
   current.level = Math.min(refsCount, adsCount);
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
-
 function loadRefList(){ 
   const list = document.getElementById('refList'); 
   if(!list) return; 
@@ -582,10 +716,12 @@ async function watchAdHandler(){
   btn.disabled = true;
   const originalText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
   btn.innerText = "Loading Ad...";
+  
   const prevAe = current.ae || 0;
   const prevTotalAds = current.totalAds || 0;
+  let adSuccess = false;
 
-  try{
+  try {
     const res = await showAdNormalized(30000);
     let completed = !!(res && res.completed);
     if (!completed){
@@ -595,63 +731,70 @@ async function watchAdHandler(){
 
     if (!completed){
       const fb = await showFallbackAdModal(18);
-      if (!fb || !fb.completed) { 
-        if (tg.showAlert) tg.showAlert('Mining halted: Ad not completed.'); 
-        btn.disabled=false; 
-        btn.innerText = originalText; 
-        return; 
+      if (fb && fb.completed) {
+        adSuccess = true;
       }
+    } else {
+      adSuccess = true;
     }
-
-    const reward = 100 * (current.multiplierAds || 1);
-    current.ae = (current.ae || 0) + reward;
-    current.totalAds = (current.totalAds || 0) + 1;
-    current.adsToday = (current.adsToday || 0) + 1;
-    current.lastAdTime = now;
-    
-    // Increment window count
-    current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-    current.adsWindowStart = current.adsWindowStart || now;
-
-    enqueuePending(reward, 1, null, null);
-    writeLocal(current, window.__aether_pending);
-
-    // best-effort write
-    try{
-      await db.collection('users').doc(userDocId).update({
-        ae: firebase.firestore.FieldValue.increment(reward),
-        totalAds: firebase.firestore.FieldValue.increment(1),
-        adsToday: firebase.firestore.FieldValue.increment(1),
-        lastAdTime: now,
-        adsWindowStart: current.adsWindowStart,
-        adsWindowCount: current.adsWindowCount,
-        lastSaveTime: Date.now()
-      });
-      try{ await flushPending(false); } catch(e){}
-    }catch(writeErr){
-      saveSmallState().catch(()=>{});
-    }
-
-    computeLevel(); updateUI();
-
-    // Visual button cooldown
-    const cooldown = 1000 * (10 + Math.floor(Math.random()*15));
-    btn.innerText = `Cooling down ${Math.round(cooldown/1000)}s...`;
-    
-    // Flash the points
-    const pts = document.getElementById('points');
-    pts.style.color = '#fff';
-    setTimeout(()=> { pts.style.color = 'var(--text)'; }, 300);
-
-    setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
-
-  }catch(err){
-    btn.disabled=false; btn.innerText = originalText;
+  } catch(err){
+    adSuccess = false;
+  }
+  // MODIFIED: Correctly handle failure vs success and only show timeout if actually failed
+  if (!adSuccess) {
+    btn.disabled=false; 
+    btn.innerText = originalText; 
     if (tg.showAlert) tg.showAlert('Ad network timeout. Try again later.');
+    return;
   }
-  }
+
+  // ==== AD SUCCESS BLOCK ====
+  const reward = 100 * (current.multiplierAds || 1);
+  current.ae = (current.ae || 0) + reward;
+  current.totalAds = (current.totalAds || 0) + 1;
+  current.adsToday = (current.adsToday || 0) + 1;
+  current.lastAdTime = now;
   
-  async function handleReferralParam(param){
+  // Increment window count
+  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+  current.adsWindowStart = current.adsWindowStart || now;
+
+  enqueuePending(reward, 1, null, null);
+  writeLocal(current, window.__aether_pending);
+  
+  // NEW: Trigger beautiful success popup directly
+  showRewardPopup(reward);
+
+  // best-effort write
+  try {
+    await db.collection('users').doc(userDocId).update({
+      ae: firebase.firestore.FieldValue.increment(reward),
+      totalAds: firebase.firestore.FieldValue.increment(1),
+      adsToday: firebase.firestore.FieldValue.increment(1),
+      lastAdTime: now,
+      adsWindowStart: current.adsWindowStart,
+      adsWindowCount: current.adsWindowCount,
+      lastSaveTime: Date.now()
+    });
+    try{ await flushPending(false); } catch(e){}
+  } catch(writeErr){
+    saveSmallState().catch(()=>{});
+  }
+
+  computeLevel(); updateUI();
+
+  // Visual button cooldown
+  const cooldown = 1000 * (10 + Math.floor(Math.random()*15));
+  btn.innerText = `Cooling down ${Math.round(cooldown/1000)}s...`;
+  
+  // Flash the points
+  const pts = document.getElementById('points');
+  pts.style.color = '#fff';
+  setTimeout(()=> { pts.style.color = 'var(--text)'; }, 300);
+
+  setTimeout(()=>{ btn.disabled=false; btn.innerText = originalText; }, cooldown);
+}
+async function handleReferralParam(param){
   try{
     const referrerId = param.replace('ref_','');
     if (!referrerId || referrerId === userDocId) return;
@@ -689,8 +832,7 @@ function updateWalletButtons(){
 async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Linked!'); enqueuePending(0,0,null,null); await saveSmallState(); }
 
 let tonUI = null;
-
-function openChannel(){ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); }
+  function openChannel(){ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); }
 function followX(){ const X_URL = 'https://x.com/Aetherofficia97'; try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; } }
 function tonConnect(){ try{ tonUI.connectWallet(); }catch(e){ if (tg.showAlert) tg.showAlert('TON UI loading...'); } }
 async function disconnectTon(){ try{ await tonUI.disconnect(); }catch(e){} try{ await db.collection('users').doc(userDocId).update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Disconnected.'); }
@@ -704,7 +846,7 @@ function initSoundToggle(){
     if(now) { 
       el.classList.add('on'); 
       localStorage.setItem('aether_sound','1'); 
-      playClick(); // Test the sound immediately
+      playClick(); 
     } else { 
       el.classList.remove('on'); 
       localStorage.setItem('aether_sound','0'); 
@@ -717,6 +859,8 @@ async function initApp(){
     showSplashFor(1800);
     initTheme();
     initSoundToggle();
+    initMusicToggle(); // Initialize Background Music settings
+    
     await auth.signInAnonymously();
     
     const tgId = tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id ? tg.initDataUnsafe.user.id.toString() : 'guest_' + Date.now();
@@ -756,17 +900,17 @@ async function initApp(){
         current.adsWindowCount = typeof server.adsWindowCount === 'number' ? server.adsWindowCount : current.adsWindowCount;
       } else {
         current.adsWindowCount = current.adsWindowCount || server.adsWindowCount || 0;
-  }
-            Object.assign(current, server);
+      }
+      Object.assign(current, server);
       current.adsWindowStart = Number(current.adsWindowStart || Date.now());
       current.adsWindowCount = Number(current.adsWindowCount || 0);
 
       if (window.__aether_pending && window.__aether_pending.aeDelta) current.ae = (current.ae || 0) + (window.__aether_pending.aeDelta || 0);
       if (window.__aether_pending && window.__aether_pending.adsDelta) current.totalAds = (current.totalAds || 0) + (window.__aether_pending.adsDelta || 0);
-
       computeLevel(); updateUI(); updateLevelProgressUI(); toggleAirdropSection();
       writeLocal(current, window.__aether_pending);
     });
+    
     const startParam = tg.initDataUnsafe && tg.initDataUnsafe.start_param ? tg.initDataUnsafe.start_param : '';
     const refLink = `https://t.me/AetherMineXBot?start=ref_${userDocId}`;
     document.getElementById('myRef').innerText = refLink;
@@ -806,7 +950,6 @@ async function initApp(){
         try { flushPending(false).catch(()=>{}); } catch(e){}
       }
     });
-
     document.getElementById('appWrap').style.display = 'block';
 
   }catch(e){
@@ -849,7 +992,7 @@ async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   enqueuePending(reward, 0, null, levelNo); writeLocal(current, window.__aether_pending);
   computeLevel(); updateUI(); updateLevelProgressUI();
   if (Math.abs(window.__aether_pending.aeDelta||0) >= FLUSH_THRESHOLD_AE) await flushPending(true);
-  if (tg.showAlert) tg.showAlert(`Level ${levelNo} Claimed! +${reward} Ae!`);
+  if (tg.showAlert) showRewardPopup(reward); // Use new beautiful popup instead of alert
 }
 
 function copyRefHandler(){ const refLink = document.getElementById('myRef').innerText; navigator.clipboard.writeText(refLink).then(()=>{ if (tg.showAlert) tg.showAlert('Link Copied to Clipboard!'); }).catch(()=>{ if (tg.showAlert) tg.showAlert('Copy failed'); }); }
@@ -869,4 +1012,4 @@ initApp();
 </script>
 </body>
 </html>
-
+  
