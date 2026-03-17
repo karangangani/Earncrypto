@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AETHER Crypto Market</title>
+    <title>AETHER Pro Market</title>
+    
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #0b0e14;
-            --card-bg: #151a25;
-            --card-hover: #1e2532;
-            --text-main: #ffffff;
-            --text-muted: #8b92a5;
-            --accent-glow: #00f0ff;
-            --positive: #22c55e;
-            --negative: #ef4444;
+            --bg-base: #0b0e11;
+            --bg-surface: #181a20;
+            --bg-surface-hover: #2b3139;
+            --text-main: #eaecef;
+            --text-muted: #848e9c;
+            --accent: #00f0ff;
+            --up-color: #0ecb81;
+            --up-bg: rgba(14, 203, 129, 0.1);
+            --down-color: #f6465d;
+            --down-bg: rgba(246, 70, 93, 0.1);
+            --border: #2b3139;
         }
 
         * {
@@ -28,271 +32,253 @@
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-base);
             color: var(--text-main);
-            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden;
+            overscroll-behavior-y: none;
         }
 
-        /* Header & Search */
+        /* Glass Header */
         header {
-            padding: 20px;
-            background: rgba(11, 14, 20, 0.9);
-            backdrop-filter: blur(10px);
+            padding: 16px 20px 12px;
+            background: rgba(11, 14, 17, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 50;
             position: sticky;
             top: 0;
-            z-index: 10;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-
-        h1 {
-            font-size: 24px;
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .brand-title {
+            font-size: 20px;
             font-weight: 800;
-            text-align: center;
-            margin-bottom: 15px;
-            background: linear-gradient(90deg, #fff, var(--accent-glow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-
-        .search-container {
-            position: relative;
-        }
-
-        .search-bar {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background-color: var(--card-bg);
+        
+        .live-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
             color: var(--text-main);
-            font-size: 16px;
+            background: var(--bg-surface);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .status-dot {
+            width: 6px; height: 6px;
+            background-color: var(--up-color);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--up-color);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        .status-dot.offline {
+            background-color: var(--down-color);
+            box-shadow: 0 0 8px var(--down-color);
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .search-wrapper { position: relative; }
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-surface);
+            color: var(--text-main);
+            font-size: 15px;
             outline: none;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            will-change: border-color, box-shadow;
+        }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
         }
 
-        .search-bar:focus {
-            border-color: var(--accent-glow);
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
-        }
-
-        /* Main Content */
+        /* Main Scroll Area */
         main {
             flex: 1;
-            padding: 15px;
             overflow-y: auto;
-            padding-bottom: 30px;
+            padding: 16px;
+            padding-bottom: 40px;
         }
+        main::-webkit-scrollbar { display: none; }
 
-        /* AETHER Special Card */
+        /* Featured AETHER Card */
         .aether-card {
-            background: linear-gradient(145deg, #121824, #0a0d12);
-            border: 1px solid var(--accent-glow);
+            background: linear-gradient(145deg, #182230 0%, #0d1219 100%);
+            border: 1px solid rgba(0, 240, 255, 0.3);
             border-radius: 16px;
             padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.05);
+            margin-bottom: 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            box-shadow: 0 8px 32px rgba(0, 240, 255, 0.05);
             position: relative;
             overflow: hidden;
         }
 
-        .aether-card::before {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(0,240,255,0.1) 0%, transparent 70%);
-            animation: pulse 4s infinite linear;
-            pointer-events: none;
+        .aether-card::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+            animation: shimmer 6s infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.5; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.5; }
-        }
+        @keyframes shimmer { 100% { left: 200%; } }
 
-        .aether-info h2 {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-main);
-            margin-bottom: 4px;
+        .aether-info h2 { font-size: 24px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px;}
+        .aether-info span {
+            font-size: 11px; font-weight: 700;
+            color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px;
+            background: rgba(0, 240, 255, 0.1); padding: 5px 10px; border-radius: 6px;
         }
-
-        .aether-info p {
-            font-size: 12px;
-            color: var(--accent-glow);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
-
-        .aether-logo {
-            width: 50px;
-            height: 50px;
-            background: var(--accent-glow);
+        
+        .aether-logo-container {
+            width: 60px; height: 60px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            color: var(--bg-color);
-            font-size: 24px;
-            box-shadow: 0 0 15px var(--accent-glow);
-        }
-
-        /* Coin List */
-        .coin-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .coin-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 16px;
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
-        }
-
-        .coin-row:active, .coin-row:hover {
-            background-color: var(--card-hover);
-            transform: scale(0.98);
-        }
-
-        .coin-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .coin-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-        }
-
-        .coin-name-block {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .coin-name {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .coin-symbol {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .coin-right {
-            text-align: right;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .coin-price {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .coin-change {
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .change-pos { color: var(--positive); }
-        .change-neg { color: var(--negative); }
-
-        /* Chart Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(5px);
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            width: 100%;
-            max-width: 600px;
-            height: 70vh;
-            background-color: var(--card-bg);
-            border-radius: 16px;
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-surface);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
         }
 
+        .aether-logo-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            image-rendering: -webkit-optimize-contrast;
+            transform: translateZ(0);
+        }
+
+        .aether-logo-fallback {
+            display: none; font-weight: 800; color: #fff; font-size: 24px;
+        }
+        /* Crypto List Styling */
+        .list-header {
+            display: flex; justify-content: space-between;
+            padding: 0 16px 10px; font-size: 12px; font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .coin-list { display: flex; flex-direction: column; gap: 8px; }
+        
+        .coin-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; background-color: var(--bg-surface);
+            border-radius: 12px; cursor: pointer;
+            transition: background-color 0.15s, transform 0.1s;
+            will-change: transform;
+        }
+        
+        .coin-row:active { transform: scale(0.98); background-color: var(--bg-surface-hover); }
+        
+        .coin-left { display: flex; align-items: center; gap: 14px; }
+        .coin-icon { width: 36px; height: 36px; border-radius: 50%; background-color: #2b3139; }
+        .coin-name-block { display: flex; flex-direction: column; gap: 3px; }
+        .coin-symbol { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .coin-name { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        
+        .coin-right { text-align: right; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+        .coin-price { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.3px; }
+        .coin-change-pill {
+            font-size: 13px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+            min-width: 68px; text-align: right;
+        }
+        
+        .pos-bg { background-color: var(--up-bg); color: var(--up-color); }
+        .neg-bg { background-color: var(--down-bg); color: var(--down-color); }
+        .neutral-bg { background-color: rgba(255,255,255,0.05); color: var(--text-muted); }
+
+        /* Modal & TradingView */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            z-index: 100; display: none; flex-direction: column; justify-content: flex-end;
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        
+        .modal-content {
+            width: 100%; height: 88vh; background-color: var(--bg-surface);
+            border-radius: 24px 24px 0 0; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        
         .modal-header {
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border);
         }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
+        .modal-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px;
+            background: var(--bg-surface-hover); border: none; color: var(--text-muted);
+            width: 32px; height: 32px; border-radius: 50%; font-size: 20px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
         }
-
-        .chart-container {
-            flex: 1;
-            width: 100%;
-            background: var(--bg-color);
+        .tf-selector {
+            display: flex; padding: 12px 20px; gap: 8px; background: var(--bg-base);
+            border-bottom: 1px solid var(--border); overflow-x: auto;
         }
-
-        /* Loading State */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-size: 14px;
+        .tf-selector::-webkit-scrollbar { display: none; }
+        .tf-btn {
+            background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
         }
+        .tf-btn.active { background: var(--bg-surface-hover); color: var(--text-main); border-color: var(--text-muted); }
+        
+        .chart-container { flex: 1; width: 100%; background: var(--bg-base); position: relative; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>AETHER Market</h1>
-        <div class="search-container">
-            <input type="text" id="searchInput" class="search-bar" placeholder="Search by name or symbol (e.g. BTC)">
+        <div class="header-top">
+            <div class="brand-title">Market</div>
+            <div class="live-status" id="connStatus">
+                <div class="status-dot" id="connDot"></div>
+                <span id="connText">LIVE</span>
+            </div>
+        </div>
+        <div class="search-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search assets...">
         </div>
     </header>
 
@@ -300,143 +286,243 @@
         <div class="aether-card">
             <div class="aether-info">
                 <h2>AETHER</h2>
-                <p>Status: Coming Soon</p>
+                <span>Coming Soon</span>
             </div>
-            <div class="aether-logo">A</div>
+            <div class="aether-logo-container">
+                <img src="https://raw.githubusercontent.com/karangangani/Earncrypto/main/IMG_20260228_091810_031.jpg" 
+                     alt="Aether" 
+                     class="aether-logo-img" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="aether-logo-fallback">A</div>
+            </div>
         </div>
 
-        <div class="coin-list" id="coinList">
-            <div class="loading">Loading live market data...</div>
+        <div class="list-header">
+            <span>Asset</span>
+            <span>Price / 24h</span>
         </div>
+        <div class="coin-list" id="coinList"></div>
     </main>
 
     <div class="modal-overlay" id="chartModal">
         <div class="modal-content">
             <div class="modal-header">
-                <span class="modal-title" id="modalTitle">BTC/USDT</span>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <div class="modal-title" id="modalTitle">Loading...</div>
+                <button class="close-btn" onclick="closeModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="tf-selector" id="tfSelector">
+                <button class="tf-btn" onclick="updateTF('15', this)">15m</button>
+                <button class="tf-btn active" onclick="updateTF('60', this)">1H</button>
+                <button class="tf-btn" onclick="updateTF('240', this)">4H</button>
+                <button class="tf-btn" onclick="updateTF('D', this)">1D</button>
             </div>
             <div class="chart-container" id="tv_chart_container"></div>
         </div>
-    </div>
+        </div>
 
     <script>
-        let globalCoinData = [];
-        const coinListContainer = document.getElementById('coinList');
-        const searchInput = document.getElementById('searchInput');
-        const chartModal = document.getElementById('chartModal');
-        const modalTitle = document.getElementById('modalTitle');
-        let tvWidget = null;
+        const rawCoinData = [
+            "BTC:Bitcoin", "ETH:Ethereum", "BNB:BNB", "SOL:Solana", "XRP:XRP", "USDC:USDC", 
+            "DOGE:Dogecoin", "ADA:Cardano", "AVAX:Avalanche", "SHIB:Shiba Inu", "DOT:Polkadot", 
+            "LINK:Chainlink", "TRX:TRON", "MATIC:Polygon", "LTC:Litecoin", "BCH:Bitcoin Cash", 
+            "UNI:Uniswap", "APT:Aptos", "NEAR:NEAR Protocol", "ATOM:Cosmos", "XLM:Stellar", 
+            "FIL:Filecoin", "ICP:Internet Computer", "HBAR:Hedera", "VET:VeChain", "ARB:Arbitrum", 
+            "OP:Optimism", "RNDR:Render", "MKR:Maker", "INJ:Injective", "GRT:The Graph"
+        ];
 
-        // Fetch top 100 coins from CoinGecko Free API
-        async function fetchMarketData() {
-            try {
-                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false');
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                const data = await response.json();
-                globalCoinData = data;
-                renderList(globalCoinData);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                coinListContainer.innerHTML = `<div class="loading" style="color: #ef4444;">Failed to load data. Rate limit may be reached. Please wait a minute and refresh.</div>`;
-            }
-        }
+        const state = {
+            coins: {},
+            ui: {},
+            ws: null,
+            reconnectTimer: null,
+            activeSymbol: null,
+            activeTF: '60',
+            tvWidget: null
+        };
 
-        // Render the list of coins
-        function renderList(dataToRender) {
-            coinListContainer.innerHTML = '';
+        function initDOM() {
+            const list = document.getElementById('coinList');
+            const frag = document.createDocumentFragment();
             
-            if (dataToRender.length === 0) {
-                coinListContainer.innerHTML = '<div class="loading">No coins found matching your search.</div>';
-                return;
-            }
-
-            dataToRender.forEach(coin => {
-                const price = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumSignificantDigits: 6 }).format(coin.current_price);
-                const change = coin.price_change_percentage_24h || 0;
-                const changeClass = change >= 0 ? 'change-pos' : 'change-neg';
-                const changeText = change >= 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
+            rawCoinData.forEach(data => {
+                const [symbol, name] = data.split(':');
+                state.coins[symbol] = { price: 0, change: 0 };
 
                 const row = document.createElement('div');
                 row.className = 'coin-row';
-                // Pass symbol to open chart (e.g. btc -> BTC)
-                row.onclick = () => openModal(coin.symbol.toUpperCase(), coin.name);
+                row.onclick = () => openModal(symbol, name);
+
+                const icon = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
 
                 row.innerHTML = `
                     <div class="coin-left">
-                        <img src="${coin.image}" alt="${coin.name}" class="coin-icon">
+                        <img src="${icon}" class="coin-icon" loading="lazy" onerror="this.src='https://assets.coincap.io/assets/icons/generic@2x.png'">
                         <div class="coin-name-block">
-                            <span class="coin-name">${coin.name}</span>
-                            <span class="coin-symbol">${coin.symbol}</span>
+                            <span class="coin-symbol">${symbol}</span>
+                            <span class="coin-name">${name}</span>
                         </div>
                     </div>
                     <div class="coin-right">
-                        <span class="coin-price">${price}</span>
-                        <span class="coin-change ${changeClass}">${changeText}</span>
+                        <span class="coin-price" id="p-${symbol}">--</span>
+                        <span class="coin-change-pill neutral-bg" id="c-${symbol}">--</span>
                     </div>
                 `;
-                coinListContainer.appendChild(row);
+                
+                frag.appendChild(row);
+                state.ui[symbol] = {
+                    row: row,
+                    priceEl: row.querySelector(`#p-${symbol}`),
+                    changeEl: row.querySelector(`#c-${symbol}`)
+                };
             });
+            list.appendChild(frag);
         }
 
-        // Search Functionality
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredData = globalCoinData.filter(coin => 
-                coin.name.toLowerCase().includes(searchTerm) || 
-                coin.symbol.toLowerCase().includes(searchTerm)
-            );
-            renderList(filteredData);
+        function getWSUrl() {
+            const endpoints = [
+                'wss://stream.binance.com:9443/ws/!miniTicker@arr',
+                'wss://stream1.binance.com:9443/ws/!miniTicker@arr',
+                'wss://stream2.binance.com:9443/ws/!miniTicker@arr',
+                'wss://stream3.binance.com:9443/ws/!miniTicker@arr'
+            ];
+            const url = endpoints[Math.floor(Math.random() * endpoints.length)];
+            console.log("Routing to LB:", url);
+            return url;
+        }
+
+        function setStatus(isLive) {
+            const dot = document.getElementById('connDot');
+            const txt = document.getElementById('connText');
+            if (isLive) {
+                dot.className = 'status-dot';
+                txt.textContent = 'LIVE';
+            } else {
+                dot.className = 'status-dot offline';
+                txt.textContent = 'RECONNECTING';
+            }
+        }
+
+        function connectLiveMarket() {
+            if (state.ws) state.ws.close();
+            
+            setStatus(false);
+            state.ws = new WebSocket(getWSUrl());
+
+            state.ws.onopen = () => {
+                setStatus(true);
+                if(state.reconnectTimer) clearInterval(state.reconnectTimer);
+            };
+
+            state.ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                
+                requestAnimationFrame(() => {
+                    data.forEach(ticker => {
+                        if (ticker.s.endsWith('USDT')) {
+                            const symbol = ticker.s.replace('USDT', '');
+                            if (state.ui[symbol]) {
+                                processTick(symbol, parseFloat(ticker.c), parseFloat(ticker.o));
+                            }
+                        }
+                    });
+                });
+            };
+
+            state.ws.onclose = () => {
+                setStatus(false);
+                clearTimeout(state.reconnectTimer);
+                state.reconnectTimer = setTimeout(connectLiveMarket, 3000); 
+            };
+            
+            state.ws.onerror = () => state.ws.close();
+        }
+
+        function processTick(symbol, currentPrice, openPrice) {
+            const ui = state.ui[symbol];
+            const data = state.coins[symbol];
+            
+            if (data.price !== currentPrice) {
+                ui.priceEl.textContent = currentPrice < 1 
+                    ? '$' + currentPrice.toFixed(4) 
+                    : '$' + currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                data.price = currentPrice;
+            }
+            const changePercent = ((currentPrice - openPrice) / openPrice) * 100;
+            const roundedChange = parseFloat(changePercent.toFixed(2));
+
+            if (data.change !== roundedChange) {
+                const sign = roundedChange > 0 ? '+' : '';
+                ui.changeEl.textContent = `${sign}${roundedChange.toFixed(2)}%`;
+                
+                if (roundedChange > 0) ui.changeEl.className = 'coin-change-pill pos-bg';
+                else if (roundedChange < 0) ui.changeEl.className = 'coin-change-pill neg-bg';
+                else ui.changeEl.className = 'coin-change-pill neutral-bg';
+                
+                data.change = roundedChange;
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            Object.values(state.ui).forEach((ui, index) => {
+                const symbolStr = rawCoinData[index].toLowerCase();
+                ui.row.style.display = symbolStr.includes(query) ? 'flex' : 'none';
+            });
         });
 
-        // Open TradingView Chart Modal
-        function openModal(symbol, name) {
-            modalTitle.innerText = `${name} (${symbol}/USDT)`;
-            chartModal.classList.add('active');
-            
-            // Clear previous widget
-            document.getElementById('tv_chart_container').innerHTML = '';
+        function renderChart() {
+            const container = document.getElementById('tv_chart_container');
+            container.innerHTML = ''; 
 
-            // Map standard crypto symbols to Binance format for TradingView
-            const tvSymbol = `BINANCE:${symbol}USDT`;
-
-            tvWidget = new TradingView.widget({
+            state.tvWidget = new TradingView.widget({
                 "autosize": true,
-                "symbol": tvSymbol,
-                "interval": "60",
+                "symbol": `BINANCE:${state.activeSymbol}USDT`,
+                "interval": state.activeTF,
                 "timezone": "Etc/UTC",
                 "theme": "dark",
                 "style": "1",
                 "locale": "en",
                 "enable_publishing": false,
-                "backgroundColor": "rgba(11, 14, 20, 1)",
-                "gridColor": "rgba(255, 255, 255, 0.05)",
-                "hide_top_toolbar": false,
+                "backgroundColor": "#0b0e11",
+                "gridColor": "#181a20",
+                "hide_top_toolbar": true,
                 "hide_legend": false,
                 "save_image": false,
                 "container_id": "tv_chart_container"
             });
         }
 
-        // Close Chart Modal
-        function closeModal() {
-            chartModal.classList.remove('active');
-            document.getElementById('tv_chart_container').innerHTML = ''; // Destroy chart to save memory
+                function openModal(symbol, name) {
+            state.activeSymbol = symbol;
+            const icon = `https://assets.coincap.io/assets/icons/${symbol.toLowerCase()}@2x.png`;
+            document.getElementById('modalTitle').innerHTML = `<img src="${icon}" width="24" height="24" style="border-radius:50%; background:#2b3139; padding:2px" onerror="this.style.display='none'"> ${name} (${symbol})`;
+            
+            document.getElementById('chartModal').classList.add('active');
+            renderChart();
         }
 
-        // Close modal if clicked outside the content box
-        chartModal.addEventListener('click', (e) => {
-            if (e.target === chartModal) {
-                closeModal();
-            }
+        function updateTF(tf, btn) {
+            document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.activeTF = tf;
+            renderChart();
+        }
+        function closeModal() {
+            document.getElementById('chartModal').classList.remove('active');
+            setTimeout(() => { 
+                document.getElementById('tv_chart_container').innerHTML = ''; 
+                state.tvWidget = null;
+            }, 300);
+        }
+
+        document.getElementById('chartModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('chartModal')) closeModal();
         });
 
-        // Initialize Data Fetch
-        fetchMarketData();
-        
-        // Auto update data every 60 seconds
-        setInterval(fetchMarketData, 60000);
+        initDOM();
+        connectLiveMarket();
     </script>
 </body>
 </html>
