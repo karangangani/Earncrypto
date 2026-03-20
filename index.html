@@ -64,7 +64,7 @@ body{
 .wrap{max-width:720px;margin:12px auto; padding-bottom: 20px;}
 
 /* HEADER & LOGO */
-.header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:20px;background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow); transition: all 0.3s ease;}
+  .header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:20px;background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow); transition: all 0.3s ease;}
 .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#071017,#0f2540);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;position:relative;box-shadow:0 8px 30px rgba(0,0,0,0.3); cursor:pointer; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;}
 .logo:active{transform: scale(0.92);}
 .logo img{width:100%;height:100%;object-fit:cover;}
@@ -122,6 +122,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 .modal .card::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 10px; }
 @keyframes popIn { 0% { opacity:0; transform: scale(0.9) translateY(20px); } 100% { opacity:1; transform: scale(1) translateY(0); } }
 #warn{color:#ff5555;text-align:center;margin-top:10px; font-weight:700;}
+
 /* SPLASH SCREEN */
 #splash { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:100000; background: var(--bg); flex-direction:column; color:var(--text); }
 .splash-logo { width:160px; height:160px; border-radius:30px; display:flex; align-items:center; justify-content:center; margin-bottom:24px; transform-style:preserve-3d; animation: splashPop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); background:linear-gradient(135deg,#071017,#0f2540); box-shadow:0 20px 60px rgba(0,0,0,0.5); overflow: hidden;}
@@ -130,8 +131,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 .splash-text { font-weight:900; font-size:26px; margin-bottom:18px; letter-spacing:1.5px; color:var(--text); }
 .loading-ring { width:56px; height:56px; border-radius:50%; border:4px solid var(--card-border); border-top-color:var(--accent); animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* SETTINGS GEAR */
+  /* SETTINGS GEAR */
 .gear { margin-left:auto; cursor:pointer; padding:12px; border-radius:14px; display:inline-flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--card-border); color:var(--text); transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
 .gear:active { transform: scale(0.9); }
 .setting-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; font-weight:700; color:var(--text); font-size: 15px;}
@@ -189,11 +189,11 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
       <h1>AETHER</h1>
       <div id="userLine" class="sub">Connecting...</div>
     </div>
+
     <div class="gear" id="openSettings" title="Settings" onclick="playClick(); document.getElementById('settingsModal').style.display='flex'">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 2.3 17.88l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.27-.39 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 1 1 6.7 2.3l.06.06c.43.43 1 .62 1.6.49.5-.11 1-.36 1-1.06V1a2 2 0 1 1 4 0v.09c0 .7.55.95 1 .06.59.13 1.17-.06 1.6-.49l.06-.06A2 2 0 1 1 21.7 6.12l-.06.06c-.43.43-.62 1-.49 1.6.11.5.36 1 1.06 1H23a2 2 0 1 1 0 4h-.09c-.7 0-1.27.39-1.51 1z"/></svg>
     </div>
   </div>
-  
   <div class="card">
     <div class="stats">
       <div class="stat"><div class="v" id="points">0</div><div class="l">Ae Earned</div></div>
@@ -208,7 +208,8 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
       <div class="tab" onclick="openTab('referral', event); playClick()">Invite</div>
       <div class="tab" onclick="openTab('airdrop', event); playClick()">Airdrop</div>
     </div>
-        <div id="home" class="section active">
+
+    <div id="home" class="section active">
       <div class="ref-box">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <div style="flex:1;min-width:160px">
@@ -316,8 +317,8 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
       <div class="faq-item">
         <div class="faq-question">How can I earn AE?<span class="faq-icon">+</span></div>
         <div class="faq-answer">You can earn AE by watching ads, inviting friends through referral links, and completing mining levels.</div>
-      </div>
-      <div class="faq-item">
+  </div>
+  <div class="faq-item">
         <div class="faq-question">How many ads can I watch?<span class="faq-icon">+</span></div>
         <div class="faq-answer">Users can watch up to 50 ads every 12 hours. After the limit is reached, the ad counter resets automatically after 12 hours.</div>
       </div>
@@ -377,7 +378,7 @@ function initMusicToggle() {
   document.body.addEventListener('touchstart', tryAutoplay);
   if(isEnabled) tryAutoplay();
 }
-/* ================== WEB AUDIO API (PREMIUM SOUND) ================== */
+  /* ================== WEB AUDIO API (PREMIUM SOUND) ================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playPremiumClick() {
   try {
@@ -497,8 +498,9 @@ function writeLocal(stateObj, pendingObj){
     if(stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
     if(pendingObj) localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
   }catch(e){}
-}
-(function initLocal(){
+  }
+  
+  (function initLocal(){
   try{
     const stored = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
     const state = stored.state || stored || {};
@@ -565,103 +567,61 @@ function resetAdsWindowIfNeededLocal(){
       writeLocal(current, window.__aether_pending);
       saveSmallState().catch(()=>{});
       return true;
-    }
-    return false;
+      
+  return false;
   }catch(e){ return false; }
 }
 
-/* ================== CRITICAL BUG FIX: AD RESET LOGIC ================== */
-function resetAdContainer() {
-    try {
-        // 1. Aggressively remove all old ad iframes
-        const oldIframes = document.querySelectorAll('iframe[src*="libtl.com"]');
-        oldIframes.forEach(el => el.remove());
-        
-        // 2. Remove the old script tag
-        const oldScript = document.getElementById('ad-sdk');
-        if(oldScript) oldScript.remove();
-        
-        // 3. Clear the cached global function so it's forced to re-initialize
-        if (window.show_10192178) {
-            window.show_10192178 = undefined;
-        }
-
-        // 4. Inject a fresh script tag
-        const newScript = document.createElement('script');
-        newScript.id = 'ad-sdk';
-        newScript.src = '//libtl.com/sdk.js';
-        newScript.setAttribute('data-zone', '10192178');
-        newScript.setAttribute('data-sdk', 'show_10192178');
-        document.head.appendChild(newScript);
-    } catch(e) {
-        console.error("Ad reset failed", e);
-    }
-}
-
-function showAdNormalized(timeoutMs = 25000){
+/* ================== CRITICAL BUG FIX: CLEAN AD LOGIC ================== */
+// Uses standard promises instead of destructive script reinjection
+function showAdNormalized(timeoutMs = 30000){
   return new Promise((resolve) => {
     let resolved = false;
-    let timer = null;
 
-    // Helper to prevent memory leaks and duplicate triggers
-    const cleanup = () => {
-        window.removeEventListener('libtl_ad_result', handler);
-        if (timer) clearTimeout(timer);
-    };
-
-    const handler = (ev) => { 
-        if(resolved) return;
-        resolved = true;
-        cleanup(); 
-        try{ 
-            const ok = !!(ev.detail && (ev.detail.completed || ev.detail.success)); 
-            resolve({completed: ok}); 
-        } catch(e){ 
-            resolve({completed:false}); 
-        } 
-    };
-    
-    window.addEventListener('libtl_ad_result', handler);
-    
-    // Timeout failsafe
-    timer = setTimeout(() => { 
-        if(!resolved) { 
-            resolved = true; 
-            cleanup();
-            resolve({ completed: false, reason:'timeout' }); 
-        } 
-    }, timeoutMs);
-    try { 
-        if (window.show_10192178 && typeof window.show_10192178 === 'function') {
-            const maybe = window.show_10192178('');
-            if (maybe && typeof maybe.then === 'function'){
-                maybe.then(res => {
-                    if(!resolved){
-                        resolved=true; cleanup();
-                        resolve({completed: !!(res && res.completed)});
-                    }
-                }).catch(()=>{
-                    if(!resolved){ resolved=true; cleanup(); resolve({completed:false}); }
-                });
-            }
-        } else if (window.libtl && typeof window.libtl.show === 'function') {
-             window.libtl.show({ 
-                 zone:'10192178', 
-                 onComplete: ()=>{ if(!resolved){ resolved=true; cleanup(); resolve({completed:true}); } }, 
-                 onClose:(watched)=>{ if(!resolved){ resolved=true; cleanup(); resolve({completed: !!watched}); } }, 
-                 onError: ()=>{ if(!resolved){ resolved=true; cleanup(); resolve({completed:false}); } } 
-             });
-        } else {
-                      // SDK didn't load in time
-            if(!resolved) { resolved=true; cleanup(); resolve({completed:false, reason:'not_loaded'}); }
+    // Timeout fallback just in case the ad network hangs
+    const timer = setTimeout(() => {
+        if(!resolved) {
+            resolved=true;
+            resolve({ completed: false, reason:'timeout' });
         }
-    } catch(e){
-        if(!resolved) { resolved=true; cleanup(); resolve({completed:false}); }
+    }, timeoutMs);
+
+    try {
+        if (typeof window.show_10192178 === 'function') {
+            // SDK function found! Most Monetag/Reward SDKs return a promise
+            window.show_10192178().then(res => {
+                if(!resolved){
+                    resolved = true;
+                    clearTimeout(timer);
+                    // Standardize the response based on typical ad networks
+                    resolve({ completed: true });
+                }
+            }).catch(err => {
+                if(!resolved){
+                    resolved = true;
+                    clearTimeout(timer);
+                    resolve({ completed: false, error: err });
+                }
+            });
+        } else {
+            // Ad SDK not fully loaded yet
+            if(!resolved){
+                resolved = true;
+                clearTimeout(timer);
+                resolve({ completed: false, reason: 'sdk_not_loaded' });
+            }
+        }
+    } catch(e) {
+        if(!resolved){
+            resolved = true;
+            clearTimeout(timer);
+            resolve({ completed: false, error: e });
+        }
     }
   });
 }
 
-function showFallbackAdModal(seconds = 15){
+function showFallbackAdModal(seconds = 10){
   return new Promise((resolve) => {
     let modal = document.getElementById('fallback-ad-modal');
     if (!modal){
@@ -697,6 +657,7 @@ function updateUI(){
   
   const cycleCount = current.adsWindowCount || 0;
   document.getElementById('adsCycleCount').innerText = `${cycleCount}/${ADS_WINDOW_LIMIT}`;
+  
   updateAdReward();
   updateWalletButtons();
 }
@@ -730,9 +691,8 @@ function loadRefList(){
       list.appendChild(li); 
     }); 
   }
-}
-
-/* ----------------- WatchAd Handler (BUG FIXED) ----------------- */
+  }
+  /* ----------------- WatchAd Handler (BUG FIXED) ----------------- */
 async function watchAdHandler(){
   resetAdsWindowIfNeededLocal();
 
@@ -749,106 +709,82 @@ async function watchAdHandler(){
   const btn = document.getElementById('watchAd');
   btn.disabled = true;
   btn.classList.remove('retry');
+  const originalText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
+  btn.innerText = "Loading Ad...";
   
-  // Base reward calculation (keeps the 100 AE)
-  const baseReward = 100 * (current.multiplierAds || 1);
-  const originalText = `Watch Ad (+${baseReward} Ae)`;
-  btn.innerText = "Loading Secure Connection...";
-  
-  const prevAe = current.ae || 0;
-  const prevTotalAds = current.totalAds || 0;
   let adSuccess = false;
 
   try {
-    // Ensure clean state before calling ad
-    resetAdContainer();
-    await new Promise(r => setTimeout(r, 300)); // Small buffer to let script attach
-    const res = await showAdNormalized(25000);
-    let completed = !!(res && res.completed);
+    const res = await showAdNormalized(30000); 
     
-    if (!completed){
-      await new Promise(r=>setTimeout(r, 800));
-      completed = (current.ae || 0) > prevAe || (current.totalAds || 0) > prevTotalAds;
-    }
-
-    if (!completed){
-      const fb = await showFallbackAdModal(15);
-      if (fb && fb.completed) adSuccess = true;
+    if (res && res.completed){
+        adSuccess = true;
     } else {
-      adSuccess = true;
+        // Fallback for adblockers / no fill rates
+        const fb = await showFallbackAdModal(10);
+        if (fb && fb.completed) adSuccess = true;
     }
   } catch(err){
-    adSuccess = false;
-  }
+      adSuccess = false;
+  } 
 
-  // SUCCESS BLOCK - Handle Firebase updates & Rewards
-  if (adSuccess) {
-      current.ae = (current.ae || 0) + baseReward;
-      current.totalAds = (current.totalAds || 0) + 1;
-      current.adsToday = (current.adsToday || 0) + 1;
-      current.lastAdTime = Date.now();
-      current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-      current.adsWindowStart = current.adsWindowStart || Date.now();
-
-      enqueuePending(baseReward, 1, null, null);
-      writeLocal(current, window.__aether_pending);
-      
-      showRewardPopup(baseReward);
-      
-      // Visual text pop effect
-      const pts = document.getElementById('points');
-      pts.style.color = '#fff';
-      pts.style.transform = 'scale(1.1)';
-      setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 300);
-
-      try {
-        await db.collection('users').doc(userDocId).update({
-          ae: firebase.firestore.FieldValue.increment(baseReward),
-          totalAds: firebase.firestore.FieldValue.increment(1),
-          adsToday: firebase.firestore.FieldValue.increment(1),
-          lastAdTime: current.lastAdTime,
-          adsWindowStart: current.adsWindowStart,
-          adsWindowCount: current.adsWindowCount,
-          lastSaveTime: Date.now()
-        });
-        try{ await flushPending(false); } catch(e){}
-      } catch(writeErr){
-        saveSmallState().catch(()=>{});
-      }
-      computeLevel(); 
-      updateUI();
-  } else {
-      // If it failed completely, prep UI for a retry state
+  // If failed, unlock button
+  if (!adSuccess) {
+      btn.disabled = false; 
+      btn.innerText = "Retry Ad Connection"; 
       btn.classList.add('retry');
+      return;
   }
 
-  // ALWAY trigger cooldown logic (Success or Fail) so the app never freezes
-  startAdCooldown(btn, originalText);
-}
-// ----------------- Live Countdown Logic -----------------
-function startAdCooldown(btn, originalText) {
-    // Reset the ad container immediately in the background so it's ready for the next click
-    resetAdContainer(); 
-    
-    // Generate random cooldown between 1 and 20 seconds
-    let cooldownSeconds = Math.floor(Math.random() * 20) + 1;
-    
-    btn.disabled = true;
-    btn.innerText = `Next ad available in ${cooldownSeconds}s`;
-    
-    const timerInterval = setInterval(() => {
-        cooldownSeconds--;
-        if (cooldownSeconds > 0) {
-            btn.innerText = `Next ad available in ${cooldownSeconds}s`;
-        } else {
-            // Timer finished: reset button
-            clearInterval(timerInterval);
-            btn.disabled = false;
-            btn.innerText = btn.classList.contains('retry') ? "Retry Ad Connection" : originalText;
-        }
-    }, 1000);
+  // SUCCESS BLOCK
+  btn.classList.remove('retry');
+  const reward = 100 * (current.multiplierAds || 1);
+  current.ae = (current.ae || 0) + reward;
+  current.totalAds = (current.totalAds || 0) + 1;
+  current.adsToday = (current.adsToday || 0) + 1;
+  current.lastAdTime = now;
+  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+  current.adsWindowStart = current.adsWindowStart || now;
+
+  enqueuePending(reward, 1, null, null);
+  writeLocal(current, window.__aether_pending);
+  
+  showRewardPopup(reward);
+
+  try {
+    await db.collection('users').doc(userDocId).update({
+      ae: firebase.firestore.FieldValue.increment(reward),
+      totalAds: firebase.firestore.FieldValue.increment(1),
+      adsToday: firebase.firestore.FieldValue.increment(1),
+      lastAdTime: now,
+      adsWindowStart: current.adsWindowStart,
+      adsWindowCount: current.adsWindowCount,
+      lastSaveTime: Date.now()
+    });
+    try{ await flushPending(false); } catch(e){}
+  } catch(writeErr){
+    saveSmallState().catch(()=>{});
   }
-  async function handleReferralParam(param){
+  
+  computeLevel(); 
+  updateUI();
+
+  // Visual button cooldown (prevent network spamming)
+  const cooldown = 5000; 
+  btn.innerText = `Cooling down...`;
+  
+  const pts = document.getElementById('points');
+  pts.style.color = '#fff';
+  pts.style.transform = 'scale(1.1)';
+  setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 300);
+
+  setTimeout(()=>{ 
+      btn.disabled = false; 
+      btn.innerText = originalText; 
+  }, cooldown);
+}
+
+async function handleReferralParam(param){
   try{
     const referrerId = param.replace('ref_','');
     if (!referrerId || referrerId === userDocId) return;
@@ -873,15 +809,15 @@ function updateWalletButtons(){
   const connected = !!(current.tonWallet); 
   document.getElementById('connectTon').style.display = connected ? 'none' : 'inline-block'; 
   document.getElementById('disconnectTon').style.display = connected ? 'inline-block' : 'none'; 
-}
-
-async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Linked!'); enqueuePending(0,0,null,null); await saveSmallState(); }
+  }
+  async function trySaveTonWallet(addr){ current.tonWallet = addr; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Linked!'); enqueuePending(0,0,null,null); await saveSmallState(); }
 
 let tonUI = null;
 function openChannel(){ if (tg.openTelegramLink) tg.openTelegramLink('https://t.me/Aetherofficialchannel'); else window.open('https://t.me/Aetherofficialchannel','_blank'); }
 function followX(){ const X_URL = 'https://x.com/Aetherofficia97'; try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; } }
 function tonConnect(){ try{ tonUI.connectWallet(); }catch(e){ if (tg.showAlert) tg.showAlert('TON UI loading...'); } }
 async function disconnectTon(){ try{ await tonUI.disconnect(); }catch(e){} try{ await db.collection('users').doc(userDocId).update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Disconnected.'); }
+  
 function initSoundToggle(){
   const enabled = localStorage.getItem('aether_sound') === '1';
   const el = document.getElementById('soundToggle');
@@ -939,7 +875,7 @@ async function initApp(){
         if (server.adsWindowCount) server.adsWindowCount = Number(server.adsWindowCount);
       } catch(e){}
       
-      if (server.adsWindowStart && (!current.adsWindowStart || server.adsWindowStart > current.adsWindowStart)) {
+  if (server.adsWindowStart && (!current.adsWindowStart || server.adsWindowStart > current.adsWindowStart)) {
         current.adsWindowStart = server.adsWindowStart;
         current.adsWindowCount = typeof server.adsWindowCount === 'number' ? server.adsWindowCount : current.adsWindowCount;
       } else {
@@ -983,13 +919,6 @@ async function initApp(){
       }catch(e){}
     }, 60*1000);
 
-    window.addEventListener('focus', () => {
-      const btn = document.getElementById('watchAd');
-      if (!btn || btn.disabled) return; 
-      // Ensure state is clean when returning to app
-      resetAdContainer();
-    });
-    
     document.getElementById('appWrap').style.display = 'block';
 
   }catch(e){
@@ -1012,7 +941,8 @@ function renderLevelsChunk(max){
     container.appendChild(el);
     document.getElementById(`claim_${i}`).addEventListener('click', async ()=>{ playClick(); await claimLevel(i, refsNeeded, adsNeeded, reward); });
   }
-  levelsRendered = end; updateLevelProgressUI();
+  
+levelsRendered = end; updateLevelProgressUI();
 }
 function updateLevelProgressUI(){
   const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
@@ -1053,5 +983,4 @@ initApp();
 </script>
 </body>
 </html>
-  
-    
+      
