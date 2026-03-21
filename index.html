@@ -683,47 +683,138 @@ async function watchAdHandler(){
   current.adsWindowStart = current.adsWindowStart || now;
 
   enqueuePending(reward, 1, null, null);
-  writeLocal(current, window.__aether_pending);
-  showRewardPopup(reward);
+/* ================== PERFECTED AD LOGIC ================== */
+let isAdLoading = false; // Strict lock to prevent spam clicks and looping
 
-  // FIX 2: Removed "await" from the Firebase update.
-  // Now, if the internet drops, Firebase will save it in the background 
-  // without permanently freezing the UI button!
+async function watchAdHandler(){
+  if (isAdLoading) return; // If already loading or cooling down, ignore clicks
+
+  resetAdsWindowIfNeededLocal();
+
+  const now = Date.now();
+  const start = Number(current.adsWindowStart || 0);
+  
+  // Check daily limit
+  if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT){
+    const timeLeftMs = ADS_WINDOW_MS - (now - start);
+    const hoursLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60));
+    if (tg.showAlert) tg.showAlert(`Mining Cycle Complete! 🛑\nLimit: ${ADS_WINDOW_LIMIT}/${ADS_WINDOW_LIMIT}.\n\nNext cycle begins in approx ${hoursLeft} hours.`);
+    return;
+  }
+
+  const btn = document.getElementById('watchAd');
+  const rewardAmount = 100 * (current.multiplierAds || 1);
+  const originalText = `Watch Ad (+${rewardAmount} Ae)`;
+
+  // Strict Disable State
+  isAdLoading = true;
+  btn.disabled = true;
+  btn.classList.remove('retry');
+  btn.innerText = "Loading Ad...";
+  btn.style.opacity = "0.7";
+  
+  // Clean Ad Call with an 8-second Timeout Failsafe
+  const playAd = new Promise((resolve) => {
+      let isResolved = false;
+
+      const timeoutTimer = setTimeout(() => {
+          if (!isResolved) {
+              isResolved = true;
+              resolve({ success: false, reason: 'timeout' });
+          }
+      }, 8000); // Wait max 8 seconds
+
+      if (typeof window.show_10192178 === 'function') {
+          window.show_10192178().then(() => {
+              if (!isResolved) {
+                  isResolved = true;
+                  clearTimeout(timeoutTimer);
+                  resolve({ success: true });
+              }
+          }).catch((err) => {
+              if (!isResolved) {
+                  isResolved = true;
+                  clearTimeout(timeoutTimer);
+                  resolve({ success: false, reason: 'error' });
+              }
+          });
+      } else {
+          if (!isResolved) {
+              isResolved = true;
+              clearTimeout(timeoutTimer);
+              resolve({ success: false, reason: 'sdk_missing' });
+          }
+      }
+  });
+
+  const result = await playAd;
+
+  if (!result.success) {
+      // --- AD FAILED / TIMEOUT ---
+      isAdLoading = false; // Release lock so user can retry
+      btn.disabled = false;
+      btn.innerText = "Retry Ad Connection";
+      btn.classList.add('retry');
+      btn.style.opacity = "1";
+
+      let errorMsg = "Ad network is busy or connection failed. Please try again.";
+      if (result.reason === 'sdk_missing') errorMsg = "Ad system is initializing. Please wait a moment.";
+      
+      if (window.tg && tg.showAlert) tg.showAlert(errorMsg);
+      return;
+  }
+
+  // --- AD SUCCESS: Add Reward ---
+  current.ae = (current.ae || 0) + rewardAmount;
+  current.totalAds = (current.totalAds || 0) + 1;
+  current.adsToday = (current.adsToday || 0) + 1;
+  current.lastAdTime = Date.now();
+  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+  current.adsWindowStart = current.adsWindowStart || Date.now();
+
+  enqueuePending(rewardAmount, 1, null, null);
+  writeLocal(current, window.__aether_pending);
+  showRewardPopup(rewardAmount);
+
+  // NON-BLOCKING FIREBASE UPDATE (No 'await' to freeze the app)
   if (db) {
       db.collection('users').doc(userDocId).update({
-        ae: firebase.firestore.FieldValue.increment(reward),
-        totalAds: firebase.firestore.FieldValue.increment(1),
-        adsToday: firebase.firestore.FieldValue.increment(1),
-        lastAdTime: now,
-        adsWindowStart: current.adsWindowStart,
-        adsWindowCount: current.adsWindowCount,
-        lastSaveTime: Date.now()
+          ae: firebase.firestore.FieldValue.increment(rewardAmount),
+          totalAds: firebase.firestore.FieldValue.increment(1),
+          adsToday: firebase.firestore.FieldValue.increment(1),
+          lastAdTime: Date.now(),
+          adsWindowStart: current.adsWindowStart,
+          adsWindowCount: current.adsWindowCount,
+          lastSaveTime: Date.now()
       }).then(() => {
-          try{ flushPending(false); } catch(e){}
+          try { flushPending(false); } catch(e){}
       }).catch((writeErr) => {
-        saveSmallState().catch(()=>{});
+          saveSmallState().catch(()=>{});
       });
   }
-  
+
   computeLevel(); 
   updateUI();
 
-  const cooldown = 5000; 
-  btn.innerText = `Cooling down...`;
-  
+  // Fun point animation
   const pts = document.getElementById('points');
   if (pts) {
       pts.style.color = '#fff';
-      pts.style.transform = 'scale(1.1)';
-      setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 300);
+      pts.style.transform = 'scale(1.2)';
+      setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 400);
   }
 
-  setTimeout(()=>{ 
-      btn.disabled = false; 
-      btn.innerText = originalText; 
-  }, cooldown);
+  // --- EXACTLY 5 SECOND COOL-DOWN ---
+  btn.innerText = "Cooling down...";
+  
+  setTimeout(() => {
+      // 5 seconds later: unlock the button. User MUST manually click again.
+      isAdLoading = false; 
+      btn.disabled = false;
+      btn.innerText = originalText;
+      btn.style.opacity = "1";
+  }, 5000);
 }
-
 /* ================== OTHER HANDLERS ================== */
 async function handleReferralParam(param){
   if (!db) return; 
