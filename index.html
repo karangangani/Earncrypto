@@ -631,14 +631,11 @@ function loadRefList(){
 let isAdLoading = false; // Strict lock flag
 
 async function watchAdHandler(){
-  if (isAdLoading) return; // Prevents double clicks and auto-loops
-
   resetAdsWindowIfNeededLocal();
 
   const now = Date.now();
   const start = Number(current.adsWindowStart || 0);
   
-  // Check daily limit
   if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT){
     const timeLeftMs = ADS_WINDOW_MS - (now - start);
     const hoursLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60));
@@ -647,115 +644,84 @@ async function watchAdHandler(){
   }
 
   const btn = document.getElementById('watchAd');
-  const rewardAmount = 100 * (current.multiplierAds || 1);
-  const originalText = `Watch Ad (+${rewardAmount} Ae)`;
-
-  // Strict Disable State
-  isAdLoading = true;
   btn.disabled = true;
   btn.classList.remove('retry');
+  const originalText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
   btn.innerText = "Loading Ad...";
-  btn.style.opacity = "0.7";
   
-  // Clean, Promisified Ad Call with 8-second Failsafe
-  const playAd = new Promise((resolve) => {
-      let isResolved = false;
+  let adSuccess = false;
 
-      const timeoutTimer = setTimeout(() => {
-          if (!isResolved) {
-              isResolved = true;
-              resolve({ success: false, reason: 'timeout' });
-          }
-      }, 8000); // 8 second wait max
+  try {
+    // FIX 1: Dropped timeout from 30000 to 8000 (8 seconds). 
+    // If the ad network fails on the 2nd ad, it skips to your Fallback Modal much faster.
+    const res = await showAdNormalized(8000); 
+    if (res && res.completed){
+        adSuccess = true;
+    } else {
+        const fb = await showFallbackAdModal(10);
+        if (fb && fb.completed) adSuccess = true;
+    }
+  } catch(err){
+      adSuccess = false;
+  } 
 
-      if (typeof window.show_10192178 === 'function') {
-          window.show_10192178().then(() => {
-              if (!isResolved) {
-                  isResolved = true;
-                  clearTimeout(timeoutTimer);
-                  resolve({ success: true });
-              }
-          }).catch((err) => {
-              if (!isResolved) {
-                  isResolved = true;
-                  clearTimeout(timeoutTimer);
-                  resolve({ success: false, reason: 'error' });
-              }
-          });
-      } else {
-          if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timeoutTimer);
-              resolve({ success: false, reason: 'sdk_missing' });
-          }
-      }
-  });
-  const result = await playAd;
-
-  if (result.success) {
-      // --- AD SUCCESS: Add Reward ---
-      current.ae = (current.ae || 0) + rewardAmount;
-      current.totalAds = (current.totalAds || 0) + 1;
-      current.adsToday = (current.adsToday || 0) + 1;
-      current.lastAdTime = now;
-      current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-      current.adsWindowStart = current.adsWindowStart || now;
-
-      enqueuePending(rewardAmount, 1, null, null);
-      writeLocal(current, window.__aether_pending);
-      showRewardPopup(rewardAmount);
-
-      if (db) {
-          try {
-              await db.collection('users').doc(userDocId).update({
-                  ae: firebase.firestore.FieldValue.increment(rewardAmount),
-                  totalAds: firebase.firestore.FieldValue.increment(1),
-                  adsToday: firebase.firestore.FieldValue.increment(1),
-                  lastAdTime: now,
-                  adsWindowStart: current.adsWindowStart,
-                  adsWindowCount: current.adsWindowCount,
-                  lastSaveTime: Date.now()
-              });
-              try { await flushPending(false); } catch(e){}
-          } catch(writeErr){
-              saveSmallState().catch(()=>{});
-          }
-      }
-
-      computeLevel(); 
-      updateUI();
-
-      // Fun point animation
-      const pts = document.getElementById('points');
-      if (pts) {
-          pts.style.color = '#fff';
-          pts.style.transform = 'scale(1.2)';
-          setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 400);
-      }
-
-      // --- 5 SECOND COOL-DOWN ---
-      btn.innerText = "Cooling down...";
-      
-      setTimeout(() => {
-          // Releases lock, User has to click again manually
-          isAdLoading = false; 
-          btn.disabled = false;
-          btn.innerText = originalText;
-          btn.style.opacity = "1";
-      }, 5000);
-
-  } else {
-      // --- AD FAILED / TIMEOUT ---
-      isAdLoading = false; // Release lock so user can retry
-      btn.disabled = false;
-      btn.innerText = "Retry Ad Connection";
+  if (!adSuccess) {
+      btn.disabled = false; 
+      btn.innerText = "Retry Ad Connection"; 
       btn.classList.add('retry');
-      btn.style.opacity = "1";
-
-      let errorMsg = "Ad network is busy or connection failed. Please try again.";
-      if (result.reason === 'sdk_missing') errorMsg = "Ad system is initializing. Please wait a moment.";
-    if (window.tg && tg.showAlert) tg.showAlert(errorMsg);
+      return;
   }
+
+  // SUCCESS BLOCK
+  btn.classList.remove('retry');
+  const reward = 100 * (current.multiplierAds || 1);
+  current.ae = (current.ae || 0) + reward;
+  current.totalAds = (current.totalAds || 0) + 1;
+  current.adsToday = (current.adsToday || 0) + 1;
+  current.lastAdTime = now;
+  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+  current.adsWindowStart = current.adsWindowStart || now;
+
+  enqueuePending(reward, 1, null, null);
+  writeLocal(current, window.__aether_pending);
+  showRewardPopup(reward);
+
+  // FIX 2: Removed "await" from the Firebase update.
+  // Now, if the internet drops, Firebase will save it in the background 
+  // without permanently freezing the UI button!
+  if (db) {
+      db.collection('users').doc(userDocId).update({
+        ae: firebase.firestore.FieldValue.increment(reward),
+        totalAds: firebase.firestore.FieldValue.increment(1),
+        adsToday: firebase.firestore.FieldValue.increment(1),
+        lastAdTime: now,
+        adsWindowStart: current.adsWindowStart,
+        adsWindowCount: current.adsWindowCount,
+        lastSaveTime: Date.now()
+      }).then(() => {
+          try{ flushPending(false); } catch(e){}
+      }).catch((writeErr) => {
+        saveSmallState().catch(()=>{});
+      });
+  }
+  
+  computeLevel(); 
+  updateUI();
+
+  const cooldown = 5000; 
+  btn.innerText = `Cooling down...`;
+  
+  const pts = document.getElementById('points');
+  if (pts) {
+      pts.style.color = '#fff';
+      pts.style.transform = 'scale(1.1)';
+      setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 300);
+  }
+
+  setTimeout(()=>{ 
+      btn.disabled = false; 
+      btn.innerText = originalText; 
+  }, cooldown);
 }
 
 /* ================== OTHER HANDLERS ================== */
