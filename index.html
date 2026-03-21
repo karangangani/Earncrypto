@@ -59,7 +59,7 @@ body{
   overflow-y: auto;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
-.wrap{max-width:720px;margin:12px auto; padding-bottom: 20px;}
+  .wrap{max-width:720px;margin:12px auto; padding-bottom: 20px;}
 
 /* HEADER & LOGO */
 .header{display:flex;gap:12px;align-items:center;padding:14px;border-radius:20px;background:var(--card);border:1px solid var(--card-border);box-shadow:var(--shadow); transition: all 0.3s ease;}
@@ -112,8 +112,7 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
 .ref-list{list-style:none;padding:0; margin-top:12px;}
 .ref-item{padding:16px;background:var(--card);border-radius:14px;margin-bottom:12px;border:1px solid var(--card-border); font-weight:700; color:var(--text); display: flex; align-items: center;}
 .footer{margin-top:24px;text-align:center;color:var(--muted);font-size:13px;padding:16px;background:var(--card);border-radius:18px; font-weight:700; border:1px solid var(--card-border);}
-
-/* MODALS */
+  /* MODALS */
 .modal { position: fixed; inset: 0; display:none; align-items:center; justify-content:center; z-index:99999; background: var(--modal-bg); backdrop-filter: blur(8px); transition: background 0.3s;}
 .modal .card { max-width:480px; width:90%; max-height: 90vh; overflow-y: auto; padding:24px; border-radius:24px; background:var(--card); border:1px solid var(--border); color:var(--muted); box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
 .modal .card::-webkit-scrollbar { width: 6px; }
@@ -175,7 +174,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
   <div class="loading-ring"></div>
   <div id="splashStatus" style="margin-top:20px;color:var(--muted);font-size:15px;font-weight:700;">Initializing Ecosystem...</div>
 </div>
-
 <div class="wrap" id="appWrap" style="display:none">
   <div class="header">
     <div class="logo" onclick="playClick()">
@@ -242,7 +240,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
       <p class="small" style="margin-top:14px">Ads watched this cycle: <span id="adsCycleCount" style="color:var(--text); font-weight:800;">0/50</span></p>
       <p class="small">Level: <span id="levelDisplay" style="color:var(--text); font-weight:800;">0</span> • Total Ads: <span id="totalAds" style="color:var(--text); font-weight:800;">0</span></p>
       <div id="warn"></div>
-
       <div class="small" style="margin-top:28px;font-weight:900;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;font-size:14px;">Mining Level Rewards</div>
       <div id="levelsList" class="levels"></div>
       <div style="text-align:center;margin-top:24px">
@@ -309,7 +306,6 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
         <div class="faq-question">What is AETHER?<span class="faq-icon">+</span></div>
         <div class="faq-answer">AETHER is a reward-based mining platform where users earn AE tokens by watching ads and inviting friends.</div>
       </div>
-      
       <div class="faq-item">
         <div class="faq-question">How can I earn AE?<span class="faq-icon">+</span></div>
         <div class="faq-answer">You can earn AE by watching ads, inviting friends through referral links, and completing mining levels.</div>
@@ -380,7 +376,7 @@ function initMusicToggle() {
       toggleEl.classList.remove('on');
       localStorage.setItem('aether_music', '0');
       bgMusic.pause();
-    }
+      }
   };
   const tryAutoplay = () => {
     if (localStorage.getItem('aether_music') === '1' && bgMusic.paused) {
@@ -492,8 +488,7 @@ let current = {
   adsWindowStart: Date.now(), adsWindowCount: 0
 };
 window.__aether_pending = window.__aether_pending || { aeDelta:0, adsDelta:0, refs:[], claimed:[], lastFlush:0 };
-
-/* ---------------- Storage & Sync ---------------- */
+  /* ---------------- Storage & Sync ---------------- */
 function readLocal(){
   try{
     return {
@@ -560,7 +555,7 @@ async function saveSmallState(){
       adsWindowStart: Number(current.adsWindowStart || Date.now()),
       adsWindowCount: Number(current.adsWindowCount || 0)
     };
-    small.lastResetDate = new Date(small.lastResetTimestamp).toDateString();
+  small.lastResetDate = new Date(small.lastResetTimestamp).toDateString();
     await db.collection('users').doc(userDocId).set(small, { merge: true });
     writeLocal(current, window.__aether_pending);
   }catch(e){}
@@ -583,74 +578,6 @@ function resetAdsWindowIfNeededLocal(){
   }catch(e){ return false; }
 }
 
-/* ================== AD LOGIC ================== */
-function showAdNormalized(timeoutMs = 30000){
-  return new Promise((resolve) => {
-    let resolved = false;
-    const timer = setTimeout(() => {
-        if(!resolved) {
-            resolved=true;
-            resolve({ completed: false, reason:'timeout' });
-        }
-    }, timeoutMs);
-
-    try {
-        if (typeof window.show_10192178 === 'function') {
-            window.show_10192178().then(res => {
-                if(!resolved){
-                    resolved = true;
-                    clearTimeout(timer);
-                    resolve({ completed: true });
-                }
-            }).catch(err => {
-                if(!resolved){
-                    resolved = true;
-                    clearTimeout(timer);
-                    resolve({ completed: false, error: err });
-                }
-            });
-        } else {
-            if(!resolved){
-                resolved = true;
-                clearTimeout(timer);
-                resolve({ completed: false, reason: 'sdk_not_loaded' });
-            }
-        }
-    } catch(e) {
-        if(!resolved){
-            resolved = true;
-            clearTimeout(timer);
-            resolve({ completed: false, error: e });
-        }
-    }
-  });
-}
-
-function showFallbackAdModal(seconds = 10){
-  return new Promise((resolve) => {
-    let modal = document.getElementById('fallback-ad-modal');
-    if (!modal){
-      modal = document.createElement('div'); modal.id='fallback-ad-modal';
-      Object.assign(modal.style,{position:'fixed',left:0,right:0,top:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.85)',zIndex:99999, backdropFilter:'blur(8px)'});
-      modal.innerHTML = `<div style="width:90%;max-width:400px;background:var(--card);padding:28px;border-radius:24px;color:var(--text);text-align:center;border:1px solid var(--accent);box-shadow: 0 15px 50px rgba(0,211,138,0.25);">
-        <h3 style="color:var(--accent); font-weight:900; font-size:22px; margin-bottom:12px;">Fallback Reward</h3>
-        <p style="color:var(--muted); font-weight:600;">Ad provider busy. Wait <span id="fallback-count" style="color:var(--text); font-weight:900; font-size:20px;">${seconds}</span>s for reward.</p>
-        <button id="fallback-cancel" class="btn secondary" style="margin-top:24px;">Cancel Mining</button>
-        </div>`;
-      document.body.appendChild(modal);
-          }
-    modal.style.display='flex';
-    const countEl = modal.querySelector('#fallback-count'); 
-    const cancel = modal.querySelector('#fallback-cancel');
-    let rem = seconds; countEl.innerText = rem;
-    const iv = setInterval(()=>{ 
-        rem--; countEl.innerText = rem; 
-        if(rem<=0){ clearInterval(iv); modal.style.display='none'; resolve({completed:true}); } 
-    }, 1000);
-    cancel.onclick = ()=>{ clearInterval(iv); modal.style.display='none'; resolve({completed:false}); };
-  });
-}
-
 /* ================== UI Helpers ================== */
 function updateAdReward(){ document.getElementById('adReward').innerText = 100 * (current.multiplierAds || 1); }
 function updateUI(){
@@ -666,6 +593,7 @@ function updateUI(){
   updateAdReward();
   updateWalletButtons();
 }
+
 function openTab(tabId, ev){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
@@ -681,6 +609,7 @@ function computeLevel(){
   current.level = Math.min(refsCount, adsCount);
   if (!Number.isFinite(current.level) || current.level < 0) current.level = 0;
 }
+
 function loadRefList(){ 
   const list = document.getElementById('refList'); 
   if(!list) return; 
@@ -694,16 +623,22 @@ function loadRefList(){
       li.className='ref-item'; 
       li.innerHTML = `<span style="color:var(--accent); margin-right:8px;">●</span> Miner ID: ${r.substring(0,8)}...`; 
       list.appendChild(li); 
-    }); 
-  }
+    });
+    }
 }
-/* ----------------- WatchAd Handler ----------------- */
+
+/* ================== PERFECTED AD LOGIC ================== */
+let isAdLoading = false; // Strict lock flag
+
 async function watchAdHandler(){
+  if (isAdLoading) return; // Prevents double clicks and auto-loops
+
   resetAdsWindowIfNeededLocal();
 
   const now = Date.now();
   const start = Number(current.adsWindowStart || 0);
   
+  // Check daily limit
   if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT){
     const timeLeftMs = ADS_WINDOW_MS - (now - start);
     const hoursLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60));
@@ -712,82 +647,120 @@ async function watchAdHandler(){
   }
 
   const btn = document.getElementById('watchAd');
+  const rewardAmount = 100 * (current.multiplierAds || 1);
+  const originalText = `Watch Ad (+${rewardAmount} Ae)`;
+
+  // Strict Disable State
+  isAdLoading = true;
   btn.disabled = true;
   btn.classList.remove('retry');
-  const originalText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
   btn.innerText = "Loading Ad...";
+  btn.style.opacity = "0.7";
   
-  let adSuccess = false;
+  // Clean, Promisified Ad Call with 8-second Failsafe
+  const playAd = new Promise((resolve) => {
+      let isResolved = false;
 
-  try {
-    const res = await showAdNormalized(30000); 
-    if (res && res.completed){
-        adSuccess = true;
-    } else {
-        const fb = await showFallbackAdModal(10);
-        if (fb && fb.completed) adSuccess = true;
-    }
-  } catch(err){
-      adSuccess = false;
-  } 
+      const timeoutTimer = setTimeout(() => {
+          if (!isResolved) {
+              isResolved = true;
+              resolve({ success: false, reason: 'timeout' });
+          }
+      }, 8000); // 8 second wait max
 
-  if (!adSuccess) {
-      btn.disabled = false; 
-      btn.innerText = "Retry Ad Connection"; 
-      btn.classList.add('retry');
-      return;
-  }
-
-  // SUCCESS BLOCK
-  btn.classList.remove('retry');
-  const reward = 100 * (current.multiplierAds || 1);
-  current.ae = (current.ae || 0) + reward;
-  current.totalAds = (current.totalAds || 0) + 1;
-  current.adsToday = (current.adsToday || 0) + 1;
-  current.lastAdTime = now;
-  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-  current.adsWindowStart = current.adsWindowStart || now;
-
-  enqueuePending(reward, 1, null, null);
-  writeLocal(current, window.__aether_pending);
-  showRewardPopup(reward);
-
-  if (db) {
-      try {
-        await db.collection('users').doc(userDocId).update({
-          ae: firebase.firestore.FieldValue.increment(reward),
-          totalAds: firebase.firestore.FieldValue.increment(1),
-          adsToday: firebase.firestore.FieldValue.increment(1),
-          lastAdTime: now,
-          adsWindowStart: current.adsWindowStart,
-          adsWindowCount: current.adsWindowCount,
-          lastSaveTime: Date.now()
-        });
-        try{ await flushPending(false); } catch(e){}
-      } catch(writeErr){
-        saveSmallState().catch(()=>{});
+      if (typeof window.show_10192178 === 'function') {
+          window.show_10192178().then(() => {
+              if (!isResolved) {
+                  isResolved = true;
+                  clearTimeout(timeoutTimer);
+                  resolve({ success: true });
+              }
+          }).catch((err) => {
+              if (!isResolved) {
+                  isResolved = true;
+                  clearTimeout(timeoutTimer);
+                  resolve({ success: false, reason: 'error' });
+              }
+          });
+      } else {
+          if (!isResolved) {
+              isResolved = true;
+              clearTimeout(timeoutTimer);
+              resolve({ success: false, reason: 'sdk_missing' });
+          }
       }
+  });
+  const result = await playAd;
+
+  if (result.success) {
+      // --- AD SUCCESS: Add Reward ---
+      current.ae = (current.ae || 0) + rewardAmount;
+      current.totalAds = (current.totalAds || 0) + 1;
+      current.adsToday = (current.adsToday || 0) + 1;
+      current.lastAdTime = now;
+      current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+      current.adsWindowStart = current.adsWindowStart || now;
+
+      enqueuePending(rewardAmount, 1, null, null);
+      writeLocal(current, window.__aether_pending);
+      showRewardPopup(rewardAmount);
+
+      if (db) {
+          try {
+              await db.collection('users').doc(userDocId).update({
+                  ae: firebase.firestore.FieldValue.increment(rewardAmount),
+                  totalAds: firebase.firestore.FieldValue.increment(1),
+                  adsToday: firebase.firestore.FieldValue.increment(1),
+                  lastAdTime: now,
+                  adsWindowStart: current.adsWindowStart,
+                  adsWindowCount: current.adsWindowCount,
+                  lastSaveTime: Date.now()
+              });
+              try { await flushPending(false); } catch(e){}
+          } catch(writeErr){
+              saveSmallState().catch(()=>{});
+          }
+      }
+
+      computeLevel(); 
+      updateUI();
+
+      // Fun point animation
+      const pts = document.getElementById('points');
+      if (pts) {
+          pts.style.color = '#fff';
+          pts.style.transform = 'scale(1.2)';
+          setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 400);
+      }
+
+      // --- 5 SECOND COOL-DOWN ---
+      btn.innerText = "Cooling down...";
+      
+      setTimeout(() => {
+          // Releases lock, User has to click again manually
+          isAdLoading = false; 
+          btn.disabled = false;
+          btn.innerText = originalText;
+          btn.style.opacity = "1";
+      }, 5000);
+
+  } else {
+      // --- AD FAILED / TIMEOUT ---
+      isAdLoading = false; // Release lock so user can retry
+      btn.disabled = false;
+      btn.innerText = "Retry Ad Connection";
+      btn.classList.add('retry');
+      btn.style.opacity = "1";
+
+      let errorMsg = "Ad network is busy or connection failed. Please try again.";
+      if (result.reason === 'sdk_missing') errorMsg = "Ad system is initializing. Please wait a moment.";
+    if (window.tg && tg.showAlert) tg.showAlert(errorMsg);
   }
-  
-  computeLevel(); 
-  updateUI();
-
-  const cooldown = 5000; 
-  btn.innerText = `Cooling down...`;
-  
-  const pts = document.getElementById('points');
-  pts.style.color = '#fff';
-  pts.style.transform = 'scale(1.1)';
-  setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 300);
-
-  setTimeout(()=>{ 
-      btn.disabled = false; 
-      btn.innerText = originalText; 
-  }, cooldown);
 }
 
+/* ================== OTHER HANDLERS ================== */
 async function handleReferralParam(param){
-  if (!db) return; // Need DB for referrals
+  if (!db) return; 
   try{
     const referrerId = param.replace('ref_','');
     if (!referrerId || referrerId === userDocId) return;
@@ -820,6 +793,7 @@ function openChannel(){ if (tg.openTelegramLink) tg.openTelegramLink('https://t.
 function followX(){ const X_URL = 'https://x.com/Aetherofficia97'; try { window.open(X_URL, '_blank', 'noopener,noreferrer'); } catch(e) { location.href = X_URL; } }
 function tonConnect(){ try{ tonUI.connectWallet(); }catch(e){ if (tg.showAlert) tg.showAlert('TON UI loading...'); } }
 async function disconnectTon(){ try{ if(db) await db.collection('users').doc(userDocId).update({ tonWallet: '' }); }catch(e){} current.tonWallet=''; updateUI(); if (tg.showAlert) tg.showAlert('Wallet Disconnected.'); }
+
 function initSoundToggle(){
   const enabled = localStorage.getItem('aether_sound') === '1';
   const el = document.getElementById('soundToggle');
@@ -837,14 +811,13 @@ function initSoundToggle(){
   };
 }
 
-/* ----------------- REALTIME & INIT (CRASH FIX PROOF) ----------------- */
+/* ----------------- REALTIME & INIT ----------------- */
 async function initApp(){
   try{
     showSplashFor(1800);
     initTheme();
     initSoundToggle();
-    initMusicToggle(); 
-    
+    initMusicToggle();
     // Fail-safe wrapper for Firebase Auth
     if (auth) {
         await auth.signInAnonymously();
@@ -859,7 +832,8 @@ async function initApp(){
     const docRef = db.collection('users').doc(userDocId);
     const doc = await docRef.get();
     const username = (tg.initDataUnsafe && tg.initDataUnsafe.user && (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name)) || 'Miner';
-        if (!doc.exists){
+    
+    if (!doc.exists){
       current.username = username;
       try{ await docRef.set(current); } catch(e){}
     } else {
@@ -911,7 +885,7 @@ async function initApp(){
             try{ if(db) await db.collection('users').doc(userDocId).update({ tonWallet: '' }); } catch(e){}
             current.tonWallet = '';
             updateUI();
-          }
+            }
         });
     } catch(e) { console.warn("TON Script failed to load."); }
 
@@ -934,13 +908,12 @@ async function initApp(){
     if (splash) splash.style.opacity = '0';
     setTimeout(() => { if (splash) splash.style.display = 'none'; document.getElementById('appWrap').style.display = 'block'; }, 400);
   } catch(e) {
-    // FATAL ERROR FALLBACK - GUARANTEES THE APP STILL OPENS!
+    // FATAL ERROR FALLBACK
     console.warn("Failed to connect to Firebase. Running in Local Mode.", e);
     const splash = document.getElementById('splash');
     if (splash) splash.style.display = 'none'; 
     document.getElementById('appWrap').style.display = 'block';
     
-    // Setup Local Offline Mode
     document.getElementById('userLine').innerText = "Offline/Local Mode";
     document.getElementById('myRef').innerText = "Requires connection";
     renderLevelsChunk(20);
@@ -965,6 +938,7 @@ function renderLevelsChunk(max){
   }
   levelsRendered = end; updateLevelProgressUI();
 }
+
 function updateLevelProgressUI(){
   const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
   for (let i=1;i<=levelsRendered;i++){
@@ -975,8 +949,8 @@ function updateLevelProgressUI(){
     btn.innerText = claimed ? 'CLAIMED ✓' : 'CLAIM REWARD';
     if(claimed) { btn.style.background = 'transparent'; btn.style.border = '1px solid var(--accent)'; btn.style.color = 'var(--accent)'; btn.style.boxShadow = 'none'; }
   }
-}
-async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
+  }
+  async function claimLevel(levelNo, refsNeeded, adsNeeded, reward){
   const refsCount = (current.refs||[]).length; const adsDone = current.totalAds || 0;
   if (refsCount < refsNeeded || adsDone < adsNeeded) return tg.showAlert && tg.showAlert('Requirements not met');
   if ((current.claimedLevels||[]).includes(levelNo)) return tg.showAlert && tg.showAlert('Already claimed');
@@ -998,7 +972,7 @@ function showSplashFor(ms=1800){
   const soundEnabled = localStorage.getItem('aether_sound') === '1';
   if (soundEnabled){ setTimeout(()=> playClick(), 300); }
   
-  // Extra fail-safe: Even if initApp completely hangs, this clears the screen in 5 seconds
+  // Extra fail-safe
   setTimeout(()=>{ 
       splash.style.opacity = '0';
       setTimeout(()=> { splash.style.display='none'; document.getElementById('appWrap').style.display='block'; }, 400);
@@ -1007,7 +981,7 @@ function showSplashFor(ms=1800){
 
 // Start the app
 initApp();
-
 </script>
 </body>
 </html>
+  
