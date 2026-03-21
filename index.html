@@ -627,62 +627,8 @@ function loadRefList(){
     }
 }
 
-/* ================== PERFECTED AD LOGIC ================== */
-let isAdLoading = false; // Strict lock flag
 
-async function watchAdHandler(){
-  resetAdsWindowIfNeededLocal();
-
-  const now = Date.now();
-  const start = Number(current.adsWindowStart || 0);
   
-  if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT){
-    const timeLeftMs = ADS_WINDOW_MS - (now - start);
-    const hoursLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60));
-    if (tg.showAlert) tg.showAlert(`Mining Cycle Complete! 🛑\nLimit: ${ADS_WINDOW_LIMIT}/${ADS_WINDOW_LIMIT}.\n\nNext cycle begins in approx ${hoursLeft} hours.`);
-    return;
-  }
-
-  const btn = document.getElementById('watchAd');
-  btn.disabled = true;
-  btn.classList.remove('retry');
-  const originalText = `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
-  btn.innerText = "Loading Ad...";
-  
-  let adSuccess = false;
-
-  try {
-    // FIX 1: Dropped timeout from 30000 to 8000 (8 seconds). 
-    // If the ad network fails on the 2nd ad, it skips to your Fallback Modal much faster.
-    const res = await showAdNormalized(8000); 
-    if (res && res.completed){
-        adSuccess = true;
-    } else {
-        const fb = await showFallbackAdModal(10);
-        if (fb && fb.completed) adSuccess = true;
-    }
-  } catch(err){
-      adSuccess = false;
-  } 
-
-  if (!adSuccess) {
-      btn.disabled = false; 
-      btn.innerText = "Retry Ad Connection"; 
-      btn.classList.add('retry');
-      return;
-  }
-
-  // SUCCESS BLOCK
-  btn.classList.remove('retry');
-  const reward = 100 * (current.multiplierAds || 1);
-  current.ae = (current.ae || 0) + reward;
-  current.totalAds = (current.totalAds || 0) + 1;
-  current.adsToday = (current.adsToday || 0) + 1;
-  current.lastAdTime = now;
-  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-  current.adsWindowStart = current.adsWindowStart || now;
-
-  enqueuePending(reward, 1, null, null);
 /* ================== PERFECTED AD LOGIC ================== */
 let isAdLoading = false; // Strict lock to prevent spam clicks and looping
 
@@ -809,12 +755,7 @@ async function watchAdHandler(){
   
   setTimeout(() => {
       // 5 seconds later: unlock the button. User MUST manually click again.
-      isAdLoading = false; 
-      btn.disabled = false;
-      btn.innerText = originalText;
-      btn.style.opacity = "1";
-  }, 5000);
-}
+      isAdLoad
 /* ================== OTHER HANDLERS ================== */
 async function handleReferralParam(param){
   if (!db) return; 
