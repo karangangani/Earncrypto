@@ -233,9 +233,8 @@ h1{color:var(--text);font-size:20px;margin-bottom:2px;font-weight:800;letter-spa
             Failed to load market data. Please check your connection.
         </div>
       </div>
-    </div>
-
-    <div id="tasks" class="section">
+  </div>
+        <div id="tasks" class="section">
       <button id="watchAd" class="btn" style="padding:18px; font-size:16px;" onclick="playClick(); watchAdHandler()">Watch Ad (+<span id="adReward">100</span> Ae)</button>
       <p class="small" style="margin-top:14px">Ads watched this cycle: <span id="adsCycleCount" style="color:var(--text); font-weight:800;">0/50</span></p>
       <p class="small">Level: <span id="levelDisplay" style="color:var(--text); font-weight:800;">0</span> • Total Ads: <span id="totalAds" style="color:var(--text); font-weight:800;">0</span></p>
@@ -499,7 +498,7 @@ function readLocal(){
 }
 function writeLocal(stateObj, pendingObj){
   try{
-    if(stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
+        if(stateObj) localStorage.setItem(STATE_KEY, JSON.stringify(stateObj));
     if(pendingObj) localStorage.setItem(PENDING_KEY, JSON.stringify(pendingObj));
   }catch(e){}
 }
@@ -627,135 +626,183 @@ function loadRefList(){
     }
 }
 
-
-  
 /* ================== PERFECTED AD LOGIC ================== */
-let isAdLoading = false; // Strict lock to prevent spam clicks and looping
+let isAdLoading = false;
+let adUnlockTimer = null;
 
-async function watchAdHandler(){
-  if (isAdLoading) return; // If already loading or cooling down, ignore clicks
+function getAdButtonText() {
+  return `Watch Ad (+${100 * (current.multiplierAds || 1)} Ae)`;
+}
+
+function unlockAdButton(button, text = getAdButtonText(), makeRetry = false) {
+  isAdLoading = false;
+  if (!button) return;
+  button.disabled = false;
+  button.innerText = text;
+  button.style.opacity = "1";
+  if (makeRetry) button.classList.add('retry');
+  else button.classList.remove('retry');
+}
+
+async function waitForAdSdk(timeoutMs = 5000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (typeof window.show_10192178 === 'function') return window.show_10192178;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return null;
+}
+
+async function playAdOnce(timeoutMs = 12000) {
+  const sdkFn = await waitForAdSdk(5000);
+  if (typeof sdkFn !== 'function') {
+    return { success: false, reason: 'sdk_missing' };
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const finish = (payload) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(payload);
+    };
+
+    const timer = setTimeout(() => finish({ success: false, reason: 'timeout' }), timeoutMs);
+
+    try {
+      const result = sdkFn();
+      if (result && typeof result.then === 'function') {
+        result.then(() => finish({ success: true }))
+              .catch(() => finish({ success: false, reason: 'error' }));
+      } else {
+        // Some ad SDKs open a modal without returning a promise.
+        // Give the SDK a short window, then assume it opened successfully.
+        setTimeout(() => finish({ success: true }), 250);
+      }
+    } catch (err) {
+      finish({ success: false, reason: 'error' });
+    }
+  });
+}
+
+async function watchAdHandler() {
+  if (isAdLoading) return;
 
   resetAdsWindowIfNeededLocal();
 
   const now = Date.now();
   const start = Number(current.adsWindowStart || 0);
-  
-  // Check daily limit
-  if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT){
+
+  if ((current.adsWindowCount || 0) >= ADS_WINDOW_LIMIT) {
     const timeLeftMs = ADS_WINDOW_MS - (now - start);
     const hoursLeft = Math.ceil(timeLeftMs / (1000 * 60 * 60));
-    if (tg.showAlert) tg.showAlert(`Mining Cycle Complete! 🛑\nLimit: ${ADS_WINDOW_LIMIT}/${ADS_WINDOW_LIMIT}.\n\nNext cycle begins in approx ${hoursLeft} hours.`);
+    if (tg.showAlert) {
+      tg.showAlert(
+        `Mining Cycle Complete! 🛑
+Limit: ${ADS_WINDOW_LIMIT}/${ADS_WINDOW_LIMIT}.
+
+Next cycle begins in approx ${hoursLeft} hours.`
+      );
+    }
     return;
   }
 
   const btn = document.getElementById('watchAd');
   const rewardAmount = 100 * (current.multiplierAds || 1);
-  const originalText = `Watch Ad (+${rewardAmount} Ae)`;
+  const originalText = getAdButtonText();
 
-  // Strict Disable State
+  if (!btn) return;
+
   isAdLoading = true;
   btn.disabled = true;
   btn.classList.remove('retry');
-  btn.innerText = "Loading Ad...";
-  btn.style.opacity = "0.7";
+  btn.innerText = 'Loading Ad...';
+  btn.style.opacity = '0.7';
+
+  let adCompleted = false;
+
+  try {
+    const result = await playAdOnce(12000);
+
+    if (!result || !result.success) {
+      const reason = result?.reason || 'error';
+      unlockAdButton(btn, 'Retry Ad Connection', true);
   
-  // Clean Ad Call with an 8-second Timeout Failsafe
-  const playAd = new Promise((resolve) => {
-      let isResolved = false;
+        let errorMsg = 'Ad network is busy or connection failed. Please try again.';
+      if (reason === 'sdk_missing') errorMsg = 'Ad system is initializing. Please wait a moment.';
+      else if (reason === 'timeout') errorMsg = 'Ad loading took too long. Please try again.';
 
-      const timeoutTimer = setTimeout(() => {
-          if (!isResolved) {
-              isResolved = true;
-              resolve({ success: false, reason: 'timeout' });
-          }
-      }, 8000); // Wait max 8 seconds
-
-      if (typeof window.show_10192178 === 'function') {
-          window.show_10192178().then(() => {
-              if (!isResolved) {
-                  isResolved = true;
-                  clearTimeout(timeoutTimer);
-                  resolve({ success: true });
-              }
-          }).catch((err) => {
-              if (!isResolved) {
-                  isResolved = true;
-                  clearTimeout(timeoutTimer);
-                  resolve({ success: false, reason: 'error' });
-              }
-          });
-      } else {
-          if (!isResolved) {
-              isResolved = true;
-              clearTimeout(timeoutTimer);
-              resolve({ success: false, reason: 'sdk_missing' });
-          }
-      }
-  });
-
-  const result = await playAd;
-
-  if (!result.success) {
-      // --- AD FAILED / TIMEOUT ---
-      isAdLoading = false; // Release lock so user can retry
-      btn.disabled = false;
-      btn.innerText = "Retry Ad Connection";
-      btn.classList.add('retry');
-      btn.style.opacity = "1";
-
-      let errorMsg = "Ad network is busy or connection failed. Please try again.";
-      if (result.reason === 'sdk_missing') errorMsg = "Ad system is initializing. Please wait a moment.";
-      
       if (window.tg && tg.showAlert) tg.showAlert(errorMsg);
       return;
-  }
+    }
 
-  // --- AD SUCCESS: Add Reward ---
-  current.ae = (current.ae || 0) + rewardAmount;
-  current.totalAds = (current.totalAds || 0) + 1;
-  current.adsToday = (current.adsToday || 0) + 1;
-  current.lastAdTime = Date.now();
-  current.adsWindowCount = (current.adsWindowCount || 0) + 1;
-  current.adsWindowStart = current.adsWindowStart || Date.now();
+    adCompleted = true;
 
-  enqueuePending(rewardAmount, 1, null, null);
-  writeLocal(current, window.__aether_pending);
-  showRewardPopup(rewardAmount);
+    // reward credits
+    current.ae = (current.ae || 0) + rewardAmount;
+    current.totalAds = (current.totalAds || 0) + 1;
+    current.adsToday = (current.adsToday || 0) + 1;
+    current.lastAdTime = now;
+    current.adsWindowCount = (current.adsWindowCount || 0) + 1;
+    current.adsWindowStart = current.adsWindowStart || now;
 
-  // NON-BLOCKING FIREBASE UPDATE (No 'await' to freeze the app)
-  if (db) {
+    enqueuePending(rewardAmount, 1, null, null);
+    writeLocal(current, window.__aether_pending);
+    showRewardPopup(rewardAmount);
+
+    if (db) {
       db.collection('users').doc(userDocId).update({
-          ae: firebase.firestore.FieldValue.increment(rewardAmount),
-          totalAds: firebase.firestore.FieldValue.increment(1),
-          adsToday: firebase.firestore.FieldValue.increment(1),
-          lastAdTime: Date.now(),
-          adsWindowStart: current.adsWindowStart,
-          adsWindowCount: current.adsWindowCount,
-          lastSaveTime: Date.now()
+        ae: firebase.firestore.FieldValue.increment(rewardAmount),
+        totalAds: firebase.firestore.FieldValue.increment(1),
+        adsToday: firebase.firestore.FieldValue.increment(1),
+        lastAdTime: Date.now(),
+        adsWindowStart: current.adsWindowStart,
+        adsWindowCount: current.adsWindowCount,
+        lastSaveTime: Date.now()
       }).then(() => {
-          try { flushPending(false); } catch(e){}
-      }).catch((writeErr) => {
-          saveSmallState().catch(()=>{});
+        try { flushPending(false); } catch (e) {}
+      }).catch(() => {
+        saveSmallState().catch(() => {});
       });
-  }
+    }
 
-  computeLevel(); 
-  updateUI();
+    computeLevel();
+    updateUI();
 
-  // Fun point animation
-  const pts = document.getElementById('points');
-  if (pts) {
+    const pts = document.getElementById('points');
+    if (pts) {
       pts.style.color = '#fff';
       pts.style.transform = 'scale(1.2)';
-      setTimeout(()=> { pts.style.color = 'var(--text)'; pts.style.transform = 'scale(1)'; }, 400);
-  }
+      setTimeout(() => {
+        pts.style.color = 'var(--text)';
+        pts.style.transform = 'scale(1)';
+      }, 400);
+    }
 
-  // --- EXACTLY 5 SECOND COOL-DOWN ---
-  btn.innerText = "Cooling down...";
-  
-  setTimeout(() => {
-      // 5 seconds later: unlock the button. User MUST manually click again.
-      isAdLoad
+    btn.innerText = 'Cooling down...';
+
+    if (adUnlockTimer) clearTimeout(adUnlockTimer);
+    adUnlockTimer = setTimeout(() => {
+      unlockAdButton(btn, originalText, false);
+    }, 5000);
+
+  } catch (err) {
+    if (!adCompleted) {
+      unlockAdButton(btn, 'Retry Ad Connection', true);
+      if (window.tg && tg.showAlert) tg.showAlert('Ad loading error aavyo. Dubara try karo.');
+      return;
+    }
+
+    // If something unexpected happened after ad success, still restore safely.
+    if (adUnlockTimer) clearTimeout(adUnlockTimer);
+    adUnlockTimer = setTimeout(() => {
+      unlockAdButton(btn, originalText, false);
+    }, 5000);
+  }
+}
+
 /* ================== OTHER HANDLERS ================== */
 async function handleReferralParam(param){
   if (!db) return; 
@@ -982,4 +1029,5 @@ initApp();
 </script>
 </body>
 </html>
+
   
